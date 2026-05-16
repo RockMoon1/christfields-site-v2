@@ -276,6 +276,19 @@ body {
   50%      { transform: scaleY(1);   opacity: 1; }
 }
 
+/* ============================================================
+   FaithFlow active-status dot pulse
+   ============================================================ */
+
+@keyframes ffPulse {
+  0%, 100% { opacity: 1;   transform: scale(1);    }
+  50%      { opacity: 0.5; transform: scale(1.25); }
+}
+
+/* Larger and smaller ember variants used by EmberField.tsx */
+.ember.ember-lg { width: 4px; height: 4px; filter: blur(0.8px); }
+.ember.ember-sm { width: 2px; height: 2px; filter: blur(0.4px); }
+
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     opacity: 1;
