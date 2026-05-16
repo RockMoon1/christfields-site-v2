@@ -18,8 +18,10 @@ const word: Variants = {
 
 export function FFHero() {
   const { scrollY } = useScroll();
-  const bgY = useTransform(scrollY, [0, 800], [0, -120]);
-  const contentOpacity = useTransform(scrollY, [0, 600], [1, 0.4]);
+  // Parallax tuned so the background visibly drifts as you scroll past
+  // the hero. Combined with the content fade, this creates real depth.
+  const bgY = useTransform(scrollY, [0, 800], [0, -260]);
+  const contentOpacity = useTransform(scrollY, [0, 600], [1, 0.3]);
 
   return (
     <section className="relative z-[2] flex min-h-[92vh] items-center justify-center overflow-hidden px-7 pt-[var(--nav-h)]">

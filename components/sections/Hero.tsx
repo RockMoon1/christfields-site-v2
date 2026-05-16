@@ -28,9 +28,10 @@ export function Hero() {
   const { scrollY } = useScroll();
   // Background glows drift up at different rates as you scroll past the hero.
   // Top glow moves up faster, bottom glow moves slower, creating depth.
-  const topGlowY = useTransform(scrollY, [0, 800], [0, -180]);
-  const bottomGlowY = useTransform(scrollY, [0, 800], [0, -80]);
-  const heroOpacity = useTransform(scrollY, [0, 600], [1, 0.4]);
+  // Distances tuned so the parallax reads clearly even on short scrolls.
+  const topGlowY = useTransform(scrollY, [0, 800], [0, -340]);
+  const bottomGlowY = useTransform(scrollY, [0, 800], [0, -160]);
+  const heroOpacity = useTransform(scrollY, [0, 600], [1, 0.3]);
 
   return (
     <section

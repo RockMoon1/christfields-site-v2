@@ -226,7 +226,10 @@ button:focus-visible {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 1;
+  /* Sit ABOVE section backgrounds (z-2) but below the cursor effects (z-60+).
+     Combined with mix-blend-mode on each ember below, this lets embers
+     shine through any section background instead of being hidden. */
+  z-index: 30;
   overflow: hidden;
 }
 
@@ -238,6 +241,10 @@ button:focus-visible {
   pointer-events: none;
   filter: blur(0.6px);
   opacity: 0;
+  /* Additive blending. Embers ADD warm light to whatever is under them
+     without obscuring content. Text stays readable, dark backgrounds get
+     a soft gold lift where each ember sits. */
+  mix-blend-mode: plus-lighter;
   --scatter-x: 0px;
   --scatter-y: 0px;
   transform: translate3d(var(--scatter-x), var(--scatter-y), 0);
