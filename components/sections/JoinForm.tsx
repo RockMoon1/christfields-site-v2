@@ -76,7 +76,7 @@ export function JoinForm() {
   return (
     <section
       id="join"
-      className="relative overflow-hidden border-t border-border-sub py-[110px]"
+      className="relative overflow-hidden py-[110px]"
     >
       <div
         aria-hidden

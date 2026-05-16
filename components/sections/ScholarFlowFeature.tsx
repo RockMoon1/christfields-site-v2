@@ -9,7 +9,7 @@ export function ScholarFlowFeature() {
   return (
     <section
       id="scholarflow"
-      className="relative border-t border-border-sub bg-black-2 py-[110px]"
+      className="relative bg-black-2 py-[110px]"
     >
       <Container>
         <Reveal>

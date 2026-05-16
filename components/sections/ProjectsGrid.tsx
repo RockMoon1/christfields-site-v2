@@ -54,7 +54,7 @@ const badgeStyles: Record<ProjectCard['badgeTone'], string> = {
 
 export function ProjectsGrid() {
   return (
-    <section id="projects" className="border-t border-border-sub py-[110px]">
+    <section id="projects" className="py-[110px]">
       <Container>
         <Reveal>
           <p className="mb-4 text-xs font-medium uppercase tracking-[0.22em] text-gold">

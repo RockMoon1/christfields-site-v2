@@ -31,7 +31,7 @@ const values: Value[] = [
 
 export function Values() {
   return (
-    <section id="values" className="border-t border-border-sub bg-black-2 py-[110px]">
+    <section id="values" className="bg-black-2 py-[110px]">
       <Container>
         <Reveal>
           <p className="mb-4 text-xs font-medium uppercase tracking-[0.22em] text-gold">
@@ -48,10 +48,17 @@ export function Values() {
         <div className="grid gap-x-12 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
           {values.map((value, i) => (
             <Reveal key={value.name} delay={0.05 * (i + 1)}>
-              <div className="border-l border-border-gold pl-6">
-                <div className="mb-4 h-px w-12 bg-gold" aria-hidden />
-                <h3 className="mb-3 font-display text-2xl font-light text-ivory">{value.name}</h3>
-                <p className="text-sm leading-relaxed text-silver">{value.body}</p>
+              <div className="group cursor-default border-l border-border-gold pl-6 transition-[border-color,padding] duration-500 hover:border-gold hover:pl-7">
+                <div
+                  aria-hidden
+                  className="mb-4 h-px w-12 bg-gold shadow-[0_0_0_rgba(201,165,72,0)] transition-[width,box-shadow] duration-500 group-hover:w-24 group-hover:shadow-[0_0_12px_rgba(201,165,72,0.5)]"
+                />
+                <h3 className="mb-3 font-display text-2xl font-light text-ivory transition-colors duration-300 group-hover:text-gold-lt">
+                  {value.name}
+                </h3>
+                <p className="text-sm leading-relaxed text-silver transition-colors duration-300 group-hover:text-ivory-dim">
+                  {value.body}
+                </p>
               </div>
             </Reveal>
           ))}

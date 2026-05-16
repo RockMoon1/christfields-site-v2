@@ -5,7 +5,7 @@ import { ScriptureSymbol } from '../motion/ScriptureSymbol';
 
 export function Vision() {
   return (
-    <section id="vision" className="border-t border-border-sub py-[110px]">
+    <section id="vision" className="py-[110px]">
       <Container>
         <Reveal>
           <p className="mb-4 text-xs font-medium uppercase tracking-[0.22em] text-gold">

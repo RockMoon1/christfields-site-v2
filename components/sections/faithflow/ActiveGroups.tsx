@@ -4,7 +4,7 @@ import { CardSpotlight } from '../../motion/CardSpotlight';
 
 export function ActiveGroups() {
   return (
-    <section id="groups" className="relative z-[2] border-t border-border-sub bg-black-2 py-[110px]">
+    <section id="groups" className="relative z-[2] bg-black-2 py-[110px]">
       <Container>
         <Reveal>
           <p className="mb-4 text-xs font-medium uppercase tracking-[0.22em] text-gold">

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { motion, type Variants } from 'framer-motion';
+import { motion, useScroll, useTransform, type Variants } from 'framer-motion';
 import { Reveal } from '../../Reveal';
 import { HeroSpotlight } from '../../motion/HeroSpotlight';
 import { MagneticButton } from '../../motion/MagneticButton';
@@ -17,24 +17,29 @@ const word: Variants = {
 };
 
 export function FFHero() {
+  const { scrollY } = useScroll();
+  const bgY = useTransform(scrollY, [0, 800], [0, -120]);
+  const contentOpacity = useTransform(scrollY, [0, 600], [1, 0.4]);
+
   return (
     <section className="relative z-[2] flex min-h-[92vh] items-center justify-center overflow-hidden px-7 pt-[var(--nav-h)]">
-      <div
+      <motion.div
         aria-hidden
-        className="absolute inset-0 -z-10"
         style={{
+          y: bgY,
           background: `
             radial-gradient(ellipse at 50% 28%, rgba(201, 165, 72, 0.10) 0%, transparent 55%),
             radial-gradient(ellipse at 50% 90%, rgba(45, 106, 79, 0.20) 0%, transparent 60%),
             #060908
           `,
         }}
+        className="absolute inset-0 -z-10"
       />
 
       {/* Cursor-following gold spotlight */}
       <HeroSpotlight />
 
-      <div className="relative z-10 mx-auto max-w-3xl text-center">
+      <motion.div style={{ opacity: contentOpacity }} className="relative z-10 mx-auto max-w-3xl text-center">
         <Reveal>
           <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-lt/35 bg-emerald-lt/15 px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.16em] text-emerald-lt">
             <span className="inline-block h-1.5 w-1.5 animate-[ffPulse_2s_ease-in-out_infinite] rounded-full bg-emerald-lt shadow-[0_0_8px_var(--color-emerald-lt)]" />
@@ -87,7 +92,7 @@ export function FFHero() {
             </MagneticButton>
           </div>
         </Reveal>
-      </div>
+      </motion.div>
 
       <div
         aria-hidden

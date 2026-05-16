@@ -93,7 +93,7 @@ export function GetInvolved() {
   return (
     <section
       id="get-involved"
-      className="relative z-[2] overflow-hidden border-t border-border-sub py-[110px]"
+      className="relative z-[2] overflow-hidden py-[110px]"
     >
       <div
         aria-hidden

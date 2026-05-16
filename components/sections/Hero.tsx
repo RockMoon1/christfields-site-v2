@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { motion, type Variants } from 'framer-motion';
+import { motion, useScroll, useTransform, type Variants } from 'framer-motion';
+import { useRef } from 'react';
 import { Reveal } from '../Reveal';
 import { HeroSpotlight } from '../motion/HeroSpotlight';
 import { MagneticButton } from '../motion/MagneticButton';
@@ -23,8 +24,17 @@ const word: Variants = {
  * The "Iron." in the heading is italic gold as before.
  */
 export function Hero() {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollY } = useScroll();
+  // Background glows drift up at different rates as you scroll past the hero.
+  // Top glow moves up faster, bottom glow moves slower, creating depth.
+  const topGlowY = useTransform(scrollY, [0, 800], [0, -180]);
+  const bottomGlowY = useTransform(scrollY, [0, 800], [0, -80]);
+  const heroOpacity = useTransform(scrollY, [0, 600], [1, 0.4]);
+
   return (
     <section
+      ref={ref}
       id="home"
       className="relative flex min-h-[92vh] items-center justify-center overflow-hidden px-7 pt-[var(--nav-h)]"
     >
@@ -40,19 +50,21 @@ export function Hero() {
           `,
         }}
       />
-      <div
+      <motion.div
         aria-hidden
+        style={{ y: topGlowY }}
         className="pointer-events-none absolute -top-20 left-1/2 -z-10 h-96 w-[120%] -translate-x-1/2 bg-gold/[0.04] blur-3xl"
       />
-      <div
+      <motion.div
         aria-hidden
+        style={{ y: bottomGlowY }}
         className="pointer-events-none absolute -bottom-20 left-1/2 -z-10 h-96 w-[120%] -translate-x-1/2 bg-emerald/[0.06] blur-3xl"
       />
 
       {/* Cursor-following gold spotlight */}
       <HeroSpotlight />
 
-      <div className="relative z-10 mx-auto max-w-3xl text-center">
+      <motion.div style={{ opacity: heroOpacity }} className="relative z-10 mx-auto max-w-3xl text-center">
         <Reveal>
           <p className="mb-6 font-display text-xs font-medium uppercase tracking-[0.22em] text-gold">
             Proverbs 27:17
@@ -107,7 +119,7 @@ export function Hero() {
             </MagneticButton>
           </div>
         </Reveal>
-      </div>
+      </motion.div>
 
       {/* Scroll indicator */}
       <div

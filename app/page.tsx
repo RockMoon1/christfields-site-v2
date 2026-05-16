@@ -1,5 +1,6 @@
 import { Footer } from '@/components/Footer';
 import { Nav } from '@/components/Nav';
+import { AnimatedDivider } from '@/components/motion/AnimatedDivider';
 import { Hero } from '@/components/sections/Hero';
 import { JoinForm } from '@/components/sections/JoinForm';
 import { ProjectsGrid } from '@/components/sections/ProjectsGrid';
@@ -19,10 +20,15 @@ export default function HomePage() {
       <Nav />
       <main id="main">
         <Hero />
+        <AnimatedDivider />
         <Vision />
+        <AnimatedDivider />
         <ScholarFlowFeature />
+        <AnimatedDivider />
         <ProjectsGrid />
+        <AnimatedDivider />
         <Values />
+        <AnimatedDivider />
         <JoinForm />
       </main>
       <Footer />

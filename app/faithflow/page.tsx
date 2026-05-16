@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Footer } from '@/components/Footer';
 import { Nav } from '@/components/Nav';
+import { AnimatedDivider } from '@/components/motion/AnimatedDivider';
 import { ActiveGroups } from '@/components/sections/faithflow/ActiveGroups';
 import { BiblicalFoundation } from '@/components/sections/faithflow/BiblicalFoundation';
 import { EmberField } from '@/components/sections/faithflow/EmberField';
@@ -62,11 +63,17 @@ export default function FaithFlowPage() {
       <Nav links={navLinks} alwaysScrolled />
       <main id="main" className="relative">
         <FFHero />
+        <AnimatedDivider />
         <WhatIsFaithFlow />
+        <AnimatedDivider />
         <ActiveGroups />
+        <AnimatedDivider />
         <HowGroupsWork />
+        <AnimatedDivider />
         <BiblicalFoundation />
+        <AnimatedDivider />
         <FutureLeaders />
+        <AnimatedDivider />
         <GetInvolved />
       </main>
       <Footer columns={footerColumns} />

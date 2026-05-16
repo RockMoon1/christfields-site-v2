@@ -43,7 +43,7 @@ export function BiblicalFoundation() {
   return (
     <section
       id="scripture"
-      className="relative z-[2] border-t border-border-sub bg-black-2 py-[110px]"
+      className="relative z-[2] bg-black-2 py-[110px]"
     >
       <Container>
         <Reveal>
