@@ -2,6 +2,13 @@ import Link from 'next/link';
 import { Container } from '../Container';
 import { Reveal } from '../Reveal';
 
+interface CtaLink {
+  href: string;
+  label: string;
+  /** If true, renders as the prominent gold-bordered button. Default is a quieter text link. */
+  primary?: boolean;
+}
+
 interface ProjectCard {
   badge: string;
   badgeTone: 'active' | 'planned' | 'dev';
@@ -9,7 +16,7 @@ interface ProjectCard {
   name: string;
   description: string;
   tags: string[];
-  cta?: { href: string; label: string };
+  ctas?: CtaLink[];
 }
 
 const projects: ProjectCard[] = [
@@ -21,7 +28,10 @@ const projects: ProjectCard[] = [
     description:
       'Real small groups walking together in person. Scripture-rooted accountability, genuine friendship, and mutual growth. Iron and Ember is our first active group. Brotherhood and sisterhood, face to face.',
     tags: ['Community', 'Accountability', 'Spiritual Growth'],
-    cta: { href: '/faithflow', label: 'Visit FaithFlow' },
+    ctas: [
+      { href: '/faithflow', label: 'Visit FaithFlow', primary: true },
+      { href: '/faithflow-resources', label: 'Trusted Resources' },
+    ],
   },
   {
     badge: 'In Development',
@@ -95,13 +105,22 @@ export function ProjectsGrid() {
                   ))}
                 </div>
 
-                {project.cta && (
-                  <Link
-                    href={project.cta.href}
-                    className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.12em] text-gold transition-colors hover:text-gold-lt"
-                  >
-                    {project.cta.label} &rarr;
-                  </Link>
+                {project.ctas && project.ctas.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-3">
+                    {project.ctas.map((cta) => (
+                      <Link
+                        key={cta.href}
+                        href={cta.href}
+                        className={
+                          cta.primary
+                            ? 'inline-flex items-center gap-1 rounded-sm border border-gold/45 bg-transparent px-4 py-2 text-xs font-medium uppercase tracking-[0.12em] text-gold transition-colors hover:bg-gold hover:text-black'
+                            : 'inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.12em] text-silver transition-colors hover:text-gold-lt'
+                        }
+                      >
+                        {cta.label} &rarr;
+                      </Link>
+                    ))}
+                  </div>
                 )}
               </article>
             </Reveal>
