@@ -5,7 +5,6 @@ import { motion, useScroll, useTransform, type Variants } from 'motion/react';
 import { Reveal } from '../../Reveal';
 import { HeroSpotlight } from '../../motion/HeroSpotlight';
 import { MagneticButton } from '../../motion/MagneticButton';
-import { SignalField } from '../../motion/SignalField';
 
 const parent: Variants = {
   hidden: {},
@@ -38,7 +37,6 @@ export function FFHero() {
         }}
         className="absolute inset-0 -z-10"
       />
-      <SignalField className="absolute inset-0 -z-10" />
 
       {/* Cursor-following gold spotlight */}
       <HeroSpotlight />

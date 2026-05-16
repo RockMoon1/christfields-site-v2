@@ -6,7 +6,6 @@ import { useRef } from 'react';
 import { Reveal } from '../Reveal';
 import { HeroSpotlight } from '../motion/HeroSpotlight';
 import { MagneticButton } from '../motion/MagneticButton';
-import { SignalField } from '../motion/SignalField';
 
 // Stagger config for the hero heading. The container delays children one by
 // one; each child rises and fades in.
@@ -62,7 +61,6 @@ export function Hero() {
         style={{ y: bottomGlowY }}
         className="pointer-events-none absolute -bottom-20 left-1/2 -z-10 h-96 w-[120%] -translate-x-1/2 bg-emerald/[0.06] blur-3xl"
       />
-      <SignalField className="absolute inset-0 -z-10" intensity="bright" />
 
       {/* Cursor-following gold spotlight */}
       <HeroSpotlight />
