@@ -4,6 +4,8 @@ import { useState, type FormEvent } from 'react';
 import { Container } from '../Container';
 import { Reveal } from '../Reveal';
 import { cn } from '@/lib/utils';
+import { FloatingInput } from '../motion/FloatingInput';
+import { FloatingTextarea } from '../motion/FloatingTextarea';
 import { ScriptureSymbol } from '../motion/ScriptureSymbol';
 
 type SubmitState = 'idle' | 'sending' | 'success' | 'error';
@@ -143,8 +145,8 @@ export function JoinForm() {
               </p>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <Field name="name" type="text" placeholder="Your name" autoComplete="given-name" maxLength={100} />
-                <Field name="email" type="email" placeholder="Your email address" autoComplete="email" maxLength={254} />
+                <FloatingInput name="name" label="Your name" type="text" required autoComplete="given-name" maxLength={100} />
+                <FloatingInput name="email" label="Your email address" type="email" required autoComplete="email" maxLength={254} />
               </div>
 
               <div className="mt-4">
@@ -158,13 +160,14 @@ export function JoinForm() {
               </div>
 
               <div className="mt-4">
-                <Textarea
+                <FloatingTextarea
                   name="message"
+                  label="Tell us about yourself"
+                  hint="Introduce yourself, ask a question, share what brought you here. We read every message."
                   rows={5}
                   maxLength={MAX_MESSAGE_CHARS}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Introduce yourself, ask a question, share what brought you here, or tell us what you are looking for. We read every message."
                 />
                 <div className={cn('mt-1 text-right text-xs', charsClass)}>
                   {message.length} / {MAX_MESSAGE_CHARS}
@@ -202,18 +205,9 @@ export function JoinForm() {
 }
 
 /* ============================================================
-   Small form primitives
+   Select primitive (the only one still used. Inputs and textarea
+   are now handled by FloatingInput / FloatingTextarea.)
    ============================================================ */
-
-function Field(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      required
-      {...props}
-      className="w-full rounded-sm border border-border-sub bg-black-3 px-4 py-3 text-sm text-ivory placeholder:text-muted focus:border-gold focus:outline-none"
-    />
-  );
-}
 
 function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
@@ -221,15 +215,6 @@ function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
       required
       {...props}
       className="w-full rounded-sm border border-border-sub bg-black-3 px-4 py-3 text-sm text-ivory focus:border-gold focus:outline-none"
-    />
-  );
-}
-
-function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return (
-    <textarea
-      {...props}
-      className="w-full resize-y rounded-sm border border-border-sub bg-black-3 px-4 py-3 text-sm text-ivory placeholder:text-muted focus:border-gold focus:outline-none"
     />
   );
 }

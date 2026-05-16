@@ -5,6 +5,8 @@ import { Container } from '../../Container';
 import { Reveal } from '../../Reveal';
 import { cn } from '@/lib/utils';
 import { FAITHFLOW_CONTENT, type InterestKey } from '@/lib/content/faithflow';
+import { FloatingInput } from '../../motion/FloatingInput';
+import { FloatingTextarea } from '../../motion/FloatingTextarea';
 import { MagneticButton } from '../../motion/MagneticButton';
 import { ScriptureSymbol } from '../../motion/ScriptureSymbol';
 import { TailoredSuccess } from './TailoredSuccess';
@@ -165,14 +167,8 @@ export function GetInvolved() {
               </p>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <Field name="name" type="text" placeholder="Your name" autoComplete="given-name" maxLength={100} />
-                <Field
-                  name="email"
-                  type="email"
-                  placeholder="Your email address"
-                  autoComplete="email"
-                  maxLength={254}
-                />
+                <FloatingInput name="name" label="Your name" type="text" required autoComplete="given-name" maxLength={100} />
+                <FloatingInput name="email" label="Your email address" type="email" required autoComplete="email" maxLength={254} />
               </div>
 
               <div className="mt-4">
@@ -195,14 +191,14 @@ export function GetInvolved() {
               </div>
 
               <div className="mt-4">
-                <textarea
+                <FloatingTextarea
                   name="message"
+                  label="Tell us about yourself"
+                  hint="Your faith journey, what brings you here, or what you are looking for. We read every message."
                   rows={5}
                   maxLength={MAX_MESSAGE_CHARS}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Tell us a little about yourself, your faith journey, or what you are looking for. We read every message."
-                  className="w-full resize-y rounded-sm border border-border-sub bg-black-3 px-4 py-3 text-sm text-ivory placeholder:text-muted focus:border-gold focus:outline-none"
                 />
                 <div className={cn('mt-1 text-right text-xs', charsClass)}>
                   {message.length} / {MAX_MESSAGE_CHARS}
@@ -238,12 +234,3 @@ export function GetInvolved() {
   );
 }
 
-function Field(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      required
-      {...props}
-      className="w-full rounded-sm border border-border-sub bg-black-3 px-4 py-3 text-sm text-ivory placeholder:text-muted focus:border-gold focus:outline-none"
-    />
-  );
-}
