@@ -262,6 +262,20 @@ body {
   transform: none;
 }
 
+/* ============================================================
+   Hero scroll indicator line
+   ============================================================ */
+
+.scroll-line {
+  transform-origin: top center;
+  animation: scrollLineFlow 2.4s ease-in-out infinite;
+}
+
+@keyframes scrollLineFlow {
+  0%, 100% { transform: scaleY(0.5); opacity: 0.4; }
+  50%      { transform: scaleY(1);   opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     opacity: 1;
@@ -271,7 +285,8 @@ body {
   .logo-fire-glow,
   .logo-fire-glow2,
   .logo-ember,
-  .ember {
+  .ember,
+  .scroll-line {
     animation: none !important;
   }
 }
