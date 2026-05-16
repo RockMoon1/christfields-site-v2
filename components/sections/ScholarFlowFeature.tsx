@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { Container } from '../Container';
 import { Reveal } from '../Reveal';
+import { MagneticButton } from '../motion/MagneticButton';
+import { ScriptureSymbol } from '../motion/ScriptureSymbol';
 
 export function ScholarFlowFeature() {
   return (
@@ -46,18 +48,22 @@ export function ScholarFlowFeature() {
 
             <Reveal delay={0.15}>
               <div className="mb-6 flex flex-wrap gap-3">
-                <Link
-                  href="#join"
-                  className="inline-flex items-center gap-2 rounded-sm bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt"
-                >
-                  Get Early Access &rarr;
-                </Link>
-                <Link
-                  href="/scholarflow-resources"
-                  className="inline-flex items-center gap-2 rounded-sm border border-gold/45 bg-transparent px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black"
-                >
-                  Trusted Resources &rarr;
-                </Link>
+                <MagneticButton>
+                  <Link
+                    href="#join"
+                    className="inline-flex items-center gap-2 rounded-sm bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt"
+                  >
+                    Get Early Access &rarr;
+                  </Link>
+                </MagneticButton>
+                <MagneticButton>
+                  <Link
+                    href="/scholarflow-resources"
+                    className="inline-flex items-center gap-2 rounded-sm border border-gold/45 bg-transparent px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black"
+                  >
+                    Trusted Resources &rarr;
+                  </Link>
+                </MagneticButton>
               </div>
             </Reveal>
 
@@ -75,9 +81,7 @@ export function ScholarFlowFeature() {
                 aria-hidden
                 className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold to-transparent opacity-60"
               />
-              <span className="mb-4 block font-display text-3xl text-gold" aria-hidden>
-                ◈
-              </span>
+              <ScriptureSymbol symbol="◈" className="mb-4 block font-display text-3xl text-gold" />
               <blockquote className="mb-4 font-display text-xl italic leading-relaxed text-ivory-dim">
                 &ldquo;Commit your work to the Lord, and your plans will be established.&rdquo;
               </blockquote>

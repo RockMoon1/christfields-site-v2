@@ -1,5 +1,19 @@
+'use client';
+
 import Link from 'next/link';
+import { motion, type Variants } from 'framer-motion';
 import { Reveal } from '../../Reveal';
+import { MagneticButton } from '../../motion/MagneticButton';
+
+const parent: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.18, delayChildren: 0.2 } },
+};
+
+const word: Variants = {
+  hidden: { opacity: 0, y: 32 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.85, ease: [0.22, 1, 0.36, 1] } },
+};
 
 export function FFHero() {
   return (
@@ -24,38 +38,49 @@ export function FFHero() {
           </span>
         </Reveal>
 
-        <Reveal delay={0.05}>
-          <h1 className="mb-6 font-display text-[clamp(3.4rem,7vw,5.5rem)] font-light leading-[1.05] tracking-[-0.01em] text-ivory">
-            Faith<em className="not-italic text-gold-lt">Flow.</em>
-          </h1>
-        </Reveal>
+        {/* Word-by-word reveal. "Faith" then "Flow." with the gold ignition. */}
+        <motion.h1
+          initial="hidden"
+          animate="visible"
+          variants={parent}
+          className="mb-6 font-display text-[clamp(3.4rem,7vw,5.5rem)] font-light leading-[1.05] tracking-[-0.01em] text-ivory"
+        >
+          <motion.span variants={word} className="inline-block">Faith</motion.span>
+          <motion.span variants={word} className="inline-block not-italic text-gold-lt">
+            Flow.
+          </motion.span>
+        </motion.h1>
 
-        <Reveal delay={0.1}>
+        <Reveal delay={0.7}>
           <p className="mx-auto mb-6 max-w-xl text-lg leading-relaxed text-ivory-dim md:text-xl">
             Real community. Scripture-rooted accountability. Faith lived together.
           </p>
         </Reveal>
 
-        <Reveal delay={0.15}>
+        <Reveal delay={0.8}>
           <p className="mb-10 font-display text-base italic text-silver md:text-lg">
             &ldquo;As iron sharpens iron, so one person sharpens another.&rdquo;
           </p>
         </Reveal>
 
-        <Reveal delay={0.2}>
+        <Reveal delay={0.9}>
           <div className="flex flex-wrap justify-center gap-3">
-            <Link
-              href="#get-involved"
-              className="inline-flex items-center gap-2 rounded-sm bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt"
-            >
-              Join or Learn More &rarr;
-            </Link>
-            <Link
-              href="#groups"
-              className="inline-flex items-center gap-2 rounded-sm border border-gold/45 bg-transparent px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black"
-            >
-              View Active Groups
-            </Link>
+            <MagneticButton>
+              <Link
+                href="#get-involved"
+                className="inline-flex items-center gap-2 rounded-sm bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt"
+              >
+                Join or Learn More &rarr;
+              </Link>
+            </MagneticButton>
+            <MagneticButton>
+              <Link
+                href="#groups"
+                className="inline-flex items-center gap-2 rounded-sm border border-gold/45 bg-transparent px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black"
+              >
+                View Active Groups
+              </Link>
+            </MagneticButton>
           </div>
         </Reveal>
       </div>

@@ -1,5 +1,21 @@
+'use client';
+
 import Link from 'next/link';
+import { motion, type Variants } from 'framer-motion';
 import { Reveal } from '../Reveal';
+import { MagneticButton } from '../motion/MagneticButton';
+
+// Stagger config for the hero heading. The container delays children one by
+// one; each child rises and fades in.
+const parent: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.09, delayChildren: 0.15 } },
+};
+
+const word: Variants = {
+  hidden: { opacity: 0, y: 28 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.75, ease: [0.22, 1, 0.36, 1] } },
+};
 
 /**
  * Home page hero. Ports the v1 hero copy and structure exactly.
@@ -39,40 +55,52 @@ export function Hero() {
           </p>
         </Reveal>
 
-        <Reveal delay={0.05}>
-          <h1 className="mb-6 font-display text-[clamp(3.2rem,7vw,5.75rem)] font-light leading-[1.05] text-ivory">
-            Iron Sharpens<br />
-            <em className="not-italic text-gold-lt">Iron.</em>
-          </h1>
-        </Reveal>
+        {/* Word-by-word stagger reveal */}
+        <motion.h1
+          initial="hidden"
+          animate="visible"
+          variants={parent}
+          className="mb-6 font-display text-[clamp(3.2rem,7vw,5.75rem)] font-light leading-[1.05] text-ivory"
+        >
+          <motion.span variants={word} className="inline-block">Iron</motion.span>{' '}
+          <motion.span variants={word} className="inline-block">Sharpens</motion.span>
+          <br />
+          <motion.span variants={word} className="inline-block not-italic text-gold-lt">
+            Iron.
+          </motion.span>
+        </motion.h1>
 
-        <Reveal delay={0.1}>
+        <Reveal delay={0.5}>
           <p className="mx-auto mb-6 max-w-2xl text-lg leading-relaxed text-ivory-dim md:text-xl">
             Christ Fields is a technology company rooted in Christian faith, building tools and
             communities for people who want to live and work with wisdom, integrity, and faithfulness.
           </p>
         </Reveal>
 
-        <Reveal delay={0.15}>
+        <Reveal delay={0.6}>
           <p className="mb-10 font-display text-base italic text-silver md:text-lg">
             &ldquo;As iron sharpens iron, so one person sharpens another.&rdquo;
           </p>
         </Reveal>
 
-        <Reveal delay={0.2}>
+        <Reveal delay={0.7}>
           <div className="flex flex-wrap justify-center gap-3">
-            <Link
-              href="#scholarflow"
-              className="inline-flex items-center gap-2 rounded-sm bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt"
-            >
-              Discover ScholarFlow &rarr;
-            </Link>
-            <Link
-              href="#vision"
-              className="inline-flex items-center gap-2 rounded-sm border border-gold/45 bg-transparent px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black"
-            >
-              Our Vision
-            </Link>
+            <MagneticButton>
+              <Link
+                href="#scholarflow"
+                className="inline-flex items-center gap-2 rounded-sm bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt"
+              >
+                Discover ScholarFlow &rarr;
+              </Link>
+            </MagneticButton>
+            <MagneticButton>
+              <Link
+                href="#vision"
+                className="inline-flex items-center gap-2 rounded-sm border border-gold/45 bg-transparent px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black"
+              >
+                Our Vision
+              </Link>
+            </MagneticButton>
           </div>
         </Reveal>
       </div>

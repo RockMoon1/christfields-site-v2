@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { Container } from '../Container';
 import { Reveal } from '../Reveal';
 import { cn } from '@/lib/utils';
+import { ScriptureSymbol } from '../motion/ScriptureSymbol';
 
 type SubmitState = 'idle' | 'sending' | 'success' | 'error';
 
@@ -112,12 +113,7 @@ export function JoinForm() {
         {state === 'success' ? (
           <Reveal>
             <div className="mx-auto max-w-xl rounded-sm border border-border-gold bg-gradient-to-br from-black-3 to-black-2 p-10 text-left">
-              <div
-                aria-hidden
-                className="mb-4 text-3xl text-gold"
-              >
-                ✦
-              </div>
+              <ScriptureSymbol className="mb-4 block text-3xl text-gold" />
               <h3 className="mb-4 font-display text-3xl font-light text-ivory">You&rsquo;re in.</h3>
               <p className="mb-3 leading-relaxed text-ivory-dim">
                 Welcome to the journey. We will reach out at launch and along the way.

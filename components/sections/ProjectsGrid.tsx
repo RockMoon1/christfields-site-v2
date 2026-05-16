@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Container } from '../Container';
 import { Reveal } from '../Reveal';
+import { TiltCard } from '../motion/TiltCard';
 
 interface CtaLink {
   href: string;
@@ -76,7 +77,8 @@ export function ProjectsGrid() {
         <div className="grid gap-6 md:grid-cols-2">
           {projects.map((project, i) => (
             <Reveal key={project.name} delay={0.1 + i * 0.05}>
-              <article className="group relative h-full overflow-hidden rounded-sm border border-border-sub bg-black-2 p-8 transition-[border-color,transform] duration-300 hover:-translate-y-1 hover:border-border-gold">
+              <TiltCard className="h-full">
+              <article className="group relative h-full overflow-hidden rounded-sm border border-border-sub bg-black-2 p-8 transition-[border-color] duration-300 hover:border-border-gold">
                 <span
                   className={`mb-4 inline-block rounded-sm border px-3 py-1 text-[10px] font-medium uppercase tracking-[0.15em] ${badgeStyles[project.badgeTone]}`}
                 >
@@ -123,6 +125,7 @@ export function ProjectsGrid() {
                   </div>
                 )}
               </article>
+              </TiltCard>
             </Reveal>
           ))}
         </div>

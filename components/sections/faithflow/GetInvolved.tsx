@@ -5,6 +5,8 @@ import { Container } from '../../Container';
 import { Reveal } from '../../Reveal';
 import { cn } from '@/lib/utils';
 import { FAITHFLOW_CONTENT, type InterestKey } from '@/lib/content/faithflow';
+import { MagneticButton } from '../../motion/MagneticButton';
+import { ScriptureSymbol } from '../../motion/ScriptureSymbol';
 import { TailoredSuccess } from './TailoredSuccess';
 
 type SubmitState = 'idle' | 'sending' | 'success' | 'error';
@@ -127,9 +129,7 @@ export function GetInvolved() {
         {state === 'success' ? (
           <Reveal>
             <div className="mx-auto max-w-2xl rounded-sm border border-border-gold bg-gradient-to-br from-black-3 to-black-2 p-10 text-center">
-              <div className="mb-4 text-3xl text-gold" aria-hidden>
-                ✦
-              </div>
+              <ScriptureSymbol className="mb-4 block text-3xl text-gold" />
               <h3 className="mb-4 font-display text-4xl font-light text-ivory">Thank You.</h3>
               <p className="mb-6 leading-relaxed text-ivory-dim">
                 Your message has been received. We will review it and reach out when there is a

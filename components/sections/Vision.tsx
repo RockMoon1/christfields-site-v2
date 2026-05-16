@@ -1,5 +1,6 @@
 import { Container } from '../Container';
 import { Reveal } from '../Reveal';
+import { ScriptureSymbol } from '../motion/ScriptureSymbol';
 
 export function Vision() {
   return (
@@ -51,9 +52,7 @@ export function Vision() {
                 aria-hidden
                 className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold to-transparent opacity-60"
               />
-              <span className="mb-4 block font-display text-3xl text-gold" aria-hidden>
-                ✦
-              </span>
+              <ScriptureSymbol className="mb-4 block font-display text-3xl text-gold" />
               <blockquote className="mb-4 font-display text-xl italic leading-relaxed text-ivory-dim">
                 &ldquo;As iron sharpens iron, so one person sharpens another.&rdquo;
               </blockquote>

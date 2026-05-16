@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Logo } from './Logo';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +29,7 @@ const defaultLinks: NavLink[] = [
 export function Nav({ links = defaultLinks, alwaysScrolled = false }: NavProps) {
   const [scrolled, setScrolled] = useState(alwaysScrolled);
   const [open, setOpen] = useState(false);
+  const [hovered, setHovered] = useState<string | null>(null);
 
   useEffect(() => {
     if (alwaysScrolled) return;
@@ -64,24 +66,41 @@ export function Nav({ links = defaultLinks, alwaysScrolled = false }: NavProps) 
         </button>
 
         <ul
+          onMouseLeave={() => setHovered(null)}
           className={cn(
             'fixed inset-x-0 top-[var(--nav-h)] flex flex-col gap-0 border-b border-border-gold bg-black/95 px-7 py-6 backdrop-blur-xl transition-transform md:static md:flex-row md:items-center md:gap-9 md:border-none md:bg-transparent md:p-0 md:backdrop-blur-none md:transition-none',
             open ? 'translate-y-0' : '-translate-y-[120%] md:translate-y-0',
           )}
         >
           {links.map((link) => (
-            <li key={link.href} className="border-b border-border-sub py-4 md:border-none md:py-0">
+            <li
+              key={link.href}
+              onMouseEnter={() => setHovered(link.href)}
+              className="relative border-b border-border-sub py-4 md:border-none md:py-0"
+            >
               <Link
                 href={link.href}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  'text-sm font-medium tracking-wide transition-colors',
+                  'relative inline-block text-sm font-medium tracking-wide transition-colors',
                   link.cta
-                    ? 'inline-block rounded-sm border border-gold/45 px-5 py-2 text-xs uppercase tracking-[0.07em] text-gold hover:bg-gold hover:text-black'
+                    ? 'rounded-sm border border-gold/45 px-5 py-2 text-xs uppercase tracking-[0.07em] text-gold hover:bg-gold hover:text-black'
                     : 'text-silver hover:text-ivory',
                 )}
               >
                 {link.label}
+
+                {/* Sliding gold underline. Only for non-CTA links. The
+                    layoutId shares the element across siblings so it
+                    smoothly animates between them on hover. */}
+                {!link.cta && hovered === link.href && (
+                  <motion.span
+                    layoutId="nav-underline"
+                    className="absolute -bottom-1 left-0 right-0 hidden h-px bg-gold md:block"
+                    transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                    aria-hidden
+                  />
+                )}
               </Link>
             </li>
           ))}
