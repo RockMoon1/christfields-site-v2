@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Container } from '../Container';
 import { Reveal } from '../Reveal';
+import { CardSpotlight } from '../motion/CardSpotlight';
 import { TiltCard } from '../motion/TiltCard';
 
 interface CtaLink {
@@ -78,6 +79,7 @@ export function ProjectsGrid() {
           {projects.map((project, i) => (
             <Reveal key={project.name} delay={0.1 + i * 0.05}>
               <TiltCard className="h-full">
+              <CardSpotlight className="h-full rounded-sm">
               <article className="group relative h-full overflow-hidden rounded-sm border border-border-sub bg-black-2 p-8 transition-[border-color] duration-300 hover:border-border-gold">
                 <span
                   className={`mb-4 inline-block rounded-sm border px-3 py-1 text-[10px] font-medium uppercase tracking-[0.15em] ${badgeStyles[project.badgeTone]}`}
@@ -125,6 +127,7 @@ export function ProjectsGrid() {
                   </div>
                 )}
               </article>
+              </CardSpotlight>
               </TiltCard>
             </Reveal>
           ))}

@@ -1,5 +1,6 @@
 import { Container } from '../../Container';
 import { Reveal } from '../../Reveal';
+import { CardSpotlight } from '../../motion/CardSpotlight';
 
 interface Step {
   title: string;
@@ -55,6 +56,7 @@ export function HowGroupsWork() {
         <ol className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {steps.map((step, i) => (
             <Reveal key={step.title} delay={0.05 * i} as="li">
+              <CardSpotlight className="h-full rounded-sm" size={220}>
               <article className="group relative h-full rounded-sm border border-border-sub bg-black-2 p-7 transition-[border-color,transform] duration-300 hover:-translate-y-1 hover:border-border-gold">
                 <span
                   aria-hidden
@@ -65,6 +67,7 @@ export function HowGroupsWork() {
                 <h3 className="mb-2 font-display text-2xl font-light text-ivory">{step.title}</h3>
                 <p className="text-sm leading-relaxed text-silver">{step.body}</p>
               </article>
+              </CardSpotlight>
             </Reveal>
           ))}
         </ol>

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Container } from '../Container';
 import { Reveal } from '../Reveal';
+import { CardSpotlight } from '../motion/CardSpotlight';
 import { MagneticButton } from '../motion/MagneticButton';
 import { ScriptureSymbol } from '../motion/ScriptureSymbol';
 
@@ -76,6 +77,7 @@ export function ScholarFlowFeature() {
           </div>
 
           <Reveal delay={0.15}>
+            <CardSpotlight className="rounded-sm">
             <aside className="relative h-fit overflow-hidden rounded-sm border border-border-gold bg-gradient-to-br from-black-3 to-black-2 p-8 text-center">
               <div
                 aria-hidden
@@ -92,6 +94,7 @@ export function ScholarFlowFeature() {
                 Coming Soon
               </span>
             </aside>
+            </CardSpotlight>
           </Reveal>
         </div>
       </Container>

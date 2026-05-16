@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { motion, type Variants } from 'framer-motion';
 import { Reveal } from '../Reveal';
+import { HeroSpotlight } from '../motion/HeroSpotlight';
 import { MagneticButton } from '../motion/MagneticButton';
 
 // Stagger config for the hero heading. The container delays children one by
@@ -47,6 +48,9 @@ export function Hero() {
         aria-hidden
         className="pointer-events-none absolute -bottom-20 left-1/2 -z-10 h-96 w-[120%] -translate-x-1/2 bg-emerald/[0.06] blur-3xl"
       />
+
+      {/* Cursor-following gold spotlight */}
+      <HeroSpotlight />
 
       <div className="relative z-10 mx-auto max-w-3xl text-center">
         <Reveal>

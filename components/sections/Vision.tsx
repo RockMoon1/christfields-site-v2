@@ -1,5 +1,6 @@
 import { Container } from '../Container';
 import { Reveal } from '../Reveal';
+import { CardSpotlight } from '../motion/CardSpotlight';
 import { ScriptureSymbol } from '../motion/ScriptureSymbol';
 
 export function Vision() {
@@ -47,6 +48,7 @@ export function Vision() {
           </div>
 
           <Reveal delay={0.15}>
+            <CardSpotlight className="rounded-sm">
             <aside className="relative h-fit overflow-hidden rounded-sm border border-border-gold bg-gradient-to-br from-black-3 to-black-2 p-8 text-center">
               <div
                 aria-hidden
@@ -60,6 +62,7 @@ export function Vision() {
                 Proverbs 27:17
               </cite>
             </aside>
+            </CardSpotlight>
           </Reveal>
         </div>
       </Container>

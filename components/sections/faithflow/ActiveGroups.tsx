@@ -1,5 +1,6 @@
 import { Container } from '../../Container';
 import { Reveal } from '../../Reveal';
+import { CardSpotlight } from '../../motion/CardSpotlight';
 
 export function ActiveGroups() {
   return (
@@ -25,7 +26,8 @@ export function ActiveGroups() {
         </Reveal>
 
         <Reveal delay={0.15}>
-          <article className="relative max-w-3xl overflow-hidden rounded-sm border border-border-gold bg-gradient-to-br from-black-3 to-black-2 p-10">
+          <CardSpotlight className="max-w-3xl rounded-sm" size={420} intensity={0.14}>
+          <article className="relative overflow-hidden rounded-sm border border-border-gold bg-gradient-to-br from-black-3 to-black-2 p-10">
             <div
               aria-hidden
               className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold to-transparent opacity-60"
@@ -76,6 +78,7 @@ export function ActiveGroups() {
               considered for a future group, reach out below.
             </p>
           </article>
+          </CardSpotlight>
         </Reveal>
       </Container>
     </section>

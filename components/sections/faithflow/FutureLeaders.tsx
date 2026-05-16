@@ -1,5 +1,6 @@
 import { Container } from '../../Container';
 import { Reveal } from '../../Reveal';
+import { CardSpotlight } from '../../motion/CardSpotlight';
 import { ScriptureSymbol } from '../../motion/ScriptureSymbol';
 
 /**
@@ -45,7 +46,8 @@ export function FutureLeaders() {
           </div>
 
           <Reveal delay={0.15}>
-            <aside className="relative h-fit overflow-hidden rounded-sm border border-border-gold bg-gradient-to-br from-black-3 to-black-2 p-8 text-center md:sticky md:top-[120px]">
+            <CardSpotlight className="rounded-sm md:sticky md:top-[120px]">
+            <aside className="relative h-fit overflow-hidden rounded-sm border border-border-gold bg-gradient-to-br from-black-3 to-black-2 p-8 text-center">
               <div
                 aria-hidden
                 className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold to-transparent opacity-60"
@@ -59,6 +61,7 @@ export function FutureLeaders() {
                 James 3:1
               </cite>
             </aside>
+            </CardSpotlight>
           </Reveal>
         </div>
       </Container>

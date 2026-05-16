@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Cormorant_Garamond, Inter } from 'next/font/google';
+import { EmberCursor } from '@/components/motion/EmberCursor';
 import { ScrollProgress } from '@/components/motion/ScrollProgress';
 import './globals.css';
 
@@ -66,6 +67,7 @@ export default function RootLayout({
           Skip to content
         </a>
         <ScrollProgress />
+        <EmberCursor />
         {children}
       </body>
     </html>

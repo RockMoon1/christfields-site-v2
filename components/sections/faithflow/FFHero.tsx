@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { motion, type Variants } from 'framer-motion';
 import { Reveal } from '../../Reveal';
+import { HeroSpotlight } from '../../motion/HeroSpotlight';
 import { MagneticButton } from '../../motion/MagneticButton';
 
 const parent: Variants = {
@@ -29,6 +30,9 @@ export function FFHero() {
           `,
         }}
       />
+
+      {/* Cursor-following gold spotlight */}
+      <HeroSpotlight />
 
       <div className="relative z-10 mx-auto max-w-3xl text-center">
         <Reveal>

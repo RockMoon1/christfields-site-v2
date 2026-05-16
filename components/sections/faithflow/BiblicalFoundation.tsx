@@ -1,5 +1,6 @@
 import { Container } from '../../Container';
 import { Reveal } from '../../Reveal';
+import { CardSpotlight } from '../../motion/CardSpotlight';
 import { ScriptureSymbol } from '../../motion/ScriptureSymbol';
 
 interface ScriptureCard {
@@ -67,6 +68,7 @@ export function BiblicalFoundation() {
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {scriptures.map((s, i) => (
             <Reveal key={s.ref} delay={0.05 * i}>
+              <CardSpotlight className="h-full rounded-sm" size={240}>
               <article className="group h-full rounded-sm border border-border-sub bg-gradient-to-b from-black-3 to-black-2 p-8 text-center transition-[border-color,transform] duration-300 hover:-translate-y-1 hover:border-border-gold">
                 <ScriptureSymbol className="mb-3 block text-2xl text-gold" delay={i * 0.05} />
                 <cite className="mb-4 block text-[11px] not-italic uppercase tracking-[0.18em] text-gold">
@@ -79,6 +81,7 @@ export function BiblicalFoundation() {
                   {s.tag}
                 </span>
               </article>
+              </CardSpotlight>
             </Reveal>
           ))}
         </div>
