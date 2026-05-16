@@ -69,6 +69,23 @@ body {
 }
 
 /* ============================================================
+   Accessibility. Visible focus ring for keyboard nav only.
+   :focus-visible avoids showing the outline on click-induced focus
+   while keeping it strong for tab navigation.
+   ============================================================ */
+
+*:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline-offset: 3px;
+}
+
+/* ============================================================
    Logo flame and ember animations (ported from v1)
    These run on the logo image in the nav and footer.
    ============================================================ */

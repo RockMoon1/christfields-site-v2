@@ -56,7 +56,16 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${inter.variable} ${cormorant.variable}`}>
-      <body className="bg-black text-ivory antialiased">{children}</body>
+      <body className="bg-black text-ivory antialiased">
+        {/* Skip link. Visible only when focused via keyboard tab. */}
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-sm focus:bg-gold focus:px-4 focus:py-2 focus:text-xs focus:font-medium focus:uppercase focus:tracking-[0.12em] focus:text-black"
+        >
+          Skip to content
+        </a>
+        {children}
+      </body>
     </html>
   );
 }

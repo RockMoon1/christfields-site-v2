@@ -29,6 +29,7 @@ export function Logo({ size = 72, showText = false, className = '' }: LogoProps)
           width={size}
           height={size}
           priority
+          sizes={`${size}px`}
           className="logo-fire-img relative z-[2]"
           style={{ width: size, height: 'auto' }}
         />

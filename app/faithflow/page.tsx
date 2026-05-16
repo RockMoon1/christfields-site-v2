@@ -60,7 +60,7 @@ export default function FaithFlowPage() {
     <>
       <EmberField />
       <Nav links={navLinks} alwaysScrolled />
-      <main className="relative">
+      <main id="main" className="relative">
         <FFHero />
         <WhatIsFaithFlow />
         <ActiveGroups />

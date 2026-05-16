@@ -44,6 +44,8 @@ export function Footer({ columns = defaultColumns }: FooterProps) {
                 alt="Christ Fields"
                 width={56}
                 height={56}
+                sizes="56px"
+                loading="lazy"
                 className="logo-fire-img relative z-[2]"
                 style={{ width: 56, height: 'auto' }}
               />

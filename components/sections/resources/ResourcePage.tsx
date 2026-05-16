@@ -30,7 +30,7 @@ export function ResourcePage({
   resources,
 }: ResourcePageProps) {
   return (
-    <main className="pt-[var(--nav-h)]">
+    <main id="main" className="pt-[var(--nav-h)]">
       <section className="border-b border-border-sub py-[90px]">
         <Container>
           <Reveal>
