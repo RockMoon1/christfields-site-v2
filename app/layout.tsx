@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Cormorant_Garamond, Inter } from 'next/font/google';
 import './globals.css';
 
@@ -43,7 +43,12 @@ export const metadata: Metadata = {
     icon: '/assets/logo.png',
     apple: '/assets/logo.png',
   },
+};
+
+export const viewport: Viewport = {
   themeColor: '#060908',
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function RootLayout({

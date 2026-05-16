@@ -41,3 +41,6 @@ next-env.d.ts.bak
 # IDE
 .vscode/
 .idea/
+
+# Leftover .tmp files from agent edits on locked drives
+*.tmp.*
