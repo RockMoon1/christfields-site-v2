@@ -1,26 +1,19 @@
 'use client';
 
-import { motion, useInView } from 'framer-motion';
+import { motion, useInView } from 'motion/react';
 import { useRef } from 'react';
 
 interface ScriptureSymbolProps {
-  /** Symbol to render. Defaults to the gold star ✦ used across the site. */
+  /** Symbol to render. Defaults to the gold star used across the site. */
   symbol?: string;
-  /** Extra className for layout (text size, color, spacing). */
+  /** Extra className for layout, text size, color, and spacing. */
   className?: string;
   /** Delay in seconds before the animation begins. */
   delay?: number;
 }
 
-/**
- * Scripture symbol that ignites on enter. When it scrolls into view it rises
- * slightly, pulses brightness up then back to rest, and stays.
- *
- * Used in every scripture card across the site to give the verse a moment
- * of reverence rather than appearing all at once with the rest of the card.
- */
 export function ScriptureSymbol({
-  symbol = '✦',
+  symbol = '\u2726',
   className = '',
   delay = 0,
 }: ScriptureSymbolProps) {
@@ -39,7 +32,11 @@ export function ScriptureSymbol({
               opacity: 1,
               y: 0,
               scale: 1,
-              filter: ['brightness(0.5)', 'brightness(2.2) drop-shadow(0 0 14px #C9A548)', 'brightness(1) drop-shadow(0 0 0px transparent)'],
+              filter: [
+                'brightness(0.5)',
+                'brightness(2.2) drop-shadow(0 0 14px #C9A548)',
+                'brightness(1) drop-shadow(0 0 0px transparent)',
+              ],
             }
           : undefined
       }

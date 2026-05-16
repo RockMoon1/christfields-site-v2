@@ -123,8 +123,8 @@ export function GetInvolved() {
 
         <Reveal delay={0.1}>
           <p className="mx-auto mb-12 max-w-2xl text-base leading-relaxed text-silver md:text-lg">
-            Whether you want to join Iron and Ember, start a group, or learn more about FaithFlow,
-            we would love to hear from you.
+            Whether you are interested in FaithFlow community, future groups, helping start a
+            group, or simply learning more, we would love to hear from you.
           </p>
         </Reveal>
 
@@ -214,7 +214,7 @@ export function GetInvolved() {
                   state === 'sending' && 'cursor-not-allowed opacity-70',
                 )}
               >
-                {state === 'sending' ? 'Sending...' : 'Get In Touch →'}
+                {state === 'sending' ? 'Sending...' : <>Get In Touch &rarr;</>}
               </button>
 
               {state === 'error' && (
@@ -233,4 +233,3 @@ export function GetInvolved() {
     </section>
   );
 }
-

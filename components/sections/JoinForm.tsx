@@ -183,7 +183,7 @@ export function JoinForm() {
                   state === 'sending' && 'cursor-not-allowed opacity-70',
                 )}
               >
-                {state === 'sending' ? 'Sending...' : 'Join the Journey →'}
+                {state === 'sending' ? 'Sending...' : <>Join the Journey &rarr;</>}
               </button>
 
               {state === 'error' && (

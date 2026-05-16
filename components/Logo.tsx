@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 
 interface LogoProps {
   /** Size of the logo image in pixels. Nav uses 72, footer uses 56. */

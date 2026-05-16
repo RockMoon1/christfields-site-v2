@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 
 /**
  * Next.js App Router template. Re-mounts on every route change.

@@ -7,7 +7,7 @@ import { TiltCard } from '../motion/TiltCard';
 interface CtaLink {
   href: string;
   label: string;
-  /** If true, renders as the prominent gold-bordered button. Default is a quieter text link. */
+  /** If true, renders as the prominent gold-bordered button. */
   primary?: boolean;
 }
 
@@ -25,7 +25,7 @@ const projects: ProjectCard[] = [
   {
     badge: 'First Group Active',
     badgeTone: 'active',
-    icon: '✦',
+    icon: '\u2726',
     name: 'FaithFlow',
     description:
       'Real small groups walking together in person. Scripture-rooted accountability, genuine friendship, and mutual growth. Iron and Ember is our first active group. Brotherhood and sisterhood, face to face.',
@@ -38,7 +38,7 @@ const projects: ProjectCard[] = [
   {
     badge: 'In Development',
     badgeTone: 'dev',
-    icon: '◉',
+    icon: '\u25CE',
     name: 'OSINT & Trace',
     description:
       'Using open-source intelligence and cybersecurity to help find missing people. Technical skill put directly in service of others, in collaboration with organizations working toward that same end. Faith expressed through work.',
@@ -77,57 +77,66 @@ export function ProjectsGrid() {
 
         <div className="grid gap-6 md:grid-cols-2">
           {projects.map((project, i) => (
-            <Reveal key={project.name} delay={0.1 + i * 0.05}>
+            <Reveal key={project.name} delay={0.1 + i * 0.05} scale={0.985}>
               <TiltCard className="h-full">
-              <CardSpotlight className="h-full rounded-sm">
-              <article className="group relative h-full overflow-hidden rounded-sm border border-border-sub bg-black-2 p-8 transition-[border-color] duration-300 hover:border-border-gold">
-                <span
-                  className={`mb-4 inline-block rounded-sm border px-3 py-1 text-[10px] font-medium uppercase tracking-[0.15em] ${badgeStyles[project.badgeTone]}`}
-                >
-                  {project.badge}
-                </span>
+                <CardSpotlight className="h-full rounded-sm">
+                  <article className="group relative h-full overflow-hidden rounded-sm border border-border-sub bg-black-2 p-8 transition-[border-color] duration-300 hover:border-border-gold">
+                    <div
+                      aria-hidden
+                      className="absolute inset-x-0 top-0 h-px scale-x-0 bg-gradient-to-r from-transparent via-gold-lt to-transparent opacity-0 transition duration-500 group-hover:scale-x-100 group-hover:opacity-100"
+                    />
 
-                <div
-                  aria-hidden
-                  className="mb-6 flex h-12 w-12 items-center justify-center rounded-full border border-border-gold bg-black-3 text-gold transition-colors group-hover:bg-gold/10"
-                >
-                  <span className="text-xl">{project.icon}</span>
-                </div>
-
-                <h3 className="mb-3 font-display text-3xl font-light text-ivory">{project.name}</h3>
-
-                <p className="mb-6 text-sm leading-relaxed text-ivory-dim">{project.description}</p>
-
-                <div className="mb-6 flex flex-wrap gap-2">
-                  {project.tags.map((tag) => (
                     <span
-                      key={tag}
-                      className="rounded-sm border border-border-sub bg-black-4 px-3 py-1 text-xs tracking-wider text-silver"
+                      className={`mb-4 inline-block rounded-sm border px-3 py-1 text-[10px] font-medium uppercase tracking-[0.15em] ${badgeStyles[project.badgeTone]}`}
                     >
-                      {tag}
+                      {project.badge}
                     </span>
-                  ))}
-                </div>
 
-                {project.ctas && project.ctas.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-3">
-                    {project.ctas.map((cta) => (
-                      <Link
-                        key={cta.href}
-                        href={cta.href}
-                        className={
-                          cta.primary
-                            ? 'inline-flex items-center gap-1 rounded-sm border border-gold/45 bg-transparent px-4 py-2 text-xs font-medium uppercase tracking-[0.12em] text-gold transition-colors hover:bg-gold hover:text-black'
-                            : 'inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.12em] text-silver transition-colors hover:text-gold-lt'
-                        }
-                      >
-                        {cta.label} &rarr;
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </article>
-              </CardSpotlight>
+                    <div
+                      aria-hidden
+                      className="mb-6 flex h-12 w-12 items-center justify-center rounded-full border border-border-gold bg-black-3 text-gold transition-colors group-hover:bg-gold/10"
+                    >
+                      <span className="text-xl">{project.icon}</span>
+                    </div>
+
+                    <h3 className="mb-3 font-display text-3xl font-light text-ivory">
+                      {project.name}
+                    </h3>
+
+                    <p className="mb-6 text-sm leading-relaxed text-ivory-dim">
+                      {project.description}
+                    </p>
+
+                    <div className="mb-6 flex flex-wrap gap-2">
+                      {project.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-sm border border-border-sub bg-black-4 px-3 py-1 text-xs tracking-wider text-silver"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    {project.ctas && project.ctas.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-3">
+                        {project.ctas.map((cta) => (
+                          <Link
+                            key={cta.href}
+                            href={cta.href}
+                            className={
+                              cta.primary
+                                ? 'inline-flex items-center gap-1 rounded-sm border border-gold/45 bg-transparent px-4 py-2 text-xs font-medium uppercase tracking-[0.12em] text-gold transition-colors hover:bg-gold hover:text-black'
+                                : 'inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.12em] text-silver transition-colors hover:text-gold-lt'
+                            }
+                          >
+                            {cta.label} &rarr;
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </article>
+                </CardSpotlight>
               </TiltCard>
             </Reveal>
           ))}

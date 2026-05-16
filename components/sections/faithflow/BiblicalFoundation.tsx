@@ -16,25 +16,25 @@ const scriptures: ScriptureCard[] = [
     tag: 'Mutual sharpening',
   },
   {
-    ref: 'Hebrews 10:24–25',
+    ref: 'Hebrews 10:24-25',
     quote:
-      'And let us consider how we may spur one another on toward love and good deeds… not giving up meeting together.',
+      'And let us consider how we may spur one another on toward love and good deeds... not giving up meeting together.',
     tag: 'Gathering together',
   },
   {
     ref: 'Galatians 6:2',
-    quote: 'Carry each other’s burdens, and in this way you will fulfill the law of Christ.',
+    quote: "Carry each other's burdens, and in this way you will fulfill the law of Christ.",
     tag: 'Bearing burdens',
   },
   {
     ref: 'Acts 2:42',
     quote:
-      'They devoted themselves to the apostles’ teaching and to fellowship, to the breaking of bread and to prayer.',
+      "They devoted themselves to the apostles' teaching and to fellowship, to the breaking of bread and to prayer.",
     tag: 'Devoted community',
   },
   {
-    ref: 'Ecclesiastes 4:9–10',
-    quote: 'Two are better than one… If either of them falls down, one can help the other up.',
+    ref: 'Ecclesiastes 4:9-10',
+    quote: 'Two are better than one... If either of them falls down, one can help the other up.',
     tag: 'Mutual support',
   },
 ];

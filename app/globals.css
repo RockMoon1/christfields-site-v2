@@ -269,7 +269,7 @@ button:focus-visible {
 }
 
 /* ============================================================
-   Scroll-reveal helper class (consumed by Framer Motion later
+   Scroll-reveal helper class (consumed by Motion later
    but kept here as a CSS fallback for SSR and JS-off cases)
    ============================================================ */
 

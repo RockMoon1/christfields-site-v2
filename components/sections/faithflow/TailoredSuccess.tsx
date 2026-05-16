@@ -1,3 +1,6 @@
+'use client';
+
+import { motion } from 'motion/react';
 import type {
   ContentSection,
   ResourceSection,
@@ -5,18 +8,14 @@ import type {
   TailoredContent,
 } from '@/lib/content/faithflow';
 
-/**
- * Renders the rich tailored content that appears inside the FaithFlow success
- * card. Each option in the form dropdown produces a different layout of prose,
- * lists, scripture cards, and resource links.
- *
- * HTML embedded inside paragraphs and list items (like <strong> and <em>) is
- * trusted because it comes from a static content file under our control, not
- * user input. dangerouslySetInnerHTML is intentional here.
- */
 export function TailoredSuccess({ content }: { content: TailoredContent }) {
   return (
-    <div className="ff-success-content text-left">
+    <motion.div
+      className="ff-success-content text-left"
+      initial={{ opacity: 0, y: 18, filter: 'blur(8px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      transition={{ duration: 0.75, delay: 0.1 }}
+    >
       <div className="mx-auto mb-7 h-px max-w-xs bg-gradient-to-r from-transparent via-gold to-transparent opacity-50" />
 
       <p className="mb-2 text-center text-[11px] font-medium uppercase tracking-[0.22em] text-gold">
@@ -28,16 +27,20 @@ export function TailoredSuccess({ content }: { content: TailoredContent }) {
 
       <div className="space-y-10">
         {content.sections.map((section, i) => (
-          <SectionBlock key={`${section.type}-${i}`} section={section} />
+          <SectionBlock key={`${section.type}-${i}`} section={section} index={i} />
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
-function SectionBlock({ section }: { section: ContentSection }) {
+function SectionBlock({ section, index }: { section: ContentSection; index: number }) {
   return (
-    <section>
+    <motion.section
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.65, delay: 0.18 + index * 0.06 }}
+    >
       <h5 className="mb-3 border-b border-border-sub pb-2 font-display text-xl font-medium tracking-wide text-gold-lt">
         {section.heading}
       </h5>
@@ -53,11 +56,12 @@ function SectionBlock({ section }: { section: ContentSection }) {
       {section.type === 'list' && (
         <ul className="divide-y divide-border-sub">
           {section.items.map((item, i) => (
-            <li
-              key={i}
-              className="relative py-3 pl-7 text-sm leading-relaxed text-ivory-dim before:absolute before:left-0 before:top-3.5 before:text-xs before:text-gold before:content-['✦']"
-              dangerouslySetInnerHTML={{ __html: item }}
-            />
+            <li key={i} className="flex gap-3 py-3 text-sm leading-relaxed text-ivory-dim">
+              <span aria-hidden className="mt-1 text-xs text-gold">
+                {'\u2726'}
+              </span>
+              <span dangerouslySetInnerHTML={{ __html: item }} />
+            </li>
           ))}
         </ul>
       )}
@@ -65,7 +69,7 @@ function SectionBlock({ section }: { section: ContentSection }) {
       {section.type === 'scriptures' && <ScripturesGrid section={section} />}
 
       {section.type === 'resources' && <ResourceList section={section} />}
-    </section>
+    </motion.section>
   );
 }
 
@@ -73,9 +77,12 @@ function ScripturesGrid({ section }: { section: ScriptureSection }) {
   return (
     <ul className="grid gap-4">
       {section.items.map((s, i) => (
-        <li
+        <motion.li
           key={i}
           className="rounded-sm border border-border-sub bg-black-3 p-5"
+          initial={{ opacity: 0, x: -12 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.55, delay: 0.08 * i }}
         >
           <cite className="mb-2 block text-[11px] not-italic uppercase tracking-[0.16em] text-gold">
             {s.ref}
@@ -83,7 +90,7 @@ function ScripturesGrid({ section }: { section: ScriptureSection }) {
           <blockquote className="font-display text-base italic leading-relaxed text-ivory-dim">
             &ldquo;{s.text}&rdquo;
           </blockquote>
-        </li>
+        </motion.li>
       ))}
     </ul>
   );
@@ -114,7 +121,7 @@ function ResourceList({ section }: { section: ResourceSection }) {
                 aria-hidden
                 className="text-gold opacity-70 transition-[opacity,transform] duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100"
               >
-                ↗
+                &nearr;
               </span>
             </a>
           </li>

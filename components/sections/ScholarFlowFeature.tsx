@@ -3,14 +3,20 @@ import { Container } from '../Container';
 import { Reveal } from '../Reveal';
 import { CardSpotlight } from '../motion/CardSpotlight';
 import { MagneticButton } from '../motion/MagneticButton';
-import { ScriptureSymbol } from '../motion/ScriptureSymbol';
+import { ScholarFlowPreview } from '../motion/ScholarFlowPreview';
+import { TiltCard } from '../motion/TiltCard';
 
 export function ScholarFlowFeature() {
   return (
     <section
       id="scholarflow"
-      className="relative bg-black-2 py-[110px]"
+      className="relative overflow-hidden bg-black-2 py-[110px]"
     >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(ellipse_at_center,rgba(45,106,79,0.12),transparent_65%)]"
+      />
+
       <Container>
         <Reveal>
           <p className="mb-4 text-xs font-medium uppercase tracking-[0.22em] text-gold">
@@ -18,7 +24,7 @@ export function ScholarFlowFeature() {
           </p>
         </Reveal>
 
-        <div className="grid gap-12 md:grid-cols-[1.3fr_1fr]">
+        <div className="grid items-center gap-12 md:grid-cols-[1.05fr_1fr]">
           <div>
             <Reveal>
               <h2 className="mb-6 font-display text-[clamp(2.4rem,4.5vw,3.75rem)] font-light leading-[1.1] text-ivory">
@@ -76,25 +82,12 @@ export function ScholarFlowFeature() {
             </Reveal>
           </div>
 
-          <Reveal delay={0.15}>
-            <CardSpotlight className="rounded-sm">
-            <aside className="relative h-fit overflow-hidden rounded-sm border border-border-gold bg-gradient-to-br from-black-3 to-black-2 p-8 text-center">
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold to-transparent opacity-60"
-              />
-              <ScriptureSymbol symbol="◈" className="mb-4 block font-display text-3xl text-gold" />
-              <blockquote className="mb-4 font-display text-xl italic leading-relaxed text-ivory-dim">
-                &ldquo;Commit your work to the Lord, and your plans will be established.&rdquo;
-              </blockquote>
-              <cite className="mb-6 block text-xs not-italic uppercase tracking-[0.18em] text-gold">
-                Proverbs 16:3
-              </cite>
-              <span className="inline-block rounded-sm border border-gold/40 bg-gold/10 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.15em] text-gold">
-                Coming Soon
-              </span>
-            </aside>
-            </CardSpotlight>
+          <Reveal delay={0.15} scale={0.98}>
+            <TiltCard max={4}>
+              <CardSpotlight className="rounded-sm" size={460} intensity={0.16}>
+                <ScholarFlowPreview />
+              </CardSpotlight>
+            </TiltCard>
           </Reveal>
         </div>
       </Container>

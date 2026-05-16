@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, type Variants } from 'framer-motion';
+import { motion, type Variants } from 'motion/react';
 import { type ReactNode } from 'react';
 
 interface RevealProps {
@@ -9,6 +9,8 @@ interface RevealProps {
   delay?: number;
   /** Distance in pixels to translate up from. Default 20. */
   y?: number;
+  /** Optional scale entrance. Default 1 means no scale shift. */
+  scale?: number;
   /** Whether to animate only once. Default true. */
   once?: boolean;
   /** Extra className for the wrapper div */
@@ -21,21 +23,24 @@ interface RevealProps {
  * Scroll-into-view reveal wrapper. Wraps content in a motion element
  * that fades and slides up when it enters the viewport.
  *
- * Honors prefers-reduced-motion automatically via Framer Motion.
+ * Honors prefers-reduced-motion automatically through Motion.
  */
 export function Reveal({
   children,
   delay = 0,
   y = 20,
+  scale = 1,
   once = true,
   className = '',
   as = 'div',
 }: RevealProps) {
   const variants: Variants = {
-    hidden: { opacity: 0, y },
+    hidden: { opacity: 0, y, scale, filter: 'blur(10px)' },
     visible: {
       opacity: 1,
       y: 0,
+      scale: 1,
+      filter: 'blur(0px)',
       transition: {
         duration: 0.8,
         ease: [0.22, 1, 0.36, 1],

@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useMotionTemplate, useMotionValue, useReducedMotion } from 'framer-motion';
+import { motion, useMotionTemplate, useMotionValue, useReducedMotion } from 'motion/react';
 import { type ReactNode, useRef, useState } from 'react';
 
 interface CardSpotlightProps {

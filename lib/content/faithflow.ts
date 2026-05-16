@@ -66,7 +66,7 @@ export const FAITHFLOW_CONTENT: Record<InterestKey, TailoredContent> = {
         paragraphs: [
           'FaithFlow is not an app, a brand, or an online group. It is the Christ Fields community framework for real people walking together in Christ. Scripture-rooted, in-person, and honest.',
           'It is built on a simple truth: <em>you do not grow alone.</em> Accountability, friendship, and faithful community are essential to following Christ.',
-          'FaithFlow creates space for people to gather in small groups, study Scripture together, walk through life’s challenges with honesty, and sharpen each other in faith and discipline.',
+          "FaithFlow creates space for people to gather in small groups, study Scripture together, walk through life's challenges with honesty, and sharpen each other in faith and discipline.",
         ],
       },
       {
@@ -94,12 +94,12 @@ export const FAITHFLOW_CONTENT: Record<InterestKey, TailoredContent> = {
         items: [
           { ref: 'Proverbs 27:17', text: 'As iron sharpens iron, so one person sharpens another.' },
           {
-            ref: 'Hebrews 10:24–25',
-            text: 'Let us consider how we may spur one another on toward love and good deeds… not giving up meeting together.',
+            ref: 'Hebrews 10:24-25',
+            text: 'Let us consider how we may spur one another on toward love and good deeds... not giving up meeting together.',
           },
           {
             ref: 'Acts 2:42',
-            text: 'They devoted themselves to the apostles’ teaching and to fellowship, to the breaking of bread and to prayer.',
+            text: "They devoted themselves to the apostles' teaching and to fellowship, to the breaking of bread and to prayer.",
           },
         ],
       },
@@ -160,7 +160,7 @@ export const FAITHFLOW_CONTENT: Record<InterestKey, TailoredContent> = {
         heading: 'Scripture for the Foundation',
         items: [
           {
-            ref: 'Psalm 1:2–3',
+            ref: 'Psalm 1:2-3',
             text: 'But whose delight is in the law of the Lord, and who meditates on his law day and night. That person is like a tree planted by streams of water.',
           },
           {
@@ -249,11 +249,11 @@ export const FAITHFLOW_CONTENT: Record<InterestKey, TailoredContent> = {
             text: 'Not many of you should become teachers, my brothers and sisters, because you know that we who teach will be judged more strictly.',
           },
           {
-            ref: '1 Peter 5:2–3',
-            text: 'Be shepherds of God’s flock that is under your care… not lording it over those entrusted to you, but being examples to the flock.',
+            ref: '1 Peter 5:2-3',
+            text: "Be shepherds of God's flock that is under your care... not lording it over those entrusted to you, but being examples to the flock.",
           },
           {
-            ref: 'Philippians 2:3–4',
+            ref: 'Philippians 2:3-4',
             text: 'Do nothing out of selfish ambition or vain conceit. Rather, in humility value others above yourselves.',
           },
         ],
@@ -324,7 +324,7 @@ export const FAITHFLOW_CONTENT: Record<InterestKey, TailoredContent> = {
           { ref: 'Proverbs 27:17', text: 'As iron sharpens iron, so one person sharpens another.' },
           {
             ref: 'Acts 2:42',
-            text: 'They devoted themselves to the apostles’ teaching and to fellowship, to the breaking of bread and to prayer.',
+            text: "They devoted themselves to the apostles' teaching and to fellowship, to the breaking of bread and to prayer.",
           },
         ],
       },
