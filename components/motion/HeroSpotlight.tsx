@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring } from 'framer-motion';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface HeroSpotlightProps {
   /** Diameter of the spotlight in pixels. Default 520. */
@@ -17,10 +17,14 @@ interface HeroSpotlightProps {
  * Drop this as a child of any positioned hero element (the hero already uses
  * relative positioning). Pointer-events are disabled so it never blocks
  * underlying content.
+ *
+ * When the cursor leaves the hero, the spotlight fades out via opacity
+ * rather than darting off-screen, so scrolling past feels clean.
  */
 export function HeroSpotlight({ size = 520, intensity = 0.12 }: HeroSpotlightProps) {
   const ref = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
+  const [visible, setVisible] = useState(false);
 
   const x = useMotionValue(-9999);
   const y = useMotionValue(-9999);
@@ -43,15 +47,15 @@ export function HeroSpotlight({ size = 520, intensity = 0.12 }: HeroSpotlightPro
       x.set(e.clientX - rect.left);
       y.set(e.clientY - rect.top);
     };
-    const onLeave = () => {
-      x.set(-9999);
-      y.set(-9999);
-    };
+    const onEnter = () => setVisible(true);
+    const onLeave = () => setVisible(false);
 
     el.addEventListener('mousemove', onMove);
+    el.addEventListener('mouseenter', onEnter);
     el.addEventListener('mouseleave', onLeave);
     return () => {
       el.removeEventListener('mousemove', onMove);
+      el.removeEventListener('mouseenter', onEnter);
       el.removeEventListener('mouseleave', onLeave);
     };
   }, [reduceMotion, x, y]);
@@ -62,8 +66,8 @@ export function HeroSpotlight({ size = 520, intensity = 0.12 }: HeroSpotlightPro
     <motion.div
       ref={ref}
       aria-hidden
-      className="pointer-events-none absolute inset-0 -z-0"
-      style={{ background }}
+      className="pointer-events-none absolute inset-0 -z-0 transition-opacity duration-500"
+      style={{ background, opacity: visible ? 1 : 0 }}
     />
   );
 }

@@ -8,7 +8,7 @@ interface CardSpotlightProps {
   className?: string;
   /** Diameter of the glow in pixels. Default 280. */
   size?: number;
-  /** Peak opacity of the gold light. Default 0.18. */
+  /** Peak opacity of the gold light. Default 0.35. */
   intensity?: number;
 }
 
@@ -17,14 +17,17 @@ interface CardSpotlightProps {
  * hovered. The card itself looks like it has a small fire near where you
  * point. Premium "Apple-style" effect.
  *
- * Skipped on touch devices and for users who prefer reduced motion. Does
- * not change the layout of the wrapped content.
+ * The glow renders AFTER the card content with mix-blend-mode: plus-lighter
+ * so it adds light to whatever is under it (the card background, text, etc).
+ * That avoids the case where a solid card background hides the glow.
+ *
+ * Skipped on touch devices and for users who prefer reduced motion.
  */
 export function CardSpotlight({
   children,
   className = '',
   size = 280,
-  intensity = 0.18,
+  intensity = 0.35,
 }: CardSpotlightProps) {
   const ref = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
@@ -42,7 +45,7 @@ export function CardSpotlight({
   return (
     <div
       ref={ref}
-      className={`group/spot relative ${className}`}
+      className={`relative ${className}`}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       onMouseMove={(e) => {
@@ -53,14 +56,19 @@ export function CardSpotlight({
         y.set(e.clientY - rect.top);
       }}
     >
-      {/* The glow layer sits absolute, matches the card shape via rounded-[inherit].
-          Parent (the card) must have a border-radius for it to be visible. */}
+      {children}
+
+      {/* Glow renders ABOVE the children with plus-lighter so it brightens
+          whatever is underneath. pointer-events-none keeps clicks working. */}
       <motion.div
         aria-hidden
         className="pointer-events-none absolute inset-0 rounded-[inherit] transition-opacity duration-500"
-        style={{ background, opacity: hover ? 1 : 0 }}
+        style={{
+          background,
+          opacity: hover ? 1 : 0,
+          mixBlendMode: 'plus-lighter',
+        }}
       />
-      {children}
     </div>
   );
 }
