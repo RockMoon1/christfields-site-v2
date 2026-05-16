@@ -34,13 +34,13 @@ export const metadata: Metadata = {
     title: 'Christ Fields',
     description:
       'Christ Fields is a technology company rooted in Christian faith. Iron sharpens iron.',
-    // images intentionally omitted. The dynamic app/opengraph-image.tsx
-    // generator provides a crisper image automatically.
+    images: ['/assets/og-image.png'],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Christ Fields',
     description: 'A Christian technology company. Iron sharpens iron.',
+    images: ['/assets/og-image.png'],
   },
   icons: {
     icon: '/assets/logo.png',
