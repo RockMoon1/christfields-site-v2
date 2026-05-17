@@ -22,7 +22,7 @@ interface NavProps {
 const defaultLinks: NavLink[] = [
   { href: '#vision', label: 'Vision' },
   { href: '#projects', label: 'Projects' },
-  { href: '#values', label: 'Values' },
+  { href: '/journal', label: 'Journal' },
   { href: '#join', label: 'Join the Journey', cta: true },
 ];
 
