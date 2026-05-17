@@ -1,5 +1,9 @@
+'use client';
+
 import { Container } from '../Container';
 import { Reveal } from '../Reveal';
+import { GlowCard } from '../motion/GlowCard';
+import { CountUp } from '../motion/CountUp';
 
 interface Value {
   name: string;
@@ -41,25 +45,28 @@ export function Values() {
 
         <Reveal delay={0.05}>
           <h2 className="mb-14 font-display text-[clamp(2.4rem,4.5vw,3.75rem)] font-light leading-[1.1] text-ivory">
-            Core <em className="not-italic text-gold-lt">Values.</em>
+            <CountUp to={5} duration={1500} className="text-gold-lt" /> Core{' '}
+            <em className="not-italic text-gold-lt">Values.</em>
           </h2>
         </Reveal>
 
         <div className="grid gap-x-12 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
           {values.map((value, i) => (
             <Reveal key={value.name} delay={0.05 * (i + 1)}>
-              <div className="group cursor-default border-l border-border-gold pl-6 transition-[border-color,padding] duration-500 hover:border-gold hover:pl-7">
-                <div
-                  aria-hidden
-                  className="mb-4 h-px w-12 bg-gold shadow-[0_0_0_rgba(201,165,72,0)] transition-[width,box-shadow] duration-500 group-hover:w-24 group-hover:shadow-[0_0_12px_rgba(201,165,72,0.5)]"
-                />
-                <h3 className="mb-3 font-display text-2xl font-light text-ivory transition-colors duration-300 group-hover:text-gold-lt">
-                  {value.name}
-                </h3>
-                <p className="text-sm leading-relaxed text-silver transition-colors duration-300 group-hover:text-ivory-dim">
-                  {value.body}
-                </p>
-              </div>
+              <GlowCard className="cursor-default rounded-sm">
+                <div className="group border-l border-border-gold pl-6 transition-[border-color,padding] duration-500 hover:border-gold hover:pl-7">
+                  <div
+                    aria-hidden
+                    className="mb-4 h-px w-12 bg-gold shadow-[0_0_0_rgba(201,165,72,0)] transition-[width,box-shadow] duration-500 group-hover:w-24 group-hover:shadow-[0_0_12px_rgba(201,165,72,0.5)]"
+                  />
+                  <h3 className="mb-3 font-display text-2xl font-light text-ivory transition-colors duration-300 group-hover:text-gold-lt">
+                    {value.name}
+                  </h3>
+                  <p className="text-sm leading-relaxed text-silver transition-colors duration-300 group-hover:text-ivory-dim">
+                    {value.body}
+                  </p>
+                </div>
+              </GlowCard>
             </Reveal>
           ))}
         </div>

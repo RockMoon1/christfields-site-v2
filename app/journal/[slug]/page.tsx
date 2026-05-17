@@ -8,6 +8,7 @@ import { Nav } from '@/components/Nav';
 import { Reveal } from '@/components/Reveal';
 import { JournalArticle } from '@/components/journal/JournalArticle';
 import { mdxComponents } from '@/components/journal/mdxComponents';
+import { MorphBlob } from '@/components/motion/MorphBlob';
 import { getAllPosts, getNextPost, getPostBySlug } from '@/lib/journal';
 
 interface PageProps {
@@ -90,6 +91,8 @@ export default async function JournalPostPage({ params }: PageProps) {
             background: `radial-gradient(ellipse at 30% 30%, ${coverColor}44 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, ${coverColor}22 0%, transparent 60%), #0c110e`,
           }}
         >
+          <MorphBlob color={`${coverColor}33`} size={400} className="-left-20 -top-20" />
+          <MorphBlob color={`${coverColor}22`} size={350} className="-bottom-16 right-10" />
           <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
         </div>
 

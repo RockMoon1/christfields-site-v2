@@ -1,10 +1,14 @@
 import { Container } from '../../Container';
 import { Reveal } from '../../Reveal';
 import { CardSpotlight } from '../../motion/CardSpotlight';
+import { MorphBlob } from '../../motion/MorphBlob';
 
 export function ActiveGroups() {
   return (
-    <section id="groups" className="relative z-[2] bg-black-2 py-[110px]">
+    <section id="groups" className="relative z-[2] overflow-hidden bg-black-2 py-[110px]">
+      {/* Ambient morphing blobs for depth */}
+      <MorphBlob color="rgba(201, 165, 72, 0.04)" size={520} className="-right-32 top-16" />
+      <MorphBlob color="rgba(45, 106, 79, 0.06)" size={460} className="-bottom-24 -left-24" />
       <Container>
         <Reveal>
           <p className="mb-4 text-xs font-medium uppercase tracking-[0.22em] text-gold">

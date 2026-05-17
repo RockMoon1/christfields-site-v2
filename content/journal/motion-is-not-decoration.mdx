@@ -1,0 +1,71 @@
+---
+title: Motion is not decoration
+slug: motion-is-not-decoration
+date: 2026-05-17
+category: Build Notes
+excerpt: Why every animation on this site has a reason. And what we added this week to make the place feel alive without making it loud.
+cover:
+  alt: Embers drifting upward in the dark
+  color: '#E4C97A'
+readingTime: 5
+---
+
+Most websites animate to impress you. We animate to tell you something.
+
+There is a difference, and it shows up in the details.
+
+## The rule we follow
+
+Every animation on this site has to do one of three things, or it does not ship.
+
+1. **Direct attention** to where the eye should go next
+2. **Communicate hierarchy** between what is primary and what is secondary
+3. **Acknowledge presence** that a human is here, a cursor is moving, the page is responding
+
+If an animation does none of those things and is only there to be seen, it gets cut. We have cut a lot.
+
+## What we added this week
+
+> "Whatever you do, work at it with all your heart, as working for the Lord." — Colossians 3:23
+
+We sat down and went through every section of the site looking for places that felt static when they should have felt alive. Five new motion pieces came out of that pass.
+
+**Character-by-character text reveals.** Key headings now animate in one letter at a time with a soft blur lifting off each character. The eye learns the line the same way you would read it aloud. Slowly. Deliberately. It is reserved for places that deserve weight.
+
+**Scroll-triggered counters.** Numbers count up when they enter the viewport. The "5 Core Values" heading no longer just appears. It arrives. The eye is told what to read first because the number is the thing that moves.
+
+**Cursor-following glow on cards.** Hover a value card and a warm gold radial follows your pointer across it. Not a glow effect for its own sake. A small acknowledgement that a person is reading this, that the page knows you are there.
+
+**Animated success state.** When someone signs up for the waitlist, a checkmark draws itself inside a circle, a pulse rings out, and the scripture appears. The form does not just turn into a success message. It celebrates. Briefly. Then it gets out of the way.
+
+**Morphing background blobs.** Slow, continuous, almost imperceptible. Gradient shapes warp and drift behind certain sections. You will not consciously see them. You will feel that the page is breathing.
+
+## Why this matters
+
+The web has trained us to expect either nothing or chaos. Static pages or autoplay-everything carousel-of-noise pages.
+
+We are betting there is a third option. A page that moves the way a careful person moves. A page that is alive the way a room with a fire in it is alive. Embers drifting. A flame moving slightly. Nothing demanding your attention. Everything inviting it.
+
+That is the posture we are going for. Whether we get it right is something you can tell us yourself.
+
+## A note on restraint
+
+We could have added twenty more animations. We did not. Here is what we left out, and why.
+
+**No parallax-on-every-section.** Parallax is exciting once. By the third section it feels like the site is fighting you. We kept it only in the hero.
+
+**No carousels.** Carousels hide content behind buttons most people do not click. If a thing is worth showing, it is worth showing.
+
+**No autoplay video.** Video on a faith and technology site should be a choice the reader makes, not a thing that ambushes them.
+
+**No floating chat bubbles.** Email exists. The address is at the bottom of every page. If you want to talk to us, send a real message.
+
+## What is next for motion
+
+Most of the work from here is small. Polish on the journal page, which is where you are right now. Subtle scroll-driven transitions between product pages. The reading progress bar at the top of long posts that you may have already noticed if you scrolled this far.
+
+If you want to see the components themselves, every one of them lives in `components/motion/` in the public-friendly half of our codebase. They are reusable. We use them ourselves.
+
+The site is not finished. It will not be finished. That is the point of building something that is supposed to last.
+
+We will keep showing you the work as it happens.

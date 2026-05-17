@@ -1,20 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { motion, useScroll, useTransform, type Variants } from 'motion/react';
+import { motion, useScroll, useTransform } from 'motion/react';
 import { Reveal } from '../../Reveal';
 import { HeroSpotlight } from '../../motion/HeroSpotlight';
 import { MagneticButton } from '../../motion/MagneticButton';
-
-const parent: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.18, delayChildren: 0.2 } },
-};
-
-const word: Variants = {
-  hidden: { opacity: 0, y: 32 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.85, ease: [0.22, 1, 0.36, 1] } },
-};
+import { TextSplit } from '../../motion/TextSplit';
 
 export function FFHero() {
   const { scrollY } = useScroll();
@@ -49,18 +40,13 @@ export function FFHero() {
           </span>
         </Reveal>
 
-        {/* Word-by-word reveal. "Faith" then "Flow." with the gold ignition. */}
-        <motion.h1
-          initial="hidden"
-          animate="visible"
-          variants={parent}
-          className="mb-6 font-display text-[clamp(3.4rem,7vw,5.5rem)] font-light leading-[1.05] tracking-[-0.01em] text-ivory"
-        >
-          <motion.span variants={word} className="inline-block">Faith</motion.span>
-          <motion.span variants={word} className="inline-block not-italic text-gold-lt">
-            Flow.
-          </motion.span>
-        </motion.h1>
+        {/* Per-character blur-in reveal. "Faith" in ivory, "Flow." in gold. */}
+        <h1 className="mb-6 font-display text-[clamp(3.4rem,7vw,5.5rem)] font-light leading-[1.05] tracking-[-0.01em] text-ivory">
+          <TextSplit text="Faith" delay={0.2} />
+          <span className="text-gold-lt">
+            <TextSplit text="Flow." delay={0.45} />
+          </span>
+        </h1>
 
         <Reveal delay={0.7}>
           <p className="mx-auto mb-6 max-w-xl text-lg leading-relaxed text-ivory-dim md:text-xl">

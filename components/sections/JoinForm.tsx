@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import { FloatingInput } from '../motion/FloatingInput';
 import { FloatingTextarea } from '../motion/FloatingTextarea';
 import { ScriptureSymbol } from '../motion/ScriptureSymbol';
+import { SuccessCheck } from '../motion/SuccessCheck';
+import { MorphBlob } from '../motion/MorphBlob';
 
 type SubmitState = 'idle' | 'sending' | 'success' | 'error';
 
@@ -91,6 +93,10 @@ export function JoinForm() {
         }}
       />
 
+      {/* Ambient morphing blobs for depth, matching Vision section */}
+      <MorphBlob color="rgba(201, 165, 72, 0.05)" size={550} className="-left-32 top-20" />
+      <MorphBlob color="rgba(45, 106, 79, 0.07)" size={500} className="-bottom-24 -right-28" />
+
       <Container className="text-center">
         <Reveal>
           <p className="mb-4 text-xs font-medium uppercase tracking-[0.22em] text-gold">
@@ -114,7 +120,8 @@ export function JoinForm() {
 
         {state === 'success' ? (
           <Reveal>
-            <div className="mx-auto max-w-xl rounded-sm border border-border-gold bg-gradient-to-br from-black-3 to-black-2 p-10 text-left">
+            <div className="mx-auto max-w-xl rounded-sm border border-border-gold bg-gradient-to-br from-black-3 to-black-2 p-10 text-center">
+              <SuccessCheck size={72} className="mx-auto mb-5" />
               <ScriptureSymbol className="mb-4 block text-3xl text-gold" />
               <h3 className="mb-4 font-display text-3xl font-light text-ivory">You&rsquo;re in.</h3>
               <p className="mb-3 leading-relaxed text-ivory-dim">

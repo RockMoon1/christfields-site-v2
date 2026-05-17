@@ -1,0 +1,81 @@
+---
+title: How this site got rebuilt
+slug: how-this-site-got-rebuilt
+date: 2026-05-14
+category: Build Notes
+excerpt: A short note on tearing down the original site and starting over. What we changed. What we kept. What we learned.
+cover:
+  alt: A blueprint being drawn in gold
+  color: '#C9A548'
+readingTime: 6
+---
+
+The first version of christfields2717.com was a handwritten HTML, CSS, and JavaScript site. It worked. It looked decent. It told the truth about what we were doing.
+
+It also could not grow with us.
+
+## Why we started over
+
+A small site with three pages is easy to maintain by hand. A site with a journal, a waitlist, three product pages, and content that changes every week is not.
+
+Every time we wanted to add a new section we were rewriting layout from scratch. Every time we wanted to share a component between pages we were copying markup. The site was honest, but it was fragile.
+
+We had to choose between two paths.
+
+**Patch and grow.** Keep the vanilla site, keep stacking files, accept that updates would get slower and slower until we resented our own site.
+
+**Tear down and build right.** Move to a real framework, commit to a system, and make every future addition easier than the last.
+
+We chose the second one. Slowly. On purpose.
+
+## What we picked, and why
+
+> "By wisdom a house is built, and through understanding it is established." — Proverbs 24:3
+
+Every choice in the stack had to pass the same test. Does this make the work more honest, or just faster?
+
+**Next.js 15.** The framework reads files on disk at build time and serves the result as static HTML. No database. No CMS. Posts are plain Markdown files in a folder, version-controlled like the rest of the codebase. If the server vanishes, the writing does not.
+
+**TypeScript.** Strict mode on. The compiler catches small mistakes before a human has to. That matters when one person is responsible for the whole site.
+
+**Tailwind v4.** The new version uses a CSS-first config. All our design tokens, every gold, every ember, every black, live in one place. Adding a new color or font is one line, not seven files.
+
+**Motion.** The animation library, formerly called Framer Motion. Used carefully, not constantly. Used to communicate, not to perform.
+
+**MDX for the journal.** Every post is a Markdown file with frontmatter at the top. Code blocks, scripture callouts, internal links, all rendered with custom styling. The file you are reading right now lives at `content/journal/how-this-site-got-rebuilt.mdx`. You can read the raw source on GitHub if you ever want to.
+
+**Netlify for hosting.** It builds the site from GitHub on every push, serves it from a CDN, and handles the forms without a backend. Simple is the point.
+
+## What we kept
+
+The voice. The colors. The flame logo. The Proverbs 27:17 verse at the top of every page. The two product names. The decision to be slow about FaithFlow.
+
+We did not rebuild because the old site was wrong. We rebuilt because it was right, and we wanted to give it room to last.
+
+## What we changed
+
+Almost everything underneath.
+
+Every section is now a real React component you can import anywhere. The hero, the values list, the journal cards, the join form, the page transitions. If a new product page needs a hero, it pulls the same hero component. If a journal post wants a scripture callout, the blockquote syntax handles it.
+
+The site is faster. The first paint is under a second on a mid-grade phone. The animations are GPU-accelerated and never block input. The cursor follows you. The page transitions sweep gold across the screen. The journal cards tilt and glow under your pointer.
+
+None of this is necessary. We added it because the site is supposed to feel like a place worth being in, not a brochure to skim.
+
+## What we learned
+
+**Start with the words, not the framework.** We picked the framework after we had written down the actual sentences we wanted to say. The frame served the message, not the other way around.
+
+**A design system is mostly restraint.** We have six colors. Two fonts. One radius value. One easing curve. The system feels rich because we never break it.
+
+**Plain files outlive platforms.** Posts as Markdown in a Git repo will still be readable in twenty years. Posts in a hosted CMS might not be readable in five.
+
+**Animation is a posture.** This deserves its own post, which is coming next.
+
+## What is left
+
+Per-post images. Better search. Tags. A real archive page. Email automation when someone signs up. An internal dashboard for the Iron and Ember group. The ScholarFlow MVP itself.
+
+We will get to all of it. Slowly. The way we have done everything else.
+
+If you want to follow the build week by week, the form on the home page is how you stay close. We post here when something is real, not when something is launching.
