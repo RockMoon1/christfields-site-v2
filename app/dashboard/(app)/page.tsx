@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { currentUser } from '@clerk/nextjs/server';
 import { PremiumOrb } from '@/components/dashboard/PremiumOrb';
+import { TronScrollEffect } from '@/components/dashboard/TronScrollEffect';
+import { RecentActivityConstellation } from '@/components/dashboard/RecentActivityConstellation';
 import { getAreas } from './progress/actions';
 
 /**
@@ -36,8 +38,16 @@ export default async function DashboardHome() {
       ? latestScores.reduce((a, b) => a + b, 0) / latestScores.length
       : 0;
 
+  // Build the constellation nodes for recent activity. Each node carries the
+  // area's color so the chart can render dots in matching colors.
+  const recentNodes = flattenRecent(areas, 8);
+
   return (
     <div className="mx-auto max-w-6xl">
+      {/* TRON-style scroll trails — gold edges and a midline beam that pulse
+          with scroll velocity and fade back to invisible when still. */}
+      <TronScrollEffect />
+
       <section className="relative mb-12 overflow-hidden rounded-sm border border-border-sub bg-gradient-to-br from-black-3 to-black-2">
         <div className="grid items-center gap-6 p-8 md:grid-cols-2 md:p-12">
           <div>
@@ -106,32 +116,15 @@ export default async function DashboardHome() {
             </p>
           </div>
         </div>
-        {totalAreas === 0 ? (
-          <div className="rounded-sm border border-dashed border-border-sub bg-black-3/40 p-12 text-center">
-            <p className="font-display text-xl italic text-silver">Nothing here yet.</p>
-            <p className="mt-2 text-sm text-muted">
-              Once you start logging progress, your timeline will show up here.
-            </p>
-          </div>
-        ) : (
-          <ul className="divide-y divide-border-sub overflow-hidden rounded-sm border border-border-sub bg-black-3">
-            {flattenRecent(areas, 6).map((row) => (
-              <li
-                key={`${row.areaId}-${row.date}-${row.score}`}
-                className="flex items-center justify-between gap-4 px-5 py-4"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm text-ivory">{row.areaName}</p>
-                  <p className="text-xs text-muted">{formatDate(row.date)}</p>
-                </div>
-                <p className="font-display text-2xl font-light text-gold-lt">
-                  {row.score}
-                  <span className="ml-1 text-xs text-muted">/ 10</span>
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
+        <RecentActivityConstellation
+          nodes={recentNodes.map((row) => ({
+            key: `${row.areaId}-${row.date}-${row.score}`,
+            areaName: row.areaName,
+            score: row.score,
+            date: row.date,
+            color: row.color,
+          }))}
+        />
       </section>
     </div>
   );
@@ -164,23 +157,34 @@ function StatCard({ label, value, hint }: StatCardProps) {
    ============================================================ */
 
 function flattenRecent(
-  areas: { id: string; name: string; entries: { score: number; date: string }[] }[],
+  areas: {
+    id: string;
+    name: string;
+    color: string;
+    entries: { score: number; date: string }[];
+  }[],
   limit: number,
 ) {
-  const rows: { areaId: string; areaName: string; score: number; date: string }[] = [];
+  const rows: {
+    areaId: string;
+    areaName: string;
+    color: string;
+    score: number;
+    date: string;
+  }[] = [];
   for (const a of areas) {
     for (const e of a.entries) {
-      rows.push({ areaId: a.id, areaName: a.name, score: e.score, date: e.date });
+      rows.push({
+        areaId: a.id,
+        areaName: a.name,
+        color: a.color,
+        score: e.score,
+        date: e.date,
+      });
     }
   }
-  rows.sort((a, b) => (a.date < b.date ? 1 : -1));
-  return rows.slice(0, limit);
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  // Chronological order so newest dots sit on the right of the constellation.
+  rows.sort((a, b) => (a.date < b.date ? -1 : 1));
+  // Then trim to the latest `limit` entries.
+  return rows.slice(-limit);
 }
