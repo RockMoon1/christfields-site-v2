@@ -89,20 +89,32 @@ async function requireUser(): Promise<string> {
 }
 
 /**
- * Idempotent: ensures all preset areas exist for this user. Called before
- * every getAreas() so a fresh account, or one that pre-dates new presets,
- * always sees them on next page load.
+ * Idempotent: ensures all preset areas exist for this user. Fast-path:
+ * checks the count first; only does the full diff and insert if needed.
+ * Saves several round trips on every dashboard load for established users.
  */
 async function ensurePresets(userId: string) {
   const sb = getSupabase();
 
+  // Fast path: if user already has all presets, do nothing.
+  const { count } = await sb
+    .from('progress_areas')
+    .select('id', { count: 'exact', head: true })
+    .eq('clerk_user_id', userId)
+    .not('preset_key', 'is', null);
+
+  if ((count ?? 0) >= PRESETS.length) return;
+
+  // Slow path: figure out which presets are missing and insert them.
   const { data: existing } = await sb
     .from('progress_areas')
     .select('preset_key')
     .eq('clerk_user_id', userId)
     .not('preset_key', 'is', null);
 
-  const have = new Set((existing as { preset_key: string }[] | null)?.map((r) => r.preset_key) || []);
+  const have = new Set(
+    (existing as { preset_key: string }[] | null)?.map((r) => r.preset_key) || [],
+  );
   const missing = PRESETS.filter((p) => !have.has(p.key));
   if (missing.length === 0) return;
 
@@ -120,12 +132,24 @@ async function ensurePresets(userId: string) {
 }
 
 /**
- * Existing accounts may have presets that pre-date the color column. Patch any
- * preset row that is still on the default color so it picks up the brand color
- * we defined for it above. Cheap idempotent fix.
+ * One-time color backfill for accounts whose presets pre-date the color
+ * column. Fast-path: a single COUNT query tells us whether ANY preset row
+ * still has the default color. If none do, we skip the per-preset updates.
  */
 async function backfillPresetColors(userId: string) {
   const sb = getSupabase();
+
+  // Quick check: any preset rows still on the default color?
+  const { count } = await sb
+    .from('progress_areas')
+    .select('id', { count: 'exact', head: true })
+    .eq('clerk_user_id', userId)
+    .not('preset_key', 'is', null)
+    .eq('color', DEFAULT_COLOR);
+
+  if (!count) return; // Nothing to fix — common case after first load.
+
+  // Fix only the ones still on the default color.
   for (const p of PRESETS) {
     await sb
       .from('progress_areas')

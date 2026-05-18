@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { currentUser } from '@clerk/nextjs/server';
 import { PremiumOrb } from '@/components/dashboard/PremiumOrb';
 import { getAreas } from './progress/actions';
@@ -8,11 +9,11 @@ import { getAreas } from './progress/actions';
  * the left. Stats are real, pulled from the user's actual data.
  */
 export default async function DashboardHome() {
-  const user = await currentUser();
+  // Fetch Clerk user and Supabase data in parallel rather than waterfalled.
+  const [user, areas] = await Promise.all([currentUser(), getAreas()]);
   const firstName = user?.firstName || user?.username || 'friend';
 
-  // Pull real data for the stat cards.
-  const areas = await getAreas();
+  // Real data for the stat cards.
   const totalAreas = areas.length;
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
@@ -51,18 +52,20 @@ export default async function DashboardHome() {
               you started. Be honest with yourself about where you are now.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <a
+              <Link
                 href="/dashboard/progress"
+                prefetch
                 className="inline-flex items-center gap-2 rounded-sm bg-gold px-5 py-2.5 text-[11px] font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt"
               >
                 Log progress →
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/dashboard/resources"
+                prefetch
                 className="inline-flex items-center gap-2 rounded-sm border border-gold/45 bg-transparent px-5 py-2.5 text-[11px] font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black"
               >
                 Open resources
-              </a>
+              </Link>
             </div>
           </div>
 

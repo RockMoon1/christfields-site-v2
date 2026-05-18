@@ -7,11 +7,12 @@ import {
   type Tier,
 } from '@/lib/resources';
 import type { AreaWithEntries } from '@/app/dashboard/(app)/progress/actions';
-import { getJournal } from '@/app/dashboard/(app)/resources/actions';
+import type { JournalEntry } from '@/app/dashboard/(app)/resources/actions';
 import { JournalSection } from './JournalSection';
 
 interface ResourceCardProps {
   area: AreaWithEntries;
+  journalEntries: JournalEntry[];
 }
 
 /**
@@ -19,7 +20,7 @@ interface ResourceCardProps {
  * tier of content based on the user's most recent score and renders it.
  * Color stripe and dot match the orb dot for that area.
  */
-export async function ResourceCard({ area }: ResourceCardProps) {
+export function ResourceCard({ area, journalEntries }: ResourceCardProps) {
   const latest = area.entries[area.entries.length - 1];
   const latestScore = latest?.score ?? null;
   const content = getResourcesForArea({
@@ -29,7 +30,6 @@ export async function ResourceCard({ area }: ResourceCardProps) {
   });
   const teaser = nextTierTeaser(content.tier);
   const isPreset = !!area.presetKey;
-  const journalEntries = await getJournal(area.id);
 
   return (
     <article className="group relative overflow-hidden rounded-sm border border-border-sub bg-black-3 transition-colors hover:border-border-gold">

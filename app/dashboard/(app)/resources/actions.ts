@@ -61,6 +61,39 @@ export async function getJournal(areaId: string): Promise<JournalEntry[]> {
   }
 }
 
+/**
+ * Bulk-load every journal entry for the signed-in user, grouped by area id.
+ * Replaces the N+1 pattern where the Resources page used to call getJournal
+ * once per area card. One round-trip total.
+ */
+export async function getAllJournalsByArea(): Promise<Map<string, JournalEntry[]>> {
+  const grouped = new Map<string, JournalEntry[]>();
+  try {
+    const userId = await requireUser();
+    const sb = getSupabase();
+
+    const { data, error } = await sb
+      .from('area_journal')
+      .select('*')
+      .eq('clerk_user_id', userId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    for (const row of (data as AreaJournal[]) || []) {
+      const list = grouped.get(row.area_id) || [];
+      list.push({
+        id: row.id,
+        body: row.body,
+        createdAt: row.created_at,
+      });
+      grouped.set(row.area_id, list);
+    }
+  } catch (err) {
+    console.error('getAllJournalsByArea failed', err);
+  }
+  return grouped;
+}
+
 /** Add a new journal entry. Returns the saved row. */
 export async function addJournalEntry(
   areaId: string,

@@ -1,4 +1,5 @@
 import { getAreas } from '../progress/actions';
+import { getAllJournalsByArea } from './actions';
 import { ResourceCard } from '@/components/dashboard/ResourceCard';
 import { ScrollTilt } from '@/components/dashboard/ScrollTilt';
 import { MorphBlob } from '@/components/motion/MorphBlob';
@@ -12,7 +13,12 @@ import { MorphBlob } from '@/components/motion/MorphBlob';
  *   8-10 Leading      "I can help someone else here."
  */
 export default async function ResourcesPage() {
-  const areas = await getAreas();
+  // Fetch areas and ALL journals in parallel. The journals query returns
+  // a Map keyed by area id so each card just pulls its own slice in O(1).
+  const [areas, journalsByArea] = await Promise.all([
+    getAreas(),
+    getAllJournalsByArea(),
+  ]);
 
   return (
     <div className="relative mx-auto max-w-5xl">
@@ -50,7 +56,10 @@ export default async function ResourcesPage() {
         <div className="flex flex-col gap-8">
           {areas.map((area) => (
             <ScrollTilt key={area.id}>
-              <ResourceCard area={area} />
+              <ResourceCard
+                area={area}
+                journalEntries={journalsByArea.get(area.id) || []}
+              />
             </ScrollTilt>
           ))}
         </div>
