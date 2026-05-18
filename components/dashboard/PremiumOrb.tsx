@@ -102,6 +102,7 @@ function Node({
 function LogoMark({ areas, vitality }: OrbCoreProps) {
   const markRef = useRef<THREE.Mesh>(null);
   const haloRef = useRef<THREE.Mesh>(null);
+  const wireRef = useRef<THREE.Mesh>(null);
   const nodesRef = useRef<THREE.Group>(null);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -143,6 +144,9 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
     return out;
   }, [areas.length]);
 
+  // Wireframe density scales with area count, clamped so it never gets ugly.
+  const wireDetail = Math.min(2 + Math.floor(areas.length / 3), 4);
+
   // Higher average score = brighter emissive glow.
   const emissive = 0.5 + Math.min(vitality, 10) * 0.07;
 
@@ -169,6 +173,17 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
       haloRef.current.scale.setScalar(pulse);
     }
 
+    if (wireRef.current) {
+      // Slowly counter-rotate the wireframe cage so it feels like a living
+      // shell around the mark. Mouse tilt is also applied so the whole orb
+      // leans toward the cursor in unison.
+      wireRef.current.rotation.y -= delta * 0.08;
+      wireRef.current.rotation.x -= delta * 0.04;
+      const t = state.clock.elapsedTime;
+      const breath = 1 + Math.sin(t * 0.6) * 0.04;
+      wireRef.current.scale.setScalar(breath * 1.08);
+    }
+
     if (nodesRef.current) {
       // Pause the orbit while the user is hovering a node, so the label
       // stays under the cursor.
@@ -189,7 +204,7 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
 
       {/* The mark itself. Alpha-mapped plane, double-sided. */}
       <mesh ref={markRef}>
-        <planeGeometry args={[2.6, 2.6]} />
+        <planeGeometry args={[2.0, 2.0]} />
         <meshStandardMaterial
           map={logoTex}
           alphaMap={logoTex}
@@ -202,6 +217,12 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
           metalness={0.35}
           roughness={0.45}
         />
+      </mesh>
+
+      {/* Wireframe cage around the mark. The webbing the user wants to keep. */}
+      <mesh ref={wireRef}>
+        <icosahedronGeometry args={[1.55, wireDetail]} />
+        <meshBasicMaterial color="#e4c97a" wireframe transparent opacity={0.18} />
       </mesh>
 
       {/* Orbiting area nodes with hover labels */}
