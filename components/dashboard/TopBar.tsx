@@ -6,8 +6,8 @@ import { usePathname } from 'next/navigation';
 const titleMap: Record<string, string> = {
   '/dashboard': 'Overview',
   '/dashboard/progress': 'Progress',
+  '/dashboard/resources': 'Resources',
   '/dashboard/photos': 'Photos',
-  '/dashboard/notes': 'Notes',
   '/dashboard/settings': 'Settings',
 };
 

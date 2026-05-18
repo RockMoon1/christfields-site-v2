@@ -15,8 +15,8 @@ interface NavItem {
 const items: NavItem[] = [
   { href: '/dashboard', label: 'Overview', icon: <DotIcon /> },
   { href: '/dashboard/progress', label: 'Progress', icon: <BarIcon /> },
+  { href: '/dashboard/resources', label: 'Resources', icon: <BookIcon /> },
   { href: '/dashboard/photos', label: 'Photos', icon: <PhotoIcon /> },
-  { href: '/dashboard/notes', label: 'Notes', icon: <NoteIcon /> },
   { href: '/dashboard/settings', label: 'Settings', icon: <GearIcon /> },
 ];
 
@@ -128,11 +128,11 @@ function PhotoIcon() {
     </svg>
   );
 }
-function NoteIcon() {
+function BookIcon() {
   return (
     <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
-      <path d="M3 2h7l3 3v9H3V2z" stroke="currentColor" strokeWidth="1.2" />
-      <path d="M5 7h6M5 10h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M2 3v10c1.5-1 4-1 6-1V2C6 2 3.5 2 2 3z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      <path d="M14 3v10c-1.5-1-4-1-6-1V2c2 0 4.5 0 6 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
     </svg>
   );
 }

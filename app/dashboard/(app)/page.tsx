@@ -58,10 +58,10 @@ export default async function DashboardHome() {
                 Log progress →
               </a>
               <a
-                href="/dashboard/notes"
+                href="/dashboard/resources"
                 className="inline-flex items-center gap-2 rounded-sm border border-gold/45 bg-transparent px-5 py-2.5 text-[11px] font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black"
               >
-                Notes from your group
+                Open resources
               </a>
             </div>
           </div>
