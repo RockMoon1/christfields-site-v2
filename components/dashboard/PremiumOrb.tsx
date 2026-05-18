@@ -1,7 +1,7 @@
 'use client';
 
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
+import { Html, useTexture } from '@react-three/drei';
 import { Suspense, useMemo, useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 
@@ -51,12 +51,10 @@ function Node({
 
   return (
     <group position={position}>
-      {/* Outer soft glow disc, also colored */}
       <mesh ref={glowRef}>
         <sphereGeometry args={[0.06, 16, 16]} />
         <meshBasicMaterial color={area.color} transparent opacity={0.25} />
       </mesh>
-      {/* Solid node, interactive */}
       <mesh
         ref={meshRef}
         onPointerOver={(e) => {
@@ -73,7 +71,6 @@ function Node({
         <meshBasicMaterial color={area.color} />
       </mesh>
 
-      {/* Floating label, visible only when hovered */}
       {hovered && (
         <Html
           position={[0, 0.14, 0]}
@@ -93,12 +90,27 @@ function Node({
   );
 }
 
-function OrbCore({ areas, vitality }: OrbCoreProps) {
-  const coreRef = useRef<THREE.Mesh>(null);
-  const wireRef = useRef<THREE.Mesh>(null);
+/**
+ * The Christ Fields logo mark, rendered as a 3D plane in WebGL. Slowly
+ * rotates around the Y axis, tilts toward the cursor, and breathes very
+ * slightly. The PNG is alpha-mapped so the plane itself is invisible — only
+ * the flame mark shows, like a stamp floating in space.
+ *
+ * Areas orbit around it as small colored nodes with hover labels, same as
+ * the previous icosahedron version.
+ */
+function LogoMark({ areas, vitality }: OrbCoreProps) {
+  const markRef = useRef<THREE.Mesh>(null);
+  const haloRef = useRef<THREE.Mesh>(null);
   const nodesRef = useRef<THREE.Group>(null);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+  // Load the logo PNG once. drei's useTexture suspends until ready.
+  const logoTex = useTexture('/assets/logo.png');
+  // Make sure colors render correctly through the standard material.
+  logoTex.colorSpace = THREE.SRGBColorSpace;
+  logoTex.anisotropy = 8;
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -111,10 +123,10 @@ function OrbCore({ areas, vitality }: OrbCoreProps) {
     return () => window.removeEventListener('mousemove', handler);
   }, []);
 
-  // Fibonacci-lattice positions, evenly distributed on a sphere.
+  // Fibonacci-lattice positions for the orbiting area nodes.
   const nodePositions = useMemo<[number, number, number][]>(() => {
     const out: [number, number, number][] = [];
-    const r = 1.55;
+    const r = 1.85;
     const n = areas.length;
     if (n === 0) return out;
     const golden = Math.PI * (3 - Math.sqrt(5));
@@ -131,31 +143,35 @@ function OrbCore({ areas, vitality }: OrbCoreProps) {
     return out;
   }, [areas.length]);
 
-  const wireDetail = Math.min(2 + Math.floor(areas.length / 3), 4);
-  const emissive = 0.4 + Math.min(vitality, 10) * 0.06;
+  // Higher average score = brighter emissive glow.
+  const emissive = 0.5 + Math.min(vitality, 10) * 0.07;
 
   useFrame((state, delta) => {
-    if (coreRef.current) {
-      coreRef.current.rotation.y += delta * 0.15;
-      coreRef.current.rotation.x += delta * 0.05;
+    if (markRef.current) {
+      // Continuous slow rotation around Y. The plane is double-sided so the
+      // back is visible too (logo appears mirrored when it faces away).
+      markRef.current.rotation.y += delta * 0.35;
 
-      const targetX = mouse.y * 0.4;
-      const targetY = mouse.x * 0.4;
-      coreRef.current.rotation.x += (targetX - coreRef.current.rotation.x) * 0.05;
-      coreRef.current.rotation.y += (targetY - coreRef.current.rotation.y) * 0.05;
+      // Mouse tilt on X axis (vertical mouse movement = vertical tilt).
+      const targetX = mouse.y * 0.35;
+      markRef.current.rotation.x += (targetX - markRef.current.rotation.x) * 0.06;
 
-      const breath = 1 + Math.sin(state.clock.elapsedTime * 0.6) * 0.04;
-      coreRef.current.scale.setScalar(breath);
+      // Soft floating up/down + breathing scale.
+      const t = state.clock.elapsedTime;
+      markRef.current.position.y = Math.sin(t * 0.5) * 0.08;
+      const breath = 1 + Math.sin(t * 0.6) * 0.03;
+      markRef.current.scale.setScalar(breath);
     }
-    if (wireRef.current) {
-      wireRef.current.rotation.y -= delta * 0.08;
-      wireRef.current.rotation.x -= delta * 0.04;
-      const breath = 1 + Math.sin(state.clock.elapsedTime * 0.6) * 0.04;
-      wireRef.current.scale.setScalar(breath * 1.08);
+
+    if (haloRef.current) {
+      const t = state.clock.elapsedTime;
+      const pulse = 1 + Math.sin(t * 1.2) * 0.06;
+      haloRef.current.scale.setScalar(pulse);
     }
+
     if (nodesRef.current) {
       // Pause the orbit while the user is hovering a node, so the label
-      // does not drift away from the cursor.
+      // stays under the cursor.
       if (!hoveredId) {
         nodesRef.current.rotation.y += delta * 0.1;
       }
@@ -165,23 +181,30 @@ function OrbCore({ areas, vitality }: OrbCoreProps) {
 
   return (
     <group>
-      <mesh ref={coreRef}>
-        <icosahedronGeometry args={[1.2, wireDetail]} />
-        <meshStandardMaterial
-          color="#c9a548"
-          emissive="#7a6228"
-          emissiveIntensity={emissive}
-          metalness={0.5}
-          roughness={0.35}
-          flatShading
-        />
-      </mesh>
-      <mesh ref={wireRef}>
-        <icosahedronGeometry args={[1.32, wireDetail]} />
-        <meshBasicMaterial color="#e4c97a" wireframe transparent opacity={0.18} />
+      {/* Soft gold halo behind the mark — gives it depth and warmth. */}
+      <mesh ref={haloRef} position={[0, 0, -0.3]}>
+        <circleGeometry args={[1.5, 48]} />
+        <meshBasicMaterial color="#c9a548" transparent opacity={0.07} />
       </mesh>
 
-      {/* Orbiting colored nodes with hover labels */}
+      {/* The mark itself. Alpha-mapped plane, double-sided. */}
+      <mesh ref={markRef}>
+        <planeGeometry args={[2.6, 2.6]} />
+        <meshStandardMaterial
+          map={logoTex}
+          alphaMap={logoTex}
+          transparent
+          alphaTest={0.05}
+          side={THREE.DoubleSide}
+          emissive="#c9a548"
+          emissiveMap={logoTex}
+          emissiveIntensity={emissive}
+          metalness={0.35}
+          roughness={0.45}
+        />
+      </mesh>
+
+      {/* Orbiting area nodes with hover labels */}
       <group ref={nodesRef}>
         {areas.map((area, i) => {
           const pos = nodePositions[i];
@@ -196,8 +219,6 @@ function OrbCore({ areas, vitality }: OrbCoreProps) {
             />
           );
         })}
-
-        {/* Faint lines from each node back to the core */}
         {nodePositions.map((pos, i) => {
           const area = areas[i];
           if (!area) return null;
@@ -240,15 +261,15 @@ export function PremiumOrb({
   return (
     <div className={className}>
       <Canvas
-        camera={{ position: [0, 0, 4.5], fov: 45 }}
+        camera={{ position: [0, 0, 5], fov: 45 }}
         gl={{ antialias: true, alpha: true }}
         dpr={[1, 2]}
       >
-        <ambientLight intensity={0.4} />
+        <ambientLight intensity={0.5} />
         <directionalLight position={[3, 4, 5]} intensity={1.2} color="#fff5d6" />
         <pointLight position={[-3, -2, -2]} intensity={0.5} color="#2d6a4f" />
         <Suspense fallback={null}>
-          <OrbCore areas={areas} vitality={vitality} />
+          <LogoMark areas={areas} vitality={vitality} />
         </Suspense>
       </Canvas>
     </div>
