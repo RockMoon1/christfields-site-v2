@@ -54,8 +54,8 @@ export default async function ResourcesPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-8">
-          {areas.map((area) => (
-            <ScrollTilt key={area.id}>
+          {areas.map((area, i) => (
+            <ScrollTilt key={area.id} index={i}>
               <ResourceCard
                 area={area}
                 journalEntries={journalsByArea.get(area.id) || []}

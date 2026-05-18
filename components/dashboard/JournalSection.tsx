@@ -86,7 +86,7 @@ export function JournalSection({
   }
 
   return (
-    <section className="border-t border-border-sub px-7 py-6">
+    <section className="relative z-10 border-t border-border-sub px-7 py-6">
       <div className="mb-3 flex items-center justify-between gap-3">
         <p
           className="text-[10px] font-medium uppercase tracking-[0.22em]"

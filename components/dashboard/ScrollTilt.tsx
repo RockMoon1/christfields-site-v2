@@ -1,40 +1,65 @@
 'use client';
 
-import { useScroll, useVelocity, useSpring, useTransform, motion } from 'motion/react';
-import { useRef, type ReactNode } from 'react';
+import {
+  useScroll,
+  useVelocity,
+  useSpring,
+  useTransform,
+  motion,
+} from 'motion/react';
+import { type ReactNode } from 'react';
 
 interface ScrollTiltProps {
   children: ReactNode;
   className?: string;
+  /**
+   * Card's position in the list. Drives a sine/cosine wave so adjacent cards
+   * lean opposite directions when scrolling, creating a wave pattern across
+   * the column rather than all cards moving in lockstep.
+   */
+  index?: number;
 }
 
 /**
- * Wraps content in a div that subtly tilts and skews based on page scroll
- * velocity. As the user scrolls fast, cards lean into the motion; as scroll
- * settles, they spring back to flat.
+ * Scroll-velocity wave wrapper. As the user scrolls fast, cards rotate, slide
+ * horizontally, and rise/fall in a coordinated sine wave. At rest, everything
+ * springs cleanly back to its neutral position so the page stays usable when
+ * the user starts typing.
  *
- * This is the 2D, performance-friendly hint at the Motion.dev "Heritage"
- * scroll velocity 3D plane effect. Same feel, no shaders.
+ * This is the 2D, performance-friendly hint at the Motion.dev Heritage scroll
+ * velocity 3D-plane effect. Same feel, no shaders, no R3F overhead.
  */
-export function ScrollTilt({ children, className = '' }: ScrollTiltProps) {
-  const ref = useRef<HTMLDivElement>(null);
+export function ScrollTilt({ children, className = '', index = 0 }: ScrollTiltProps) {
   const { scrollY } = useScroll();
   const velocity = useVelocity(scrollY);
   const smooth = useSpring(velocity, {
-    stiffness: 150,
-    damping: 22,
-    mass: 0.6,
+    stiffness: 70,
+    damping: 18,
+    mass: 0.9,
   });
 
-  // Velocity is in px per second. A fast flick is ~3000+. Clamp the resulting
-  // visual tilt so things stay tasteful, never silly.
-  const rotateX = useTransform(smooth, [-3000, 0, 3000], [3, 0, -3]);
-  const skewY = useTransform(smooth, [-3000, 0, 3000], [-1.2, 0, 1.2]);
+  // Phase the wave by card position. Sine for Y, cosine for X, so cards
+  // describe a circular motion together — wave-like and never jarring.
+  const phase = index * (Math.PI / 2.4);
+  const ySin = Math.sin(phase);
+  const xCos = Math.cos(phase);
+
+  // Velocity is roughly px/sec. A normal scroll is 1000-2000, a fast flick
+  // can hit 4000+. Tuned so amplitude is felt but never silly.
+  const rotateX = useTransform(smooth, [-3500, 0, 3500], [10, 0, -10]);
+  const y = useTransform(smooth, [-3500, 0, 3500], [-32 * ySin, 0, 32 * ySin]);
+  const x = useTransform(smooth, [-3500, 0, 3500], [36 * xCos, 0, -36 * xCos]);
+  const skewY = useTransform(smooth, [-3500, 0, 3500], [-2.2, 0, 2.2]);
 
   return (
     <motion.div
-      ref={ref}
-      style={{ rotateX, skewY, transformPerspective: 1200 }}
+      style={{
+        rotateX,
+        x,
+        y,
+        skewY,
+        transformPerspective: 1400,
+      }}
       className={`will-change-transform ${className}`}
     >
       {children}

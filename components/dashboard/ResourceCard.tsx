@@ -1,3 +1,7 @@
+'use client';
+
+import { motion, useMotionValue, useSpring } from 'motion/react';
+import { useState, type MouseEvent } from 'react';
 import {
   getResourcesForArea,
   nextTierTeaser,
@@ -31,18 +35,55 @@ export function ResourceCard({ area, journalEntries }: ResourceCardProps) {
   const teaser = nextTierTeaser(content.tier);
   const isPreset = !!area.presetKey;
 
+  // Cursor-following glow inside the card.
+  const mouseX = useMotionValue(-9999);
+  const mouseY = useMotionValue(-9999);
+  const springX = useSpring(mouseX, { stiffness: 220, damping: 26 });
+  const springY = useSpring(mouseY, { stiffness: 220, damping: 26 });
+  const [hovered, setHovered] = useState(false);
+
+  function handleMouseMove(e: MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    mouseX.set(e.clientX - rect.left);
+    mouseY.set(e.clientY - rect.top);
+  }
+
   return (
-    <article className="group relative overflow-hidden rounded-sm border border-border-sub bg-black-3 transition-colors hover:border-border-gold">
-      {/* Colored left stripe matches the orb dot */}
-      <div
+    <motion.article
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      whileHover={{ y: -6, scale: 1.005 }}
+      transition={{ type: 'spring', stiffness: 250, damping: 22 }}
+      className="group relative overflow-hidden rounded-sm border border-border-sub bg-black-3 transition-colors hover:border-border-gold"
+    >
+      {/* Cursor-following accent glow. Lives behind the content; the children
+          render z-1 via header/section/footer which sit above .pointer-events-none. */}
+      <motion.div
         aria-hidden
-        className="absolute inset-y-0 left-0 w-1"
-        style={{ backgroundColor: area.color, boxShadow: `0 0 12px ${area.color}55` }}
+        className="pointer-events-none absolute z-0 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        style={{
+          left: springX,
+          top: springY,
+          background: `radial-gradient(circle, ${area.color}33, transparent 65%)`,
+          mixBlendMode: 'plus-lighter',
+        }}
+      />
+
+      {/* Colored left stripe matches the orb dot. Brightens on hover. */}
+      <motion.div
+        aria-hidden
+        className="absolute inset-y-0 left-0 z-10 w-1"
+        style={{ backgroundColor: area.color }}
+        animate={{
+          boxShadow: hovered ? `0 0 22px ${area.color}cc` : `0 0 12px ${area.color}55`,
+        }}
+        transition={{ duration: 0.3 }}
       />
 
       {/* Header */}
       <header
-        className="flex flex-wrap items-center justify-between gap-3 border-b border-border-sub px-7 py-5"
+        className="relative z-10 flex flex-wrap items-center justify-between gap-3 border-b border-border-sub px-7 py-5"
         style={{ background: `linear-gradient(90deg, ${area.color}11, transparent 60%)` }}
       >
         <div className="flex items-center gap-3">
@@ -76,7 +117,7 @@ export function ResourceCard({ area, journalEntries }: ResourceCardProps) {
       </header>
 
       {/* Tier framing */}
-      <div className="px-7 pt-6">
+      <div className="relative z-10 px-7 pt-6">
         <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-gold">
           {tierLabel(content.tier)}
           <span className="ml-2 normal-case tracking-normal text-muted">
@@ -89,7 +130,7 @@ export function ResourceCard({ area, journalEntries }: ResourceCardProps) {
       </div>
 
       {/* Resource list */}
-      <ul className="flex flex-col gap-4 px-7 py-6">
+      <ul className="relative z-10 flex flex-col gap-4 px-7 py-6">
         {content.resources.map((r, i) => (
           <li key={i}>
             <ResourceItem resource={r} accent={area.color} />
@@ -107,14 +148,14 @@ export function ResourceCard({ area, journalEntries }: ResourceCardProps) {
 
       {/* Teaser for next tier */}
       {teaser && (
-        <footer className="border-t border-border-sub bg-black-2/50 px-7 py-4">
+        <footer className="relative z-10 border-t border-border-sub bg-black-2/50 px-7 py-4">
           <p className="text-xs text-muted">
             <span className="mr-2 text-gold-lt">→</span>
             {teaser}
           </p>
         </footer>
       )}
-    </article>
+    </motion.article>
   );
 }
 
