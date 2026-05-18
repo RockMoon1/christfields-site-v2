@@ -1,92 +1,109 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { cn } from '@/lib/utils';
+import {
+  createArea,
+  deleteArea,
+  logScore,
+  type AreaWithEntries,
+} from '@/app/dashboard/(app)/progress/actions';
 
-interface Entry {
-  /** Score from 1 to 10. */
-  score: number;
-  /** ISO date string. */
-  date: string;
+interface ProgressBoardProps {
+  initialAreas: AreaWithEntries[];
 }
-
-interface Area {
-  id: string;
-  name: string;
-  description: string;
-  entries: Entry[];
-}
-
-const SEED_AREAS: Area[] = [
-  {
-    id: 'socializing',
-    name: 'Socializing',
-    description: 'Showing up. Reaching out. Being present in person.',
-    entries: [
-      { score: 4, date: '2026-04-12' },
-      { score: 5, date: '2026-04-26' },
-      { score: 6, date: '2026-05-10' },
-    ],
-  },
-  {
-    id: 'scripture',
-    name: 'Scripture',
-    description: 'Reading slowly. Letting it sit. Coming back to it.',
-    entries: [
-      { score: 5, date: '2026-04-15' },
-      { score: 7, date: '2026-05-01' },
-    ],
-  },
-];
 
 /**
- * Self-tracked progress areas with 1-10 scoring and a simple history chart.
- * Tonight everything is stored in component state. Next session this will
- * read and write from the database, keyed to the signed-in Clerk user.
+ * Self-tracked progress areas with 1-10 scoring and a sparkline.
+ *
+ * Reads its initial state from server-rendered props (passed by the page)
+ * and uses server actions for every mutation. After each action, the page
+ * re-revalidates and we update local state optimistically for snappy UX.
  */
-export function ProgressBoard() {
-  const [areas, setAreas] = useState<Area[]>(SEED_AREAS);
+export function ProgressBoard({ initialAreas }: ProgressBoardProps) {
+  const [areas, setAreas] = useState<AreaWithEntries[]>(initialAreas);
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
+  const [isPending, startTransition] = useTransition();
 
-  function addArea(e: React.FormEvent) {
+  function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!newName.trim()) return;
-    const id = newName.toLowerCase().replace(/\s+/g, '-');
-    setAreas((prev) => [
-      ...prev,
-      { id, name: newName.trim(), description: newDesc.trim(), entries: [] },
-    ]);
+
+    const name = newName.trim();
+    const description = newDesc.trim();
+
+    // Optimistic insert with a temporary id
+    const tempId = `temp-${Date.now()}`;
+    setAreas((prev) => [...prev, { id: tempId, name, description, entries: [] }]);
     setNewName('');
     setNewDesc('');
     setShowAdd(false);
+
+    startTransition(async () => {
+      try {
+        await createArea(name, description);
+        // Once the server confirms, our optimistic row gets replaced when the
+        // page revalidates. To keep things simple we just rely on revalidatePath.
+      } catch (err) {
+        // Roll back the optimistic insert
+        setAreas((prev) => prev.filter((a) => a.id !== tempId));
+        alert('Could not save area. Please try again.');
+        console.error(err);
+      }
+    });
   }
 
-  function logScore(areaId: string, score: number) {
+  function handleLog(areaId: string, score: number) {
+    const today = new Date().toISOString().split('T')[0];
+    // Optimistic append
     setAreas((prev) =>
       prev.map((a) =>
         a.id === areaId
-          ? {
-              ...a,
-              entries: [
-                ...a.entries,
-                { score, date: new Date().toISOString().split('T')[0] },
-              ],
-            }
+          ? { ...a, entries: [...a.entries, { score, date: today }] }
           : a,
       ),
     );
+
+    startTransition(async () => {
+      try {
+        await logScore(areaId, score);
+      } catch (err) {
+        // Roll back optimistic entry
+        setAreas((prev) =>
+          prev.map((a) =>
+            a.id === areaId
+              ? { ...a, entries: a.entries.slice(0, -1) }
+              : a,
+          ),
+        );
+        alert('Could not save score. Please try again.');
+        console.error(err);
+      }
+    });
   }
 
-  function removeArea(areaId: string) {
+  function handleRemove(areaId: string) {
+    // Optimistic remove
+    const removed = areas.find((a) => a.id === areaId);
     setAreas((prev) => prev.filter((a) => a.id !== areaId));
+
+    startTransition(async () => {
+      try {
+        await deleteArea(areaId);
+      } catch (err) {
+        // Roll back
+        if (removed) setAreas((prev) => [...prev, removed]);
+        alert('Could not remove area. Please try again.');
+        console.error(err);
+      }
+    });
   }
 
   return (
     <div>
-      {/* Areas grid */}
       <div className="grid gap-6 md:grid-cols-2">
         <AnimatePresence mode="popLayout">
           {areas.map((area) => (
@@ -98,16 +115,15 @@ export function ProgressBoard() {
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             >
-              <AreaCard area={area} onLog={logScore} onRemove={removeArea} />
+              <AreaCard area={area} onLog={handleLog} onRemove={handleRemove} />
             </motion.div>
           ))}
         </AnimatePresence>
 
-        {/* Add new card */}
         <motion.div layout>
           {showAdd ? (
             <form
-              onSubmit={addArea}
+              onSubmit={handleAdd}
               className="flex h-full flex-col gap-3 rounded-sm border border-border-gold bg-black-3 p-6"
             >
               <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-gold">
@@ -119,6 +135,7 @@ export function ProgressBoard() {
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="e.g. Patience"
                 autoFocus
+                maxLength={100}
                 className="rounded-sm border border-border-sub bg-black-2 px-3 py-2 text-sm text-ivory placeholder:text-muted focus:border-gold focus:outline-none"
               />
               <textarea
@@ -126,14 +143,16 @@ export function ProgressBoard() {
                 onChange={(e) => setNewDesc(e.target.value)}
                 placeholder="One short sentence about what this area means to you."
                 rows={2}
+                maxLength={500}
                 className="rounded-sm border border-border-sub bg-black-2 px-3 py-2 text-sm text-ivory placeholder:text-muted focus:border-gold focus:outline-none"
               />
               <div className="mt-auto flex gap-2 pt-2">
                 <button
                   type="submit"
-                  className="flex-1 rounded-sm bg-gold px-4 py-2 text-[11px] font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt"
+                  disabled={isPending}
+                  className="flex-1 rounded-sm bg-gold px-4 py-2 text-[11px] font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt disabled:opacity-70"
                 >
-                  Add
+                  {isPending ? 'Saving...' : 'Add'}
                 </button>
                 <button
                   type="button"
@@ -164,13 +183,8 @@ export function ProgressBoard() {
   );
 }
 
-/* ============================================================
-   Individual area card. Shows name, latest score, sparkline,
-   and an interactive 1-10 slider to log a new score.
-   ============================================================ */
-
 interface AreaCardProps {
-  area: Area;
+  area: AreaWithEntries;
   onLog: (areaId: string, score: number) => void;
   onRemove: (areaId: string) => void;
 }
@@ -191,7 +205,9 @@ function AreaCard({ area, onLog, onRemove }: AreaCardProps) {
       <div className="mb-4 flex items-start justify-between gap-4">
         <div>
           <h3 className="mb-1 font-display text-2xl font-light text-ivory">{area.name}</h3>
-          <p className="text-xs text-silver">{area.description}</p>
+          {area.description && (
+            <p className="text-xs text-silver">{area.description}</p>
+          )}
         </div>
         <button
           type="button"
@@ -203,7 +219,6 @@ function AreaCard({ area, onLog, onRemove }: AreaCardProps) {
         </button>
       </div>
 
-      {/* Big score display */}
       <div className="mb-5 flex items-end gap-3">
         <p className="font-display text-5xl font-light leading-none text-gold-lt">
           {latest?.score ?? '—'}
@@ -222,7 +237,6 @@ function AreaCard({ area, onLog, onRemove }: AreaCardProps) {
         )}
       </div>
 
-      {/* Sparkline history */}
       {area.entries.length > 1 ? (
         <Sparkline entries={area.entries} />
       ) : (
@@ -231,7 +245,6 @@ function AreaCard({ area, onLog, onRemove }: AreaCardProps) {
         </p>
       )}
 
-      {/* New score input */}
       <div className="mt-5 border-t border-border-sub pt-5">
         <div className="mb-2 flex items-center justify-between">
           <label className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted">
@@ -259,11 +272,7 @@ function AreaCard({ area, onLog, onRemove }: AreaCardProps) {
   );
 }
 
-/* ============================================================
-   Inline SVG sparkline. Draws the entry history as a polyline.
-   ============================================================ */
-
-function Sparkline({ entries }: { entries: Entry[] }) {
+function Sparkline({ entries }: { entries: { score: number; date: string }[] }) {
   const w = 320;
   const h = 56;
   const padX = 4;
@@ -289,7 +298,6 @@ function Sparkline({ entries }: { entries: Entry[] }) {
       preserveAspectRatio="none"
       aria-hidden
     >
-      {/* Background grid hint */}
       <line
         x1={0}
         y1={h / 2}
@@ -298,13 +306,11 @@ function Sparkline({ entries }: { entries: Entry[] }) {
         stroke="rgba(201,165,72,0.1)"
         strokeDasharray="3 4"
       />
-      {/* Filled area under the line */}
       <polygon
         points={`${padX},${h - padY} ${points.join(' ')} ${w - padX},${h - padY}`}
         fill="url(#sparkFill)"
         opacity={0.25}
       />
-      {/* Line */}
       <polyline
         points={points.join(' ')}
         fill="none"
@@ -313,7 +319,6 @@ function Sparkline({ entries }: { entries: Entry[] }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {/* End dot */}
       <circle cx={lastX} cy={lastY} r={3} fill="#e4c97a" />
       <defs>
         <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">

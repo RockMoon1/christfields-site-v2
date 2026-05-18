@@ -1,0 +1,57 @@
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Christ Fields database schema
+--
+-- Run this in Supabase → SQL Editor → New query → paste → Run.
+-- Safe to re-run: every statement uses IF NOT EXISTS.
+--
+-- All tables key off clerk_user_id (text), which is the Clerk user ID we get
+-- from auth.userId() on the server. We do not duplicate user profile info
+-- (name, email, photo) here — that lives in Clerk and we fetch it from there
+-- when needed.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- Areas the user is tracking. One row per (user, area).
+create table if not exists progress_areas (
+  id            uuid primary key default gen_random_uuid(),
+  clerk_user_id text not null,
+  name          text not null,
+  description   text default '',
+  created_at    timestamptz not null default now()
+);
+
+create index if not exists progress_areas_user_idx
+  on progress_areas (clerk_user_id, created_at desc);
+
+-- Individual 1-10 score entries. Many rows per area.
+create table if not exists progress_entries (
+  id          uuid primary key default gen_random_uuid(),
+  area_id     uuid not null references progress_areas(id) on delete cascade,
+  score       int  not null check (score between 1 and 10),
+  logged_at   timestamptz not null default now()
+);
+
+create index if not exists progress_entries_area_idx
+  on progress_entries (area_id, logged_at);
+
+-- Notes from Christ Fields admins to specific members. Members see these
+-- on their /dashboard/notes page; admins write them from the admin view.
+create table if not exists member_notes (
+  id            uuid primary key default gen_random_uuid(),
+  clerk_user_id text not null,
+  author        text not null default 'Christ Fields',
+  body          text not null,
+  created_at    timestamptz not null default now()
+);
+
+create index if not exists member_notes_user_idx
+  on member_notes (clerk_user_id, created_at desc);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Row Level Security
+--
+-- We do NOT enable RLS here because all reads/writes go through Next.js
+-- server actions that already authenticate via Clerk and scope every query
+-- to the signed-in user. The Supabase service-role key is used server-side
+-- only and never reaches the browser. If we ever add direct client-side
+-- Supabase access, we will enable RLS at that point.
+-- ─────────────────────────────────────────────────────────────────────────────

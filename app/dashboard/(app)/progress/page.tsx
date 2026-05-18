@@ -1,6 +1,13 @@
 import { ProgressBoard } from '@/components/dashboard/ProgressBoard';
+import { getAreas } from './actions';
 
-export default function ProgressPage() {
+/**
+ * Progress page. Fetches the signed-in user's areas + entries server-side and
+ * hands them to the client ProgressBoard for rendering and interaction.
+ */
+export default async function ProgressPage() {
+  const areas = await getAreas();
+
   return (
     <div className="mx-auto max-w-5xl">
       <header className="mb-10">
@@ -16,7 +23,7 @@ export default function ProgressPage() {
         </p>
       </header>
 
-      <ProgressBoard />
+      <ProgressBoard initialAreas={areas} />
     </div>
   );
 }
