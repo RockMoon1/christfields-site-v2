@@ -121,7 +121,7 @@ function SweepLight() {
  * gets a true "flash of light" as it rotates.
  */
 function LogoMark({ areas, vitality }: OrbCoreProps) {
-  const markRef = useRef<THREE.Mesh>(null);
+  const markGroupRef = useRef<THREE.Group>(null);
   const haloRef = useRef<THREE.Mesh>(null);
   const wireRef = useRef<THREE.Mesh>(null);
   const nodesRef = useRef<THREE.Group>(null);
@@ -174,44 +174,63 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
   const wireDetail = Math.min(2 + Math.floor(areas.length / 3), 4);
   const emissive = 0.45 + Math.min(vitality, 10) * 0.05;
 
-  // Build the materials array for the box: [right, left, top, bottom, front, back].
-  // Front and back show the cropped logo; sides are a dark metallic gold edge.
-  const materials = useMemo(() => {
-    const side = new THREE.MeshPhysicalMaterial({
-      color: '#6e5520',
+  // The card itself is now plain metallic gold on all faces — no logo
+  // painted on it. The 3D logo is a separate displacement-mapped mesh
+  // that sits in front of (and behind) the card.
+  const cardMaterials = useMemo(() => {
+    const face = new THREE.MeshPhysicalMaterial({
+      color: '#5a4818',
       metalness: 1,
-      roughness: 0.25,
-      clearcoat: 0.8,
+      roughness: 0.32,
+      clearcoat: 0.7,
       clearcoatRoughness: 0.2,
     });
-    const front = new THREE.MeshPhysicalMaterial({
+    const edge = new THREE.MeshPhysicalMaterial({
+      color: '#6e5520',
+      metalness: 1,
+      roughness: 0.22,
+      clearcoat: 0.85,
+      clearcoatRoughness: 0.15,
+    });
+    // [right, left, top, bottom, front, back]
+    return [edge, edge, edge, edge, face, face];
+  }, []);
+
+  // The 3D logo material. The same texture is bound as map, alphaMap, AND
+  // displacementMap, so the bright cross/flame pixels physically push the
+  // plane vertices forward — turning a flat decal into a real extrusion.
+  const logoMaterial = useMemo(() => {
+    return new THREE.MeshPhysicalMaterial({
       map: logoTex,
       alphaMap: logoTex,
       transparent: true,
-      alphaTest: 0.08,
+      alphaTest: 0.05,
+      displacementMap: logoTex,
+      displacementScale: 0.16,
       side: THREE.DoubleSide,
-      metalness: 0.85,
-      roughness: 0.22,
+      metalness: 0.9,
+      roughness: 0.2,
       clearcoat: 1,
       clearcoatRoughness: 0.08,
       emissive: new THREE.Color('#c9a548'),
       emissiveMap: logoTex,
       emissiveIntensity: emissive,
     });
-    return [side, side, side, side, front, front];
   }, [logoTex, emissive]);
 
   useFrame((state, delta) => {
-    if (markRef.current) {
-      markRef.current.rotation.y += delta * 0.45;
+    if (markGroupRef.current) {
+      // Rotate the whole mark group (card + both 3D logo planes together).
+      markGroupRef.current.rotation.y += delta * 0.45;
 
       const targetX = mouse.y * 0.35;
-      markRef.current.rotation.x += (targetX - markRef.current.rotation.x) * 0.06;
+      markGroupRef.current.rotation.x +=
+        (targetX - markGroupRef.current.rotation.x) * 0.06;
 
       const t = state.clock.elapsedTime;
-      markRef.current.position.y = Math.sin(t * 0.5) * 0.08;
+      markGroupRef.current.position.y = Math.sin(t * 0.5) * 0.08;
       const breath = 1 + Math.sin(t * 0.6) * 0.03;
-      markRef.current.scale.setScalar(breath);
+      markGroupRef.current.scale.setScalar(breath);
     }
 
     if (haloRef.current) {
@@ -244,11 +263,30 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
         <meshBasicMaterial color="#c9a548" transparent opacity={0.08} />
       </mesh>
 
-      {/* Truly 3D mark: thin box with the logo on front and back, metallic
-          gold edges, clearcoat for that wet-shine catch-the-light look. */}
-      <mesh ref={markRef} material={materials} castShadow>
-        <boxGeometry args={[1.9, 1.9, 0.18]} />
-      </mesh>
+      {/* Card + truly 3D logo. Card is a thin metallic gold box; logo lives
+          on two high-segment planes (front and back) using displacementMap
+          so the cross and flame extrude as real geometry, not a flat decal. */}
+      <group ref={markGroupRef}>
+        {/* The card itself, gold metallic, no logo painted on. */}
+        <mesh material={cardMaterials} castShadow>
+          <boxGeometry args={[1.9, 1.9, 0.18]} />
+        </mesh>
+
+        {/* Front-face 3D logo. Plane is heavily subdivided (160 segments)
+            so the displacement looks smooth, not faceted. */}
+        <mesh position={[0, 0, 0.092]} material={logoMaterial}>
+          <planeGeometry args={[1.7, 1.7, 160, 160]} />
+        </mesh>
+
+        {/* Back-face 3D logo, rotated 180 so the cross faces outward there too. */}
+        <mesh
+          position={[0, 0, -0.092]}
+          rotation={[0, Math.PI, 0]}
+          material={logoMaterial}
+        >
+          <planeGeometry args={[1.7, 1.7, 160, 160]} />
+        </mesh>
+      </group>
 
       {/* Wireframe cage stays — the webbing around the mark. */}
       <mesh ref={wireRef}>
