@@ -174,31 +174,31 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
   const wireDetail = Math.min(2 + Math.floor(areas.length / 3), 4);
   const emissive = 0.45 + Math.min(vitality, 10) * 0.05;
 
-  // The card itself is now plain metallic gold on all faces — no logo
-  // painted on it. The 3D logo is a separate displacement-mapped mesh
-  // that sits in front of (and behind) the card.
+  // The card itself. Warmer, brighter gold than before so the logo on top
+  // reads vivid against it instead of muted.
   const cardMaterials = useMemo(() => {
     const face = new THREE.MeshPhysicalMaterial({
-      color: '#5a4818',
+      color: '#a8843a',
       metalness: 1,
-      roughness: 0.32,
-      clearcoat: 0.7,
-      clearcoatRoughness: 0.2,
+      roughness: 0.3,
+      clearcoat: 0.85,
+      clearcoatRoughness: 0.18,
     });
     const edge = new THREE.MeshPhysicalMaterial({
-      color: '#6e5520',
+      color: '#7a6228',
       metalness: 1,
-      roughness: 0.22,
-      clearcoat: 0.85,
-      clearcoatRoughness: 0.15,
+      roughness: 0.2,
+      clearcoat: 0.9,
+      clearcoatRoughness: 0.12,
     });
     // [right, left, top, bottom, front, back]
     return [edge, edge, edge, edge, face, face];
   }, []);
 
-  // The 3D logo material. The same texture is bound as map, alphaMap, AND
-  // displacementMap, so the bright cross/flame pixels physically push the
-  // plane vertices forward — turning a flat decal into a real extrusion.
+  // The 3D logo material. Same texture as map, alphaMap, AND displacementMap
+  // so the bright cross/flame pixels push their plane vertices forward,
+  // turning a flat decal into real extrusion. Higher emissive than before
+  // so the logo glows confidently against the now-brighter card.
   const logoMaterial = useMemo(() => {
     return new THREE.MeshPhysicalMaterial({
       map: logoTex,
@@ -206,15 +206,16 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
       transparent: true,
       alphaTest: 0.05,
       displacementMap: logoTex,
-      displacementScale: 0.16,
+      displacementScale: 0.18,
       side: THREE.DoubleSide,
       metalness: 0.9,
-      roughness: 0.2,
+      roughness: 0.18,
       clearcoat: 1,
-      clearcoatRoughness: 0.08,
-      emissive: new THREE.Color('#c9a548'),
+      clearcoatRoughness: 0.06,
+      color: new THREE.Color('#f3d97a'),
+      emissive: new THREE.Color('#e4c97a'),
       emissiveMap: logoTex,
-      emissiveIntensity: emissive,
+      emissiveIntensity: emissive + 0.4,
     });
   }, [logoTex, emissive]);
 
@@ -362,9 +363,9 @@ export function PremiumOrb({
         // not melt phone GPUs on hi-DPI screens.
         dpr={[1.5, 3]}
       >
-        <ambientLight intensity={0.4} />
-        <directionalLight position={[3, 4, 5]} intensity={1.4} color="#fff5d6" />
-        <pointLight position={[-3, -2, -2]} intensity={0.5} color="#2d6a4f" />
+        <ambientLight intensity={0.55} />
+        <directionalLight position={[3, 4, 5]} intensity={1.8} color="#fff5d6" />
+        <pointLight position={[-3, -2, -2]} intensity={0.6} color="#2d6a4f" />
         <SweepLight />
         <Suspense fallback={null}>
           <LogoMark areas={areas} vitality={vitality} />
