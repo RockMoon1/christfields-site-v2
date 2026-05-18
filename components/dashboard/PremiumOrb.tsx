@@ -4,7 +4,6 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, useTexture } from '@react-three/drei';
 import { Suspense, useMemo, useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
-import { useIsMobile } from '@/lib/hooks/useIsMobile';
 
 export interface OrbArea {
   id: string;
@@ -356,17 +355,18 @@ export function PremiumOrb({
   areas = [],
   vitality = 0,
 }: PremiumOrbProps) {
-  const isMobile = useIsMobile();
-
+  // IMPORTANT: PremiumOrb deliberately does NOT use useIsMobile anywhere.
+  // The Suspense boundary inside the Canvas (around LogoMark, for the texture
+  // load) cannot tolerate updates during hydration. A viewport-change-driven
+  // state update would trigger React error #300 ("Maximum update depth" /
+  // "Suspense boundary updated during hydration") on narrow screens.
+  //
+  // Everything in this component is therefore stable across renders: Canvas
+  // props are fixed, all children are unconditional, no state depends on
+  // viewport. The orb costs a little more on phones but the page actually
+  // renders, which is the trade we want.
   return (
     <div className={className}>
-      {/* IMPORTANT: Canvas props (gl, dpr) are STABLE — they never depend on
-          isMobile. R3F can throw if its renderer's DPR or context options
-          change after mount, and that was the cause of the "We could not
-          load this page" error on small viewports.
-          We still downgrade visuals on mobile by passing isMobile DOWN into
-          the scene (LogoMark uses it for plane segments, SweepLight is
-          conditional), which only changes the scene graph, not the renderer. */}
       <Canvas
         camera={{ position: [0, 0, 5], fov: 45 }}
         gl={{
@@ -380,10 +380,7 @@ export function PremiumOrb({
         <ambientLight intensity={0.55} />
         <directionalLight position={[3, 4, 5]} intensity={1.8} color="#fff5d6" />
         <pointLight position={[-3, -2, -2]} intensity={0.6} color="#2d6a4f" />
-        {/* SweepLight is a moving PointLight that creates the cinematic
-            highlight flash on the metallic mark. Skip it on phones — it
-            forces per-frame shading recompute on the clearcoat material. */}
-        {!isMobile && <SweepLight />}
+        <SweepLight />
         <Suspense fallback={null}>
           <LogoMark areas={areas} vitality={vitality} />
         </Suspense>
