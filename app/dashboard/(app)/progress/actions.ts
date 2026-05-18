@@ -85,21 +85,41 @@ export async function getAreas(): Promise<AreaWithEntries[]> {
   }
 }
 
-/** Add a new area for the signed-in user. */
-export async function createArea(name: string, description: string) {
+/**
+ * Add a new area for the signed-in user. Returns the created area so the
+ * client can replace its optimistic temp row with the real one (with the
+ * real database ID), which is needed before scoring it works.
+ */
+export async function createArea(
+  name: string,
+  description: string,
+): Promise<AreaWithEntries> {
   const userId = await requireUser();
   if (!name.trim()) throw new Error('Area name required');
 
   const sb = getSupabase();
-  const { error } = await sb.from('progress_areas').insert({
-    clerk_user_id: userId,
-    name: name.trim().slice(0, 100),
-    description: description.trim().slice(0, 500),
-  });
+  const { data, error } = await sb
+    .from('progress_areas')
+    .insert({
+      clerk_user_id: userId,
+      name: name.trim().slice(0, 100),
+      description: description.trim().slice(0, 500),
+    })
+    .select()
+    .single();
   if (error) throw error;
+  if (!data) throw new Error('Insert returned no row');
 
   revalidatePath('/dashboard/progress');
   revalidatePath('/dashboard');
+
+  const row = data as ProgressArea;
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    entries: [],
+  };
 }
 
 /** Log a new 1-10 score against an area. Verifies area belongs to user. */

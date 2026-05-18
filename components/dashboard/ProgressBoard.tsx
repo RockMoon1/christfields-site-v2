@@ -35,7 +35,8 @@ export function ProgressBoard({ initialAreas }: ProgressBoardProps) {
     const name = newName.trim();
     const description = newDesc.trim();
 
-    // Optimistic insert with a temporary id
+    // Optimistic insert with a temporary id. The temp id gets replaced with
+    // the real database id once createArea returns.
     const tempId = `temp-${Date.now()}`;
     setAreas((prev) => [...prev, { id: tempId, name, description, entries: [] }]);
     setNewName('');
@@ -44,9 +45,9 @@ export function ProgressBoard({ initialAreas }: ProgressBoardProps) {
 
     startTransition(async () => {
       try {
-        await createArea(name, description);
-        // Once the server confirms, our optimistic row gets replaced when the
-        // page revalidates. To keep things simple we just rely on revalidatePath.
+        const realArea = await createArea(name, description);
+        // Swap the temp row out for the real one (correct id from server).
+        setAreas((prev) => prev.map((a) => (a.id === tempId ? realArea : a)));
       } catch (err) {
         // Roll back the optimistic insert
         setAreas((prev) => prev.filter((a) => a.id !== tempId));
@@ -57,6 +58,13 @@ export function ProgressBoard({ initialAreas }: ProgressBoardProps) {
   }
 
   function handleLog(areaId: string, score: number) {
+    // If the user clicks Save before the area finishes saving on the server,
+    // the id is still a temp id and the database does not know about it yet.
+    if (areaId.startsWith('temp-')) {
+      alert('Hold on a second, that area is still being saved. Try again in a moment.');
+      return;
+    }
+
     const today = new Date().toISOString().split('T')[0];
     // Optimistic append
     setAreas((prev) =>
@@ -86,6 +94,12 @@ export function ProgressBoard({ initialAreas }: ProgressBoardProps) {
   }
 
   function handleRemove(areaId: string) {
+    // Temp areas are not yet on the server. Just drop them locally.
+    if (areaId.startsWith('temp-')) {
+      setAreas((prev) => prev.filter((a) => a.id !== areaId));
+      return;
+    }
+
     // Optimistic remove
     const removed = areas.find((a) => a.id === areaId);
     setAreas((prev) => prev.filter((a) => a.id !== areaId));
