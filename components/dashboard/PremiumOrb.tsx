@@ -121,7 +121,7 @@ function SweepLight() {
  * surface dramatically. Combined with the orbiting SweepLight, the mark
  * gets a true "flash of light" as it rotates.
  */
-function LogoMark({ areas, vitality, isMobile }: OrbCoreProps & { isMobile: boolean }) {
+function LogoMark({ areas, vitality }: OrbCoreProps) {
   const markGroupRef = useRef<THREE.Group>(null);
   const haloRef = useRef<THREE.Mesh>(null);
   const wireRef = useRef<THREE.Mesh>(null);
@@ -129,9 +129,10 @@ function LogoMark({ areas, vitality, isMobile }: OrbCoreProps & { isMobile: bool
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  // Plane segment count for the displacement-mapped logo. Heavy on mobile —
-  // cut roughly in half so the geometry is half the vertex count.
-  const planeSegments = isMobile ? 80 : 160;
+  // Plane segment count for the displacement-mapped logo. Held stable so we
+  // never remount the geometry mid-life from a viewport change. 96 is the
+  // sweet spot: visibly smooth displacement, still light enough for mobile.
+  const planeSegments = 96;
 
   // Load the logo PNG once. drei's useTexture suspends until ready.
   const logoTex = useTexture('/assets/logo.png');
@@ -384,7 +385,7 @@ export function PremiumOrb({
             forces per-frame shading recompute on the clearcoat material. */}
         {!isMobile && <SweepLight />}
         <Suspense fallback={null}>
-          <LogoMark areas={areas} vitality={vitality} isMobile={isMobile} />
+          <LogoMark areas={areas} vitality={vitality} />
         </Suspense>
       </Canvas>
     </div>
