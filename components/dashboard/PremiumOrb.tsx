@@ -91,13 +91,34 @@ function Node({
 }
 
 /**
- * The Christ Fields logo mark, rendered as a 3D plane in WebGL. Slowly
- * rotates around the Y axis, tilts toward the cursor, and breathes very
- * slightly. The PNG is alpha-mapped so the plane itself is invisible — only
- * the flame mark shows, like a stamp floating in space.
+ * Orbiting point light. Creates a dynamic specular highlight that sweeps
+ * across the metallic mark as it rotates, giving the spinning logo a
+ * cinematic flash of light effect.
+ */
+function SweepLight() {
+  const lightRef = useRef<THREE.PointLight>(null);
+
+  useFrame((state) => {
+    if (!lightRef.current) return;
+    const t = state.clock.elapsedTime;
+    lightRef.current.position.x = Math.cos(t * 0.5) * 4;
+    lightRef.current.position.z = Math.sin(t * 0.5) * 4 + 2;
+    lightRef.current.position.y = Math.sin(t * 0.35) * 1.5;
+  });
+
+  return <pointLight ref={lightRef} color="#fff8d6" intensity={6} distance={12} />;
+}
+
+/**
+ * The Christ Fields logo mark, rendered as a 3D box in WebGL so it has real
+ * thickness. The logo PNG is alpha-mapped onto the front and back faces
+ * (cropped in code so the "Christ Fields" wordmark below the cross is
+ * excluded). The four side faces are dark metallic gold, creating a
+ * medallion / stamp feel.
  *
- * Areas orbit around it as small colored nodes with hover labels, same as
- * the previous icosahedron version.
+ * Material is a PhysicalMaterial with clearcoat, so light catches the
+ * surface dramatically. Combined with the orbiting SweepLight, the mark
+ * gets a true "flash of light" as it rotates.
  */
 function LogoMark({ areas, vitality }: OrbCoreProps) {
   const markRef = useRef<THREE.Mesh>(null);
@@ -109,9 +130,15 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
 
   // Load the logo PNG once. drei's useTexture suspends until ready.
   const logoTex = useTexture('/assets/logo.png');
-  // Make sure colors render correctly through the standard material.
   logoTex.colorSpace = THREE.SRGBColorSpace;
-  logoTex.anisotropy = 8;
+  logoTex.anisotropy = 16;
+  logoTex.minFilter = THREE.LinearMipmapLinearFilter;
+  logoTex.magFilter = THREE.LinearFilter;
+  // Crop the texture vertically so only the top portion (cross + flame mark)
+  // is visible. The bottom of the PNG contains the "ChristFields" wordmark
+  // which we do not want on the 3D mark.
+  logoTex.offset.set(0, 0.4);
+  logoTex.repeat.set(1, 0.6);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -144,23 +171,43 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
     return out;
   }, [areas.length]);
 
-  // Wireframe density scales with area count, clamped so it never gets ugly.
   const wireDetail = Math.min(2 + Math.floor(areas.length / 3), 4);
+  const emissive = 0.45 + Math.min(vitality, 10) * 0.05;
 
-  // Higher average score = brighter emissive glow.
-  const emissive = 0.5 + Math.min(vitality, 10) * 0.07;
+  // Build the materials array for the box: [right, left, top, bottom, front, back].
+  // Front and back show the cropped logo; sides are a dark metallic gold edge.
+  const materials = useMemo(() => {
+    const side = new THREE.MeshPhysicalMaterial({
+      color: '#6e5520',
+      metalness: 1,
+      roughness: 0.25,
+      clearcoat: 0.8,
+      clearcoatRoughness: 0.2,
+    });
+    const front = new THREE.MeshPhysicalMaterial({
+      map: logoTex,
+      alphaMap: logoTex,
+      transparent: true,
+      alphaTest: 0.08,
+      side: THREE.DoubleSide,
+      metalness: 0.85,
+      roughness: 0.22,
+      clearcoat: 1,
+      clearcoatRoughness: 0.08,
+      emissive: new THREE.Color('#c9a548'),
+      emissiveMap: logoTex,
+      emissiveIntensity: emissive,
+    });
+    return [side, side, side, side, front, front];
+  }, [logoTex, emissive]);
 
   useFrame((state, delta) => {
     if (markRef.current) {
-      // Continuous slow rotation around Y. The plane is double-sided so the
-      // back is visible too (logo appears mirrored when it faces away).
-      markRef.current.rotation.y += delta * 0.35;
+      markRef.current.rotation.y += delta * 0.45;
 
-      // Mouse tilt on X axis (vertical mouse movement = vertical tilt).
       const targetX = mouse.y * 0.35;
       markRef.current.rotation.x += (targetX - markRef.current.rotation.x) * 0.06;
 
-      // Soft floating up/down + breathing scale.
       const t = state.clock.elapsedTime;
       markRef.current.position.y = Math.sin(t * 0.5) * 0.08;
       const breath = 1 + Math.sin(t * 0.6) * 0.03;
@@ -174,9 +221,6 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
     }
 
     if (wireRef.current) {
-      // Slowly counter-rotate the wireframe cage so it feels like a living
-      // shell around the mark. Mouse tilt is also applied so the whole orb
-      // leans toward the cursor in unison.
       wireRef.current.rotation.y -= delta * 0.08;
       wireRef.current.rotation.x -= delta * 0.04;
       const t = state.clock.elapsedTime;
@@ -185,8 +229,6 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
     }
 
     if (nodesRef.current) {
-      // Pause the orbit while the user is hovering a node, so the label
-      // stays under the cursor.
       if (!hoveredId) {
         nodesRef.current.rotation.y += delta * 0.1;
       }
@@ -196,30 +238,19 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
 
   return (
     <group>
-      {/* Soft gold halo behind the mark — gives it depth and warmth. */}
-      <mesh ref={haloRef} position={[0, 0, -0.3]}>
-        <circleGeometry args={[1.5, 48]} />
-        <meshBasicMaterial color="#c9a548" transparent opacity={0.07} />
+      {/* Soft gold halo behind the mark — depth and warmth. */}
+      <mesh ref={haloRef} position={[0, 0, -0.4]}>
+        <circleGeometry args={[1.5, 64]} />
+        <meshBasicMaterial color="#c9a548" transparent opacity={0.08} />
       </mesh>
 
-      {/* The mark itself. Alpha-mapped plane, double-sided. */}
-      <mesh ref={markRef}>
-        <planeGeometry args={[2.0, 2.0]} />
-        <meshStandardMaterial
-          map={logoTex}
-          alphaMap={logoTex}
-          transparent
-          alphaTest={0.05}
-          side={THREE.DoubleSide}
-          emissive="#c9a548"
-          emissiveMap={logoTex}
-          emissiveIntensity={emissive}
-          metalness={0.35}
-          roughness={0.45}
-        />
+      {/* Truly 3D mark: thin box with the logo on front and back, metallic
+          gold edges, clearcoat for that wet-shine catch-the-light look. */}
+      <mesh ref={markRef} material={materials} castShadow>
+        <boxGeometry args={[1.9, 1.9, 0.18]} />
       </mesh>
 
-      {/* Wireframe cage around the mark. The webbing the user wants to keep. */}
+      {/* Wireframe cage stays — the webbing around the mark. */}
       <mesh ref={wireRef}>
         <icosahedronGeometry args={[1.55, wireDetail]} />
         <meshBasicMaterial color="#e4c97a" wireframe transparent opacity={0.18} />
@@ -283,12 +314,20 @@ export function PremiumOrb({
     <div className={className}>
       <Canvas
         camera={{ position: [0, 0, 5], fov: 45 }}
-        gl={{ antialias: true, alpha: true }}
-        dpr={[1, 2]}
+        gl={{
+          antialias: true,
+          alpha: true,
+          powerPreference: 'high-performance',
+          toneMapping: THREE.ACESFilmicToneMapping,
+        }}
+        // Bump device pixel ratio for sharper output. Capped at 3 so we do
+        // not melt phone GPUs on hi-DPI screens.
+        dpr={[1.5, 3]}
       >
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[3, 4, 5]} intensity={1.2} color="#fff5d6" />
+        <ambientLight intensity={0.4} />
+        <directionalLight position={[3, 4, 5]} intensity={1.4} color="#fff5d6" />
         <pointLight position={[-3, -2, -2]} intensity={0.5} color="#2d6a4f" />
+        <SweepLight />
         <Suspense fallback={null}>
           <LogoMark areas={areas} vitality={vitality} />
         </Suspense>
