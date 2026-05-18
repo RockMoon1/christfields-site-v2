@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { cn } from '@/lib/utils';
+import { AREA_COLORS } from '@/lib/colors';
 import {
   createArea,
   deleteArea,
@@ -29,6 +30,7 @@ export function ProgressBoard({ initialAreas }: ProgressBoardProps) {
     description: string;
     whyItMatters: string;
     targetScore: number;
+    color: string;
   }) {
     const tempId = `temp-${Date.now()}`;
     setAreas((prev) => [
@@ -40,6 +42,7 @@ export function ProgressBoard({ initialAreas }: ProgressBoardProps) {
         whyItMatters: input.whyItMatters,
         targetScore: input.targetScore,
         presetKey: null,
+        color: input.color,
         entries: [],
       },
     ]);
@@ -168,6 +171,7 @@ interface AddAreaFormProps {
     description: string;
     whyItMatters: string;
     targetScore: number;
+    color: string;
   }) => void;
   isPending: boolean;
 }
@@ -177,11 +181,18 @@ function AddAreaForm({ onCancel, onSubmit, isPending }: AddAreaFormProps) {
   const [description, setDescription] = useState('');
   const [whyItMatters, setWhyItMatters] = useState('');
   const [targetScore, setTargetScore] = useState(8);
+  const [color, setColor] = useState(AREA_COLORS[0].hex);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
-    onSubmit({ name: name.trim(), description: description.trim(), whyItMatters: whyItMatters.trim(), targetScore });
+    onSubmit({
+      name: name.trim(),
+      description: description.trim(),
+      whyItMatters: whyItMatters.trim(),
+      targetScore,
+      color,
+    });
   }
 
   return (
@@ -217,6 +228,32 @@ function AddAreaForm({ onCancel, onSubmit, isPending }: AddAreaFormProps) {
         maxLength={500}
         className="rounded-sm border border-border-sub bg-black-2 px-3 py-2 text-sm text-ivory placeholder:text-muted focus:border-gold focus:outline-none"
       />
+
+      {/* Color picker */}
+      <div>
+        <label className="mb-2 block text-[10px] font-medium uppercase tracking-[0.22em] text-muted">
+          Color
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {AREA_COLORS.map((c) => (
+            <button
+              key={c.hex}
+              type="button"
+              onClick={() => setColor(c.hex)}
+              aria-label={c.label}
+              title={c.label}
+              className={cn(
+                'h-7 w-7 rounded-full border-2 transition-transform',
+                color === c.hex
+                  ? 'scale-110 border-ivory'
+                  : 'border-transparent hover:scale-105',
+              )}
+              style={{ backgroundColor: c.hex }}
+            />
+          ))}
+        </div>
+      </div>
+
       <div>
         <div className="mb-2 flex items-center justify-between">
           <label className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted">
@@ -280,7 +317,13 @@ function AreaCard({ area, onLog, onRemove }: AreaCardProps) {
   }
 
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-sm border border-border-sub bg-black-3 p-6 transition-colors hover:border-border-gold">
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-sm border border-border-sub bg-black-3 p-6 pl-7 transition-colors hover:border-border-gold">
+      {/* Color stripe: ties this card visually to its dot on the orb */}
+      <div
+        aria-hidden
+        className="absolute inset-y-0 left-0 w-1"
+        style={{ backgroundColor: area.color, boxShadow: `0 0 12px ${area.color}55` }}
+      />
       <div
         aria-hidden
         className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
@@ -289,6 +332,11 @@ function AreaCard({ area, onLog, onRemove }: AreaCardProps) {
       <div className="mb-4 flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex items-center gap-2">
+            <span
+              aria-hidden
+              className="inline-block h-2.5 w-2.5 rounded-full"
+              style={{ backgroundColor: area.color, boxShadow: `0 0 6px ${area.color}aa` }}
+            />
             <h3 className="font-display text-2xl font-light text-ivory">{area.name}</h3>
             {isPreset && (
               <span className="rounded-sm border border-gold/30 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.16em] text-gold">

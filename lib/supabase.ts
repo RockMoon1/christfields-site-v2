@@ -43,6 +43,7 @@ export interface ProgressArea {
   preset_key: string | null;
   why_it_matters: string;
   target_score: number | null;
+  color: string;
   created_at: string;
 }
 

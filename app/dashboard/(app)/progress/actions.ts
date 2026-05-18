@@ -3,6 +3,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 import { getSupabase, type ProgressArea, type ProgressEntry } from '@/lib/supabase';
+import { DEFAULT_COLOR, isValidAreaColor } from '@/lib/colors';
 
 /**
  * Server actions for the Progress feature.
@@ -19,6 +20,7 @@ export interface AreaWithEntries {
   whyItMatters: string;
   targetScore: number | null;
   presetKey: string | null;
+  color: string;
   entries: { score: number; date: string; note: string }[];
 }
 
@@ -34,6 +36,7 @@ interface PresetDef {
   description: string;
   whyItMatters: string;
   targetScore: number;
+  color: string;
 }
 
 const PRESETS: PresetDef[] = [
@@ -43,6 +46,7 @@ const PRESETS: PresetDef[] = [
     description: 'Showing up to group, in person.',
     whyItMatters: 'Community needs your presence, not just your attention.',
     targetScore: 8,
+    color: '#c9a548', // Gold
   },
   {
     key: 'honesty',
@@ -50,6 +54,7 @@ const PRESETS: PresetDef[] = [
     description: 'Telling the truth about your week.',
     whyItMatters: 'You cannot fake your way through a group like this. The people next to you eventually know.',
     targetScore: 8,
+    color: '#2d6a4f', // Emerald
   },
   {
     key: 'scripture',
@@ -57,6 +62,7 @@ const PRESETS: PresetDef[] = [
     description: 'Reading and reflecting on the Word.',
     whyItMatters: 'Reading slowly, together, makes Scripture bigger than we usually treat it.',
     targetScore: 7,
+    color: '#e4c97a', // Cream
   },
   {
     key: 'prayer',
@@ -64,6 +70,7 @@ const PRESETS: PresetDef[] = [
     description: 'For others and for yourself.',
     whyItMatters: 'Praying for each other by name changes things in ways you cannot predict.',
     targetScore: 7,
+    color: '#5b8db8', // Sky
   },
   {
     key: 'sharpening',
@@ -71,6 +78,7 @@ const PRESETS: PresetDef[] = [
     description: 'Pushing someone else toward growth.',
     whyItMatters: 'As iron sharpens iron, so one person sharpens another.',
     targetScore: 7,
+    color: '#c47b3c', // Copper
   },
 ];
 
@@ -106,8 +114,26 @@ async function ensurePresets(userId: string) {
       description: p.description,
       why_it_matters: p.whyItMatters,
       target_score: p.targetScore,
+      color: p.color,
     })),
   );
+}
+
+/**
+ * Existing accounts may have presets that pre-date the color column. Patch any
+ * preset row that is still on the default color so it picks up the brand color
+ * we defined for it above. Cheap idempotent fix.
+ */
+async function backfillPresetColors(userId: string) {
+  const sb = getSupabase();
+  for (const p of PRESETS) {
+    await sb
+      .from('progress_areas')
+      .update({ color: p.color })
+      .eq('clerk_user_id', userId)
+      .eq('preset_key', p.key)
+      .eq('color', DEFAULT_COLOR);
+  }
 }
 
 /**
@@ -119,6 +145,7 @@ export async function getAreas(): Promise<AreaWithEntries[]> {
   try {
     const userId = await requireUser();
     await ensurePresets(userId);
+    await backfillPresetColors(userId);
     const sb = getSupabase();
 
     const { data: areas, error: areasErr } = await sb
@@ -175,6 +202,7 @@ function toAreaWithEntries(a: ProgressArea): AreaWithEntries {
     whyItMatters: a.why_it_matters || '',
     targetScore: a.target_score,
     presetKey: a.preset_key,
+    color: a.color || DEFAULT_COLOR,
     entries: [],
   };
 }
@@ -185,9 +213,12 @@ export async function createArea(input: {
   description: string;
   whyItMatters: string;
   targetScore: number;
+  color: string;
 }): Promise<AreaWithEntries> {
   const userId = await requireUser();
   if (!input.name.trim()) throw new Error('Area name required');
+
+  const color = isValidAreaColor(input.color) ? input.color : DEFAULT_COLOR;
 
   const sb = getSupabase();
   const { data, error } = await sb
@@ -199,6 +230,7 @@ export async function createArea(input: {
       why_it_matters: input.whyItMatters.trim().slice(0, 500),
       target_score: clamp(input.targetScore, 1, 10),
       preset_key: null,
+      color,
     })
     .select()
     .single();

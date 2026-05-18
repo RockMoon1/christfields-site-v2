@@ -1,30 +1,104 @@
 'use client';
 
 import { Canvas, useFrame } from '@react-three/fiber';
+import { Html } from '@react-three/drei';
 import { Suspense, useMemo, useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 
+export interface OrbArea {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface OrbCoreProps {
-  /** Number of areas the user is tracking. More areas = denser orb. */
-  areaCount: number;
-  /** Average of the most recent score across areas, 0-10. Drives glow intensity. */
+  areas: OrbArea[];
+  /** Average of the most recent score across areas, 0-10. Drives glow. */
   vitality: number;
 }
 
 /**
- * The dashboard orb. A central icosahedron with a wireframe shell, plus one
- * orbiting node per area the user is tracking. As the user adds areas and
- * logs scores, the orb visibly grows and brightens.
- *
- * This is the stripped-down version of the long-term "living web" vision.
- * The next iteration will add lines between nodes, text labels, and per-area
- * size/color driven by the score history.
+ * Single orbiting node. Each one knows its area's name and color, scales up
+ * smoothly on hover, and shows a small floating label so the user can
+ * identify the dot without having to puzzle it out.
  */
-function OrbCore({ areaCount, vitality }: OrbCoreProps) {
+function Node({
+  position,
+  area,
+  onHover,
+  hovered,
+}: {
+  position: [number, number, number];
+  area: OrbArea;
+  onHover: (id: string | null) => void;
+  hovered: boolean;
+}) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
+
+  useFrame((_, delta) => {
+    if (!meshRef.current || !glowRef.current) return;
+    const target = hovered ? 1.7 : 1;
+    meshRef.current.scale.x += (target - meshRef.current.scale.x) * Math.min(1, delta * 12);
+    meshRef.current.scale.y = meshRef.current.scale.x;
+    meshRef.current.scale.z = meshRef.current.scale.x;
+
+    const glowTarget = hovered ? 2.4 : 1.2;
+    glowRef.current.scale.x += (glowTarget - glowRef.current.scale.x) * Math.min(1, delta * 10);
+    glowRef.current.scale.y = glowRef.current.scale.x;
+    glowRef.current.scale.z = glowRef.current.scale.x;
+  });
+
+  return (
+    <group position={position}>
+      {/* Outer soft glow disc, also colored */}
+      <mesh ref={glowRef}>
+        <sphereGeometry args={[0.06, 16, 16]} />
+        <meshBasicMaterial color={area.color} transparent opacity={0.25} />
+      </mesh>
+      {/* Solid node, interactive */}
+      <mesh
+        ref={meshRef}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          onHover(area.id);
+          document.body.style.cursor = 'pointer';
+        }}
+        onPointerOut={() => {
+          onHover(null);
+          document.body.style.cursor = 'auto';
+        }}
+      >
+        <sphereGeometry args={[0.06, 20, 20]} />
+        <meshBasicMaterial color={area.color} />
+      </mesh>
+
+      {/* Floating label, visible only when hovered */}
+      {hovered && (
+        <Html
+          position={[0, 0.14, 0]}
+          center
+          distanceFactor={5}
+          style={{ pointerEvents: 'none' }}
+        >
+          <div
+            className="whitespace-nowrap rounded-sm border bg-black/85 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-ivory backdrop-blur"
+            style={{ borderColor: `${area.color}aa`, color: '#f0f2ee' }}
+          >
+            {area.name}
+          </div>
+        </Html>
+      )}
+    </group>
+  );
+}
+
+function OrbCore({ areas, vitality }: OrbCoreProps) {
   const coreRef = useRef<THREE.Mesh>(null);
   const wireRef = useRef<THREE.Mesh>(null);
   const nodesRef = useRef<THREE.Group>(null);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -37,12 +111,11 @@ function OrbCore({ areaCount, vitality }: OrbCoreProps) {
     return () => window.removeEventListener('mousemove', handler);
   }, []);
 
-  // One position on the surface of a sphere for each area, evenly distributed
-  // using a Fibonacci lattice.
-  const nodePositions = useMemo(() => {
+  // Fibonacci-lattice positions, evenly distributed on a sphere.
+  const nodePositions = useMemo<[number, number, number][]>(() => {
     const out: [number, number, number][] = [];
     const r = 1.55;
-    const n = Math.max(areaCount, 0);
+    const n = areas.length;
     if (n === 0) return out;
     const golden = Math.PI * (3 - Math.sqrt(5));
     for (let i = 0; i < n; i++) {
@@ -56,12 +129,9 @@ function OrbCore({ areaCount, vitality }: OrbCoreProps) {
       ]);
     }
     return out;
-  }, [areaCount]);
+  }, [areas.length]);
 
-  // Wireframe density scales with area count, clamped so it never gets ugly.
-  const wireDetail = Math.min(2 + Math.floor(areaCount / 3), 4);
-
-  // Vitality drives emissive intensity. Higher recent scores = brighter orb.
+  const wireDetail = Math.min(2 + Math.floor(areas.length / 3), 4);
   const emissive = 0.4 + Math.min(vitality, 10) * 0.06;
 
   useFrame((state, delta) => {
@@ -84,15 +154,17 @@ function OrbCore({ areaCount, vitality }: OrbCoreProps) {
       wireRef.current.scale.setScalar(breath * 1.08);
     }
     if (nodesRef.current) {
-      // Counter-rotate the nodes so they slowly drift around the core.
-      nodesRef.current.rotation.y += delta * 0.1;
+      // Pause the orbit while the user is hovering a node, so the label
+      // does not drift away from the cursor.
+      if (!hoveredId) {
+        nodesRef.current.rotation.y += delta * 0.1;
+      }
       nodesRef.current.rotation.x = mouse.y * 0.2;
     }
   });
 
   return (
     <group>
-      {/* Solid core */}
       <mesh ref={coreRef}>
         <icosahedronGeometry args={[1.2, wireDetail]} />
         <meshStandardMaterial
@@ -104,35 +176,45 @@ function OrbCore({ areaCount, vitality }: OrbCoreProps) {
           flatShading
         />
       </mesh>
-      {/* Wireframe shell */}
       <mesh ref={wireRef}>
         <icosahedronGeometry args={[1.32, wireDetail]} />
         <meshBasicMaterial color="#e4c97a" wireframe transparent opacity={0.18} />
       </mesh>
-      {/* Orbiting nodes, one per area */}
+
+      {/* Orbiting colored nodes with hover labels */}
       <group ref={nodesRef}>
-        {nodePositions.map((pos, i) => (
-          <mesh key={i} position={pos}>
-            <sphereGeometry args={[0.06, 16, 16]} />
-            <meshBasicMaterial color="#e4c97a" />
-          </mesh>
-        ))}
-        {/* Faint lines from each node to the center, hinting at the future web */}
+        {areas.map((area, i) => {
+          const pos = nodePositions[i];
+          if (!pos) return null;
+          return (
+            <Node
+              key={area.id}
+              position={pos}
+              area={area}
+              hovered={hoveredId === area.id}
+              onHover={setHoveredId}
+            />
+          );
+        })}
+
+        {/* Faint lines from each node back to the core */}
         {nodePositions.map((pos, i) => {
+          const area = areas[i];
+          if (!area) return null;
           const geometry = new THREE.BufferGeometry().setFromPoints([
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(...pos),
           ]);
           return (
             <primitive
-              key={`line-${i}`}
+              key={`line-${area.id}`}
               object={
                 new THREE.Line(
                   geometry,
                   new THREE.LineBasicMaterial({
-                    color: '#c9a548',
+                    color: new THREE.Color(area.color),
                     transparent: true,
-                    opacity: 0.12,
+                    opacity: 0.18,
                   }),
                 )
               }
@@ -146,15 +228,13 @@ function OrbCore({ areaCount, vitality }: OrbCoreProps) {
 
 interface PremiumOrbProps {
   className?: string;
-  /** Number of areas the user is tracking. Drives orb complexity. */
-  areaCount?: number;
-  /** Average recent score (1-10) across all areas. Drives glow. */
+  areas?: OrbArea[];
   vitality?: number;
 }
 
 export function PremiumOrb({
   className = '',
-  areaCount = 0,
+  areas = [],
   vitality = 0,
 }: PremiumOrbProps) {
   return (
@@ -168,7 +248,7 @@ export function PremiumOrb({
         <directionalLight position={[3, 4, 5]} intensity={1.2} color="#fff5d6" />
         <pointLight position={[-3, -2, -2]} intensity={0.5} color="#2d6a4f" />
         <Suspense fallback={null}>
-          <OrbCore areaCount={areaCount} vitality={vitality} />
+          <OrbCore areas={areas} vitality={vitality} />
         </Suspense>
       </Canvas>
     </div>
