@@ -2,6 +2,7 @@
 
 import { UserButton } from '@clerk/nextjs';
 import { usePathname } from 'next/navigation';
+import { MobileNav } from './MobileNav';
 
 const titleMap: Record<string, string> = {
   '/dashboard': 'Overview',
@@ -12,20 +13,26 @@ const titleMap: Record<string, string> = {
 };
 
 /**
- * Top bar for the dashboard. Shows the current section title on the left,
- * and the Clerk UserButton (avatar + menu) on the right. Resend-style.
+ * Top bar for the dashboard. Hamburger menu on the left for mobile, current
+ * section title in the middle, Clerk UserButton on the right. On desktop
+ * the hamburger is hidden and a "Christ Fields / Section" breadcrumb shows.
  */
 export function TopBar() {
   const pathname = usePathname();
   const title = titleMap[pathname] ?? 'Dashboard';
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border-sub bg-black-2/90 px-6 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border-sub bg-black-2/90 px-4 backdrop-blur-xl md:px-6">
       <div className="flex items-center gap-3">
-        <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted">
+        {/* Hamburger for mobile; hides on lg+ */}
+        <MobileNav />
+
+        {/* Breadcrumb only visible on desktop. On mobile the title alone
+            keeps the bar uncluttered next to the hamburger. */}
+        <p className="hidden text-[10px] font-medium uppercase tracking-[0.22em] text-muted lg:block">
           Christ Fields
         </p>
-        <span className="text-muted">/</span>
+        <span className="hidden text-muted lg:inline">/</span>
         <h1 className="text-sm font-medium text-ivory">{title}</h1>
       </div>
 
@@ -35,7 +42,8 @@ export function TopBar() {
             elements: {
               avatarBox: 'h-8 w-8 ring-1 ring-border-gold',
               userButtonPopoverCard: 'bg-black-2 border border-border-sub',
-              userButtonPopoverActionButton: 'text-silver hover:text-ivory hover:bg-black-3',
+              userButtonPopoverActionButton:
+                'text-silver hover:text-ivory hover:bg-black-3',
               userButtonPopoverFooter: 'hidden',
             },
           }}

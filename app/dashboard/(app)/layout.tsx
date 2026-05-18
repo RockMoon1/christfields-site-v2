@@ -23,7 +23,7 @@ export default async function DashboardLayout({
       <Sidebar />
       <div className="lg:pl-60">
         <TopBar />
-        <main className="p-6 md:p-10">{children}</main>
+        <main className="px-4 py-6 sm:px-6 md:p-10">{children}</main>
       </div>
     </div>
   );
