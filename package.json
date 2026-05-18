@@ -17,7 +17,6 @@
     "@next/mdx": "^16.2.6",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
-    "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.4",
     "@types/mdx": "^2.0.13",
     "clsx": "^2.1.1",

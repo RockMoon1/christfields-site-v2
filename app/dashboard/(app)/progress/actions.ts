@@ -25,42 +25,64 @@ async function requireUser(): Promise<string> {
   return userId;
 }
 
-/** Load every area the user has, with all their entries attached. */
+/**
+ * Load every area the user has, with all their entries attached.
+ * Returns an empty array on any failure (missing env vars, missing tables,
+ * network issues) instead of throwing, so the dashboard can still render
+ * even when the database is misconfigured. Real errors are logged server-side.
+ */
 export async function getAreas(): Promise<AreaWithEntries[]> {
-  const userId = await requireUser();
-  const sb = getSupabase();
+  try {
+    const userId = await requireUser();
+    const sb = getSupabase();
 
-  const { data: areas, error: areasErr } = await sb
-    .from('progress_areas')
-    .select('*')
-    .eq('clerk_user_id', userId)
-    .order('created_at', { ascending: true });
+    const { data: areas, error: areasErr } = await sb
+      .from('progress_areas')
+      .select('*')
+      .eq('clerk_user_id', userId)
+      .order('created_at', { ascending: true });
 
-  if (areasErr) throw areasErr;
-  if (!areas || areas.length === 0) return [];
+    if (areasErr) {
+      console.error('getAreas: failed to load areas', areasErr);
+      return [];
+    }
+    if (!areas || areas.length === 0) return [];
 
-  const areaIds = (areas as ProgressArea[]).map((a) => a.id);
-  const { data: entries, error: entriesErr } = await sb
-    .from('progress_entries')
-    .select('*')
-    .in('area_id', areaIds)
-    .order('logged_at', { ascending: true });
+    const areaIds = (areas as ProgressArea[]).map((a) => a.id);
+    const { data: entries, error: entriesErr } = await sb
+      .from('progress_entries')
+      .select('*')
+      .in('area_id', areaIds)
+      .order('logged_at', { ascending: true });
 
-  if (entriesErr) throw entriesErr;
+    if (entriesErr) {
+      console.error('getAreas: failed to load entries', entriesErr);
+      // Still return areas, just without entries
+      return (areas as ProgressArea[]).map((a) => ({
+        id: a.id,
+        name: a.name,
+        description: a.description,
+        entries: [],
+      }));
+    }
 
-  const byArea = new Map<string, { score: number; date: string }[]>();
-  for (const e of (entries as ProgressEntry[]) || []) {
-    const list = byArea.get(e.area_id) || [];
-    list.push({ score: e.score, date: e.logged_at.split('T')[0] });
-    byArea.set(e.area_id, list);
+    const byArea = new Map<string, { score: number; date: string }[]>();
+    for (const e of (entries as ProgressEntry[]) || []) {
+      const list = byArea.get(e.area_id) || [];
+      list.push({ score: e.score, date: e.logged_at.split('T')[0] });
+      byArea.set(e.area_id, list);
+    }
+
+    return (areas as ProgressArea[]).map((a) => ({
+      id: a.id,
+      name: a.name,
+      description: a.description,
+      entries: byArea.get(a.id) || [],
+    }));
+  } catch (err) {
+    console.error('getAreas: unexpected failure', err);
+    return [];
   }
-
-  return (areas as ProgressArea[]).map((a) => ({
-    id: a.id,
-    name: a.name,
-    description: a.description,
-    entries: byArea.get(a.id) || [],
-  }));
 }
 
 /** Add a new area for the signed-in user. */
