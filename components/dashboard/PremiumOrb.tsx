@@ -4,6 +4,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, useTexture } from '@react-three/drei';
 import { Suspense, useMemo, useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
+import { useIsMobile } from '@/lib/hooks/useIsMobile';
 
 export interface OrbArea {
   id: string;
@@ -120,13 +121,17 @@ function SweepLight() {
  * surface dramatically. Combined with the orbiting SweepLight, the mark
  * gets a true "flash of light" as it rotates.
  */
-function LogoMark({ areas, vitality }: OrbCoreProps) {
+function LogoMark({ areas, vitality, isMobile }: OrbCoreProps & { isMobile: boolean }) {
   const markGroupRef = useRef<THREE.Group>(null);
   const haloRef = useRef<THREE.Mesh>(null);
   const wireRef = useRef<THREE.Mesh>(null);
   const nodesRef = useRef<THREE.Group>(null);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+  // Plane segment count for the displacement-mapped logo. Heavy on mobile —
+  // cut roughly in half so the geometry is half the vertex count.
+  const planeSegments = isMobile ? 80 : 160;
 
   // Load the logo PNG once. drei's useTexture suspends until ready.
   const logoTex = useTexture('/assets/logo.png');
@@ -273,10 +278,11 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
           <boxGeometry args={[1.9, 1.9, 0.18]} />
         </mesh>
 
-        {/* Front-face 3D logo. Plane is heavily subdivided (160 segments)
-            so the displacement looks smooth, not faceted. */}
+        {/* Front-face 3D logo. Plane subdivisions tuned by device — 160 on
+            desktop for smooth displacement, 80 on mobile to halve the vertex
+            count and keep GPUs happy. */}
         <mesh position={[0, 0, 0.092]} material={logoMaterial}>
-          <planeGeometry args={[1.7, 1.7, 160, 160]} />
+          <planeGeometry args={[1.7, 1.7, planeSegments, planeSegments]} />
         </mesh>
 
         {/* Back-face 3D logo, rotated 180 so the cross faces outward there too. */}
@@ -285,7 +291,7 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
           rotation={[0, Math.PI, 0]}
           material={logoMaterial}
         >
-          <planeGeometry args={[1.7, 1.7, 160, 160]} />
+          <planeGeometry args={[1.7, 1.7, planeSegments, planeSegments]} />
         </mesh>
       </group>
 
@@ -349,26 +355,32 @@ export function PremiumOrb({
   areas = [],
   vitality = 0,
 }: PremiumOrbProps) {
+  const isMobile = useIsMobile();
+
   return (
     <div className={className}>
       <Canvas
         camera={{ position: [0, 0, 5], fov: 45 }}
         gl={{
-          antialias: true,
+          antialias: !isMobile, // skip MSAA on mobile, saves significant GPU
           alpha: true,
           powerPreference: 'high-performance',
           toneMapping: THREE.ACESFilmicToneMapping,
         }}
-        // Bump device pixel ratio for sharper output. Capped at 3 so we do
-        // not melt phone GPUs on hi-DPI screens.
-        dpr={[1.5, 3]}
+        // On desktop: render at 1.5x to 3x DPR for crisp output.
+        // On mobile: cap at 1.5x so phones do not try to render at 3x retina.
+        dpr={isMobile ? [1, 1.5] : [1.5, 3]}
       >
         <ambientLight intensity={0.55} />
         <directionalLight position={[3, 4, 5]} intensity={1.8} color="#fff5d6" />
         <pointLight position={[-3, -2, -2]} intensity={0.6} color="#2d6a4f" />
-        <SweepLight />
+        {/* SweepLight is a moving PointLight that creates the cinematic
+            highlight flash on the metallic mark. Beautiful on desktop,
+            expensive on mobile because every frame recomputes shading
+            for the highly-detailed PhysicalMaterial. Skip it on phones. */}
+        {!isMobile && <SweepLight />}
         <Suspense fallback={null}>
-          <LogoMark areas={areas} vitality={vitality} />
+          <LogoMark areas={areas} vitality={vitality} isMobile={isMobile} />
         </Suspense>
       </Canvas>
     </div>

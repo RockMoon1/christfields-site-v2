@@ -52,8 +52,10 @@ export default async function DashboardHome() {
           the user scrolls; everything fades back to invisible at rest. */}
       <TronScrollEffect />
 
-      {/* Page-wide ambient blobs that drift behind ALL content. */}
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+      {/* Page-wide ambient blobs that drift behind ALL content. The big
+          60px blurs are too expensive on mobile GPUs, so hide them under
+          the md breakpoint via Tailwind. */}
+      <div className="pointer-events-none absolute inset-0 -z-10 hidden overflow-hidden md:block">
         <MorphBlob
           color="rgba(201, 165, 72, 0.04)"
           size={620}

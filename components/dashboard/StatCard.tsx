@@ -3,6 +3,7 @@
 import { motion, useMotionValue, useSpring } from 'motion/react';
 import { type MouseEvent } from 'react';
 import { CountUp } from '@/components/motion/CountUp';
+import { useIsMobile } from '@/lib/hooks/useIsMobile';
 
 interface StatCardProps {
   label: string;
@@ -29,12 +30,14 @@ export function StatCard({
   accent = '#c9a548',
   index = 0,
 }: StatCardProps) {
+  const isMobile = useIsMobile();
   const mouseX = useMotionValue(-9999);
   const mouseY = useMotionValue(-9999);
   const springX = useSpring(mouseX, { stiffness: 220, damping: 26 });
   const springY = useSpring(mouseY, { stiffness: 220, damping: 26 });
 
   function handleMouseMove(e: MouseEvent<HTMLDivElement>) {
+    if (isMobile) return; // touch devices skip cursor tracking
     const rect = e.currentTarget.getBoundingClientRect();
     mouseX.set(e.clientX - rect.left);
     mouseY.set(e.clientY - rect.top);
@@ -53,17 +56,19 @@ export function StatCard({
       }}
       className="group relative overflow-hidden rounded-sm border border-border-sub bg-black-3 p-6"
     >
-      {/* Cursor-tracking accent glow inside the card */}
-      <motion.div
-        aria-hidden
-        className="pointer-events-none absolute h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-        style={{
-          left: springX,
-          top: springY,
-          background: `radial-gradient(circle, ${accent}38, transparent 65%)`,
-          mixBlendMode: 'plus-lighter',
-        }}
-      />
+      {/* Cursor-tracking accent glow inside the card — desktop only. */}
+      {!isMobile && (
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          style={{
+            left: springX,
+            top: springY,
+            background: `radial-gradient(circle, ${accent}38, transparent 65%)`,
+            mixBlendMode: 'plus-lighter',
+          }}
+        />
+      )}
 
       {/* Top accent line that breathes */}
       <motion.div

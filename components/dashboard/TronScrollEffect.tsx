@@ -7,6 +7,7 @@ import {
   useSpring,
   useTransform,
 } from 'motion/react';
+import { useIsMobile } from '@/lib/hooks/useIsMobile';
 
 /**
  * TRON-style scroll trails. As the user scrolls, glowing gold lines pulse
@@ -19,6 +20,7 @@ import {
  * interfere with clicks or text selection.
  */
 export function TronScrollEffect() {
+  const isMobile = useIsMobile();
   const { scrollY } = useScroll();
   const velocity = useVelocity(scrollY);
   const smooth = useSpring(velocity, {
@@ -26,6 +28,12 @@ export function TronScrollEffect() {
     damping: 30,
     mass: 0.4,
   });
+
+  // Skip the whole effect on mobile. The spring driven transforms on three
+  // separate elements each frame plus the mid-screen blur halo are too
+  // expensive on small GPUs, and the visual payoff is much weaker on a
+  // small screen where the edges are millimeters apart.
+  if (isMobile) return null;
 
   // Absolute velocity → opacity. Even tiny scroll triggers a hint of glow;
   // a fast flick lights the edges up dramatically.
