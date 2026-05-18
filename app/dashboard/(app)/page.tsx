@@ -1,24 +1,30 @@
-import Link from 'next/link';
 import { currentUser } from '@clerk/nextjs/server';
+import Link from 'next/link';
 import { PremiumOrb } from '@/components/dashboard/PremiumOrb';
 import { TronScrollEffect } from '@/components/dashboard/TronScrollEffect';
-import { RecentActivityConstellation } from '@/components/dashboard/RecentActivityConstellation';
+import { HeroPanel } from '@/components/dashboard/HeroPanel';
+import { StatCard } from '@/components/dashboard/StatCard';
+import { MagneticButton } from '@/components/motion/MagneticButton';
+import { TextSplit } from '@/components/motion/TextSplit';
+import { MorphBlob } from '@/components/motion/MorphBlob';
 import { getAreas } from './progress/actions';
 
 /**
- * Dashboard overview. The first thing a member sees after signing in.
- * Premium 3D orb on the right, personal greeting + at-a-glance stats on
- * the left. Stats are real, pulled from the user's actual data.
+ * Dashboard overview. Composes the cursor-following orb, animated hero
+ * panel, motion-driven stat cards, and TRON scroll trails into a page
+ * that always feels alive. No more recent-activity list — that data is
+ * already represented on /dashboard/progress via the sparklines and on
+ * the orb webbing through area count and vitality.
  */
 export default async function DashboardHome() {
-  // Fetch Clerk user and Supabase data in parallel rather than waterfalled.
   const [user, areas] = await Promise.all([currentUser(), getAreas()]);
   const firstName = user?.firstName || user?.username || 'friend';
 
-  // Real data for the stat cards.
   const totalAreas = areas.length;
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    .toISOString()
+    .split('T')[0];
   const entriesThisMonth = areas.reduce(
     (acc, a) => acc + a.entries.filter((e) => e.date >= startOfMonth).length,
     0,
@@ -26,10 +32,12 @@ export default async function DashboardHome() {
   const memberSince = user?.createdAt ? new Date(user.createdAt) : now;
   const daysSinceJoin = Math.max(
     1,
-    Math.floor((now.getTime() - memberSince.getTime()) / (1000 * 60 * 60 * 24)),
+    Math.floor(
+      (now.getTime() - memberSince.getTime()) / (1000 * 60 * 60 * 24),
+    ),
   );
 
-  // Vitality = average of each area's most recent score. Drives the orb glow.
+  // Vitality drives orb glow.
   const latestScores = areas
     .map((a) => a.entries[a.entries.length - 1]?.score)
     .filter((s): s is number => typeof s === 'number');
@@ -38,47 +46,70 @@ export default async function DashboardHome() {
       ? latestScores.reduce((a, b) => a + b, 0) / latestScores.length
       : 0;
 
-  // Build the constellation nodes for recent activity. Each node carries the
-  // area's color so the chart can render dots in matching colors.
-  const recentNodes = flattenRecent(areas, 8);
-
   return (
-    <div className="mx-auto max-w-6xl">
-      {/* TRON-style scroll trails — gold edges and a midline beam that pulse
-          with scroll velocity and fade back to invisible when still. */}
+    <div className="relative mx-auto max-w-6xl">
+      {/* TRON-style scroll trails — edges glow and a midline beam drifts as
+          the user scrolls; everything fades back to invisible at rest. */}
       <TronScrollEffect />
 
-      <section className="relative mb-12 overflow-hidden rounded-sm border border-border-sub bg-gradient-to-br from-black-3 to-black-2">
+      {/* Page-wide ambient blobs that drift behind ALL content. */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <MorphBlob
+          color="rgba(201, 165, 72, 0.04)"
+          size={620}
+          className="left-1/3 top-1/3"
+        />
+        <MorphBlob
+          color="rgba(45, 106, 79, 0.05)"
+          size={520}
+          className="-right-32 top-3/4"
+        />
+      </div>
+
+      {/* Hero panel: ambient blobs, cursor glow, animated borders, breathing. */}
+      <HeroPanel>
         <div className="grid items-center gap-6 p-8 md:grid-cols-2 md:p-12">
           <div>
             <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.22em] text-gold">
-              Welcome back
+              <PulsingDot /> Welcome back
             </p>
+
+            {/* Greeting with character-by-character reveal */}
             <h2 className="mb-4 font-display text-4xl font-light leading-tight text-ivory md:text-5xl">
-              Hello, <em className="not-italic text-gold-lt">{firstName}</em>.
+              <TextSplit text="Hello, " delay={0.2} />
+              <em className="not-italic text-gold-lt">
+                <TextSplit text={`${firstName}.`} delay={0.45} />
+              </em>
             </h2>
+
             <p className="max-w-md text-base leading-relaxed text-silver">
-              This is your space. Track the things you are working on. Look back at where
-              you started. Be honest with yourself about where you are now.
+              This is your space. Track the things you are working on. Look back at
+              where you started. Be honest with yourself about where you are now.
             </p>
+
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/dashboard/progress"
-                prefetch
-                className="inline-flex items-center gap-2 rounded-sm bg-gold px-5 py-2.5 text-[11px] font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt"
-              >
-                Log progress →
-              </Link>
-              <Link
-                href="/dashboard/resources"
-                prefetch
-                className="inline-flex items-center gap-2 rounded-sm border border-gold/45 bg-transparent px-5 py-2.5 text-[11px] font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black"
-              >
-                Open resources
-              </Link>
+              <MagneticButton>
+                <Link
+                  href="/dashboard/progress"
+                  prefetch
+                  className="inline-flex items-center gap-2 rounded-sm bg-gold px-5 py-2.5 text-[11px] font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt"
+                >
+                  Log progress →
+                </Link>
+              </MagneticButton>
+              <MagneticButton>
+                <Link
+                  href="/dashboard/resources"
+                  prefetch
+                  className="inline-flex items-center gap-2 rounded-sm border border-gold/45 bg-transparent px-5 py-2.5 text-[11px] font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black"
+                >
+                  Open resources
+                </Link>
+              </MagneticButton>
             </div>
           </div>
 
+          {/* 3D logo medallion */}
           <div className="relative aspect-square w-full max-w-[360px] justify-self-end">
             <PremiumOrb
               className="h-full w-full"
@@ -87,104 +118,48 @@ export default async function DashboardHome() {
             />
           </div>
         </div>
-      </section>
+      </HeroPanel>
 
-      <section className="mb-12 grid gap-4 md:grid-cols-3">
+      {/* Stat cards: stagger entrance, hover lift, cursor glow, pulsing dots. */}
+      <section className="grid gap-4 md:grid-cols-3">
         <StatCard
           label="Active areas"
-          value={String(totalAreas)}
-          hint={totalAreas === 0 ? 'Start tracking on the Progress page' : 'Things you are working on'}
+          value={totalAreas}
+          hint={
+            totalAreas === 0
+              ? 'Start tracking on the Progress page'
+              : 'Things you are working on'
+          }
+          accent="#c9a548"
+          index={0}
         />
         <StatCard
           label="Entries this month"
-          value={String(entriesThisMonth)}
+          value={entriesThisMonth}
           hint="Log when something shifts"
+          accent="#2d6a4f"
+          index={1}
         />
         <StatCard
           label="Days since you started"
-          value={String(daysSinceJoin)}
+          value={daysSinceJoin}
           hint="Today counts"
-        />
-      </section>
-
-      <section>
-        <div className="mb-4 flex items-end justify-between">
-          <div>
-            <h3 className="font-display text-2xl font-light text-ivory">Recent activity</h3>
-            <p className="mt-1 text-sm text-silver">
-              Your last entries and any notes added by Christ Fields.
-            </p>
-          </div>
-        </div>
-        <RecentActivityConstellation
-          nodes={recentNodes.map((row) => ({
-            key: `${row.areaId}-${row.date}-${row.score}`,
-            areaName: row.areaName,
-            score: row.score,
-            date: row.date,
-            color: row.color,
-          }))}
+          accent="#e4c97a"
+          index={2}
         />
       </section>
     </div>
   );
 }
 
-interface StatCardProps {
-  label: string;
-  value: string;
-  hint: string;
-}
-
-function StatCard({ label, value, hint }: StatCardProps) {
+/**
+ * A tiny pulsing gold dot used as a status indicator next to "Welcome back".
+ */
+function PulsingDot() {
   return (
-    <div className="group relative overflow-hidden rounded-sm border border-border-sub bg-black-3 p-6 transition-colors hover:border-border-gold">
-      <div
-        aria-hidden
-        className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-      />
-      <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.22em] text-muted">
-        {label}
-      </p>
-      <p className="font-display text-4xl font-light text-gold-lt">{value}</p>
-      <p className="mt-3 text-xs text-silver">{hint}</p>
-    </div>
+    <span className="relative mr-2 inline-block h-1.5 w-1.5 align-middle">
+      <span className="absolute inset-0 animate-ping rounded-full bg-gold opacity-75" />
+      <span className="absolute inset-0 rounded-full bg-gold" />
+    </span>
   );
-}
-
-/* ============================================================
-   Helpers
-   ============================================================ */
-
-function flattenRecent(
-  areas: {
-    id: string;
-    name: string;
-    color: string;
-    entries: { score: number; date: string }[];
-  }[],
-  limit: number,
-) {
-  const rows: {
-    areaId: string;
-    areaName: string;
-    color: string;
-    score: number;
-    date: string;
-  }[] = [];
-  for (const a of areas) {
-    for (const e of a.entries) {
-      rows.push({
-        areaId: a.id,
-        areaName: a.name,
-        color: a.color,
-        score: e.score,
-        date: e.date,
-      });
-    }
-  }
-  // Chronological order so newest dots sit on the right of the constellation.
-  rows.sort((a, b) => (a.date < b.date ? -1 : 1));
-  // Then trim to the latest `limit` entries.
-  return rows.slice(-limit);
 }
