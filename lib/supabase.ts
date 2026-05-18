@@ -40,6 +40,9 @@ export interface ProgressArea {
   clerk_user_id: string;
   name: string;
   description: string;
+  preset_key: string | null;
+  why_it_matters: string;
+  target_score: number | null;
   created_at: string;
 }
 
@@ -47,6 +50,7 @@ export interface ProgressEntry {
   id: string;
   area_id: string;
   score: number;
+  note: string;
   logged_at: string;
 }
 

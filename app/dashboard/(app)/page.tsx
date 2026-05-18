@@ -26,6 +26,15 @@ export default async function DashboardHome() {
     Math.floor((now.getTime() - memberSince.getTime()) / (1000 * 60 * 60 * 24)),
   );
 
+  // Vitality = average of each area's most recent score. Drives the orb glow.
+  const latestScores = areas
+    .map((a) => a.entries[a.entries.length - 1]?.score)
+    .filter((s): s is number => typeof s === 'number');
+  const vitality =
+    latestScores.length > 0
+      ? latestScores.reduce((a, b) => a + b, 0) / latestScores.length
+      : 0;
+
   return (
     <div className="mx-auto max-w-6xl">
       <section className="relative mb-12 overflow-hidden rounded-sm border border-border-sub bg-gradient-to-br from-black-3 to-black-2">
@@ -58,7 +67,11 @@ export default async function DashboardHome() {
           </div>
 
           <div className="relative aspect-square w-full max-w-[360px] justify-self-end">
-            <PremiumOrb className="h-full w-full" />
+            <PremiumOrb
+              className="h-full w-full"
+              areaCount={totalAreas}
+              vitality={vitality}
+            />
           </div>
         </div>
       </section>

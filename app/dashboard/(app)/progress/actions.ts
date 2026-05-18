@@ -16,8 +16,63 @@ export interface AreaWithEntries {
   id: string;
   name: string;
   description: string;
-  entries: { score: number; date: string }[];
+  whyItMatters: string;
+  targetScore: number | null;
+  presetKey: string | null;
+  entries: { score: number; date: string; note: string }[];
 }
+
+/* ============================================================
+   Presets. Auto-created the first time a user loads their
+   dashboard. Cannot be deleted (UI hides the delete button and
+   the deleteArea action refuses to remove them).
+   ============================================================ */
+
+interface PresetDef {
+  key: string;
+  name: string;
+  description: string;
+  whyItMatters: string;
+  targetScore: number;
+}
+
+const PRESETS: PresetDef[] = [
+  {
+    key: 'presence',
+    name: 'Presence',
+    description: 'Showing up to group, in person.',
+    whyItMatters: 'Community needs your presence, not just your attention.',
+    targetScore: 8,
+  },
+  {
+    key: 'honesty',
+    name: 'Honesty',
+    description: 'Telling the truth about your week.',
+    whyItMatters: 'You cannot fake your way through a group like this. The people next to you eventually know.',
+    targetScore: 8,
+  },
+  {
+    key: 'scripture',
+    name: 'Scripture',
+    description: 'Reading and reflecting on the Word.',
+    whyItMatters: 'Reading slowly, together, makes Scripture bigger than we usually treat it.',
+    targetScore: 7,
+  },
+  {
+    key: 'prayer',
+    name: 'Prayer',
+    description: 'For others and for yourself.',
+    whyItMatters: 'Praying for each other by name changes things in ways you cannot predict.',
+    targetScore: 7,
+  },
+  {
+    key: 'sharpening',
+    name: 'Sharpening',
+    description: 'Pushing someone else toward growth.',
+    whyItMatters: 'As iron sharpens iron, so one person sharpens another.',
+    targetScore: 7,
+  },
+];
 
 async function requireUser(): Promise<string> {
   const { userId } = await auth();
@@ -26,20 +81,51 @@ async function requireUser(): Promise<string> {
 }
 
 /**
- * Load every area the user has, with all their entries attached.
- * Returns an empty array on any failure (missing env vars, missing tables,
- * network issues) instead of throwing, so the dashboard can still render
- * even when the database is misconfigured. Real errors are logged server-side.
+ * Idempotent: ensures all preset areas exist for this user. Called before
+ * every getAreas() so a fresh account, or one that pre-dates new presets,
+ * always sees them on next page load.
+ */
+async function ensurePresets(userId: string) {
+  const sb = getSupabase();
+
+  const { data: existing } = await sb
+    .from('progress_areas')
+    .select('preset_key')
+    .eq('clerk_user_id', userId)
+    .not('preset_key', 'is', null);
+
+  const have = new Set((existing as { preset_key: string }[] | null)?.map((r) => r.preset_key) || []);
+  const missing = PRESETS.filter((p) => !have.has(p.key));
+  if (missing.length === 0) return;
+
+  await sb.from('progress_areas').insert(
+    missing.map((p) => ({
+      clerk_user_id: userId,
+      preset_key: p.key,
+      name: p.name,
+      description: p.description,
+      why_it_matters: p.whyItMatters,
+      target_score: p.targetScore,
+    })),
+  );
+}
+
+/**
+ * Load every area the user has, with all their entries attached. Auto-seeds
+ * preset areas if missing. Returns an empty array on any database failure so
+ * the dashboard still renders.
  */
 export async function getAreas(): Promise<AreaWithEntries[]> {
   try {
     const userId = await requireUser();
+    await ensurePresets(userId);
     const sb = getSupabase();
 
     const { data: areas, error: areasErr } = await sb
       .from('progress_areas')
       .select('*')
       .eq('clerk_user_id', userId)
+      .order('preset_key', { ascending: true, nullsFirst: false }) // presets first
       .order('created_at', { ascending: true });
 
     if (areasErr) {
@@ -57,26 +143,22 @@ export async function getAreas(): Promise<AreaWithEntries[]> {
 
     if (entriesErr) {
       console.error('getAreas: failed to load entries', entriesErr);
-      // Still return areas, just without entries
-      return (areas as ProgressArea[]).map((a) => ({
-        id: a.id,
-        name: a.name,
-        description: a.description,
-        entries: [],
-      }));
+      return (areas as ProgressArea[]).map(toAreaWithEntries);
     }
 
-    const byArea = new Map<string, { score: number; date: string }[]>();
+    const byArea = new Map<string, { score: number; date: string; note: string }[]>();
     for (const e of (entries as ProgressEntry[]) || []) {
       const list = byArea.get(e.area_id) || [];
-      list.push({ score: e.score, date: e.logged_at.split('T')[0] });
+      list.push({
+        score: e.score,
+        date: e.logged_at.split('T')[0],
+        note: e.note || '',
+      });
       byArea.set(e.area_id, list);
     }
 
     return (areas as ProgressArea[]).map((a) => ({
-      id: a.id,
-      name: a.name,
-      description: a.description,
+      ...toAreaWithEntries(a),
       entries: byArea.get(a.id) || [],
     }));
   } catch (err) {
@@ -85,25 +167,38 @@ export async function getAreas(): Promise<AreaWithEntries[]> {
   }
 }
 
-/**
- * Add a new area for the signed-in user. Returns the created area so the
- * client can replace its optimistic temp row with the real one (with the
- * real database ID), which is needed before scoring it works.
- */
-export async function createArea(
-  name: string,
-  description: string,
-): Promise<AreaWithEntries> {
+function toAreaWithEntries(a: ProgressArea): AreaWithEntries {
+  return {
+    id: a.id,
+    name: a.name,
+    description: a.description || '',
+    whyItMatters: a.why_it_matters || '',
+    targetScore: a.target_score,
+    presetKey: a.preset_key,
+    entries: [],
+  };
+}
+
+/** Add a new (non-preset) area for the signed-in user. */
+export async function createArea(input: {
+  name: string;
+  description: string;
+  whyItMatters: string;
+  targetScore: number;
+}): Promise<AreaWithEntries> {
   const userId = await requireUser();
-  if (!name.trim()) throw new Error('Area name required');
+  if (!input.name.trim()) throw new Error('Area name required');
 
   const sb = getSupabase();
   const { data, error } = await sb
     .from('progress_areas')
     .insert({
       clerk_user_id: userId,
-      name: name.trim().slice(0, 100),
-      description: description.trim().slice(0, 500),
+      name: input.name.trim().slice(0, 100),
+      description: input.description.trim().slice(0, 500),
+      why_it_matters: input.whyItMatters.trim().slice(0, 500),
+      target_score: clamp(input.targetScore, 1, 10),
+      preset_key: null,
     })
     .select()
     .single();
@@ -113,23 +208,16 @@ export async function createArea(
   revalidatePath('/dashboard/progress');
   revalidatePath('/dashboard');
 
-  const row = data as ProgressArea;
-  return {
-    id: row.id,
-    name: row.name,
-    description: row.description,
-    entries: [],
-  };
+  return { ...toAreaWithEntries(data as ProgressArea), entries: [] };
 }
 
-/** Log a new 1-10 score against an area. Verifies area belongs to user. */
-export async function logScore(areaId: string, score: number) {
+/** Log a 1-10 score against an area, optionally with a reflection note. */
+export async function logScore(areaId: string, score: number, note: string) {
   const userId = await requireUser();
   if (score < 1 || score > 10) throw new Error('Score must be 1-10');
 
   const sb = getSupabase();
 
-  // Confirm the area belongs to this user before writing.
   const { data: area, error: ownerErr } = await sb
     .from('progress_areas')
     .select('id')
@@ -142,6 +230,7 @@ export async function logScore(areaId: string, score: number) {
   const { error } = await sb.from('progress_entries').insert({
     area_id: areaId,
     score: Math.round(score),
+    note: note.trim().slice(0, 280),
   });
   if (error) throw error;
 
@@ -149,10 +238,23 @@ export async function logScore(areaId: string, score: number) {
   revalidatePath('/dashboard');
 }
 
-/** Delete an area (cascade deletes its entries). Owner check enforced. */
+/** Delete a custom (non-preset) area. Presets are protected from deletion. */
 export async function deleteArea(areaId: string) {
   const userId = await requireUser();
   const sb = getSupabase();
+
+  // Block deletion of preset areas
+  const { data: area, error: fetchErr } = await sb
+    .from('progress_areas')
+    .select('preset_key')
+    .eq('id', areaId)
+    .eq('clerk_user_id', userId)
+    .maybeSingle();
+  if (fetchErr) throw fetchErr;
+  if (!area) throw new Error('Area not found');
+  if ((area as { preset_key: string | null }).preset_key) {
+    throw new Error('Preset areas cannot be deleted');
+  }
 
   const { error } = await sb
     .from('progress_areas')
@@ -163,4 +265,8 @@ export async function deleteArea(areaId: string) {
 
   revalidatePath('/dashboard/progress');
   revalidatePath('/dashboard');
+}
+
+function clamp(n: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, Math.round(n)));
 }
