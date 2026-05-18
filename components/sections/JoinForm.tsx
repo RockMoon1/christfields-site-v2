@@ -62,7 +62,10 @@ export function JoinForm() {
         params.append(key, value.toString());
       });
 
-      const res = await fetch('/', {
+      // POST to /__forms.html (the static file Netlify owns), NOT to /
+      // which is a Next.js route. Posting to a Next route makes Next return
+      // 200 with the page HTML and Netlify never sees the submission.
+      const res = await fetch('/__forms.html', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: params.toString(),
