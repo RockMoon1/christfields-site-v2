@@ -1,22 +1,27 @@
 import { getAreas } from '../progress/actions';
 import { ResourceCard } from '@/components/dashboard/ResourceCard';
+import { ScrollTilt } from '@/components/dashboard/ScrollTilt';
+import { MorphBlob } from '@/components/motion/MorphBlob';
 
 /**
  * Resources page. For each progress area, shows resources tailored to the
- * user's current score in that area. Three tiers:
+ * user's current score plus a per-area reflection journal.
  *
  *   1-3  Struggling   "I need help."
  *   4-7  Growing      "The humble middle."
  *   8-10 Leading      "I can help someone else here."
- *
- * Resources for presets are hand-written; custom areas use a generic but
- * personal template.
  */
 export default async function ResourcesPage() {
   const areas = await getAreas();
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="relative mx-auto max-w-5xl">
+      {/* Ambient morphing blobs behind the page, drift slowly. */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <MorphBlob color="rgba(201, 165, 72, 0.05)" size={520} className="-left-32 top-32" />
+        <MorphBlob color="rgba(45, 106, 79, 0.06)" size={460} className="-right-24 top-[60%]" />
+      </div>
+
       <header className="mb-10">
         <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.22em] text-gold">
           Right where you are
@@ -28,6 +33,7 @@ export default async function ResourcesPage() {
           What you see here changes based on where you are in each area. When you are
           struggling, this is where to start. When you are growing, this is what to ask
           of yourself. When you are ready to lead, this is how to bring others along.
+          Reflect at the bottom of each card — only you see what you write.
         </p>
       </header>
 
@@ -41,9 +47,11 @@ export default async function ResourcesPage() {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-8">
           {areas.map((area) => (
-            <ResourceCard key={area.id} area={area} />
+            <ScrollTilt key={area.id}>
+              <ResourceCard area={area} />
+            </ScrollTilt>
           ))}
         </div>
       )}

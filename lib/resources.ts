@@ -14,10 +14,21 @@ export type Tier = 'struggling' | 'growing' | 'leading';
 
 export interface Resource {
   /** A short label that explains why this item is here. */
-  kind: 'reflection' | 'action' | 'scripture' | 'question';
+  kind: 'reflection' | 'action' | 'scripture' | 'question' | 'video' | 'link';
   body: string;
   /** Optional reference like "Proverbs 27:17" — shown small under a scripture. */
   reference?: string;
+  /** URL for video / link resources. */
+  url?: string;
+  /** Short label for the source (e.g. "Tim Keller", "BibleProject"). */
+  source?: string;
+}
+
+export interface JournalPrompt {
+  /** Headline question the user answers. */
+  question: string;
+  /** Optional sub-line hint shown smaller. */
+  hint?: string;
 }
 
 export interface TierContent {
@@ -289,4 +300,28 @@ export function nextTierTeaser(currentTier: Tier): string | null {
   if (currentTier === 'growing')
     return 'When you reach an 8, you will see resources on how to lead others here.';
   return null;
+}
+
+/* ============================================================
+   Journal prompts. Change by tier so the reflection space asks
+   the right question for where the user actually is.
+   ============================================================ */
+
+const JOURNAL_PROMPTS: Record<Tier, JournalPrompt> = {
+  struggling: {
+    question: 'What have you tried, and what is getting in the way?',
+    hint: 'Be honest about effort and resistance. This is for you, not for show.',
+  },
+  growing: {
+    question: 'What is working, and what still feels stuck?',
+    hint: 'Name the small wins. Then name what you keep avoiding.',
+  },
+  leading: {
+    question: 'Who are you helping, and what are you noticing in them?',
+    hint: 'Track what good leadership looks like by paying attention to fruit, not effort.',
+  },
+};
+
+export function journalPromptFor(tier: Tier): JournalPrompt {
+  return JOURNAL_PROMPTS[tier];
 }

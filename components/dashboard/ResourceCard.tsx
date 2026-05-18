@@ -7,6 +7,8 @@ import {
   type Tier,
 } from '@/lib/resources';
 import type { AreaWithEntries } from '@/app/dashboard/(app)/progress/actions';
+import { getJournal } from '@/app/dashboard/(app)/resources/actions';
+import { JournalSection } from './JournalSection';
 
 interface ResourceCardProps {
   area: AreaWithEntries;
@@ -17,7 +19,7 @@ interface ResourceCardProps {
  * tier of content based on the user's most recent score and renders it.
  * Color stripe and dot match the orb dot for that area.
  */
-export function ResourceCard({ area }: ResourceCardProps) {
+export async function ResourceCard({ area }: ResourceCardProps) {
   const latest = area.entries[area.entries.length - 1];
   const latestScore = latest?.score ?? null;
   const content = getResourcesForArea({
@@ -27,6 +29,7 @@ export function ResourceCard({ area }: ResourceCardProps) {
   });
   const teaser = nextTierTeaser(content.tier);
   const isPreset = !!area.presetKey;
+  const journalEntries = await getJournal(area.id);
 
   return (
     <article className="group relative overflow-hidden rounded-sm border border-border-sub bg-black-3 transition-colors hover:border-border-gold">
@@ -94,6 +97,14 @@ export function ResourceCard({ area }: ResourceCardProps) {
         ))}
       </ul>
 
+      {/* Per-area reflection journal */}
+      <JournalSection
+        areaId={area.id}
+        areaColor={area.color}
+        tier={content.tier}
+        initialEntries={journalEntries}
+      />
+
       {/* Teaser for next tier */}
       {teaser && (
         <footer className="border-t border-border-sub bg-black-2/50 px-7 py-4">
@@ -112,6 +123,35 @@ export function ResourceCard({ area }: ResourceCardProps) {
    ============================================================ */
 
 function ResourceItem({ resource, accent }: { resource: Resource; accent: string }) {
+  if (resource.kind === 'video' || resource.kind === 'link') {
+    const isVideo = resource.kind === 'video';
+    return (
+      <a
+        href={resource.url || '#'}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group flex items-start gap-3 rounded-sm border border-border-sub bg-black-2/60 p-3 transition-colors hover:border-border-gold"
+      >
+        <span
+          aria-hidden
+          className="mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-sm"
+          style={{ backgroundColor: `${accent}26`, color: accent }}
+        >
+          {isVideo ? <PlayIcon /> : <LinkIcon />}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="mb-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-gold">
+            {isVideo ? 'Video' : 'Read'}
+            {resource.source && <span className="ml-2 text-muted">· {resource.source}</span>}
+          </p>
+          <p className="text-sm leading-snug text-ivory transition-colors group-hover:text-gold-lt md:text-base">
+            {resource.body}
+          </p>
+        </div>
+      </a>
+    );
+  }
+
   if (resource.kind === 'scripture') {
     return (
       <div
@@ -199,6 +239,23 @@ function leadingQuote(s: string): string {
 /* ============================================================
    Tier badge pill
    ============================================================ */
+
+function PlayIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4">
+      <path d="M5 3.5v9l7.5-4.5L5 3.5z" />
+    </svg>
+  );
+}
+
+function LinkIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4">
+      <path d="M7 9a3 3 0 0 1 0-4l2-2a3 3 0 0 1 4 4l-1 1" strokeLinecap="round" />
+      <path d="M9 7a3 3 0 0 1 0 4l-2 2a3 3 0 0 1-4-4l1-1" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 function TierBadge({ tier, color }: { tier: Tier; color: string }) {
   return (

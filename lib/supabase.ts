@@ -62,3 +62,11 @@ export interface MemberNote {
   body: string;
   created_at: string;
 }
+
+export interface AreaJournal {
+  id: string;
+  area_id: string;
+  clerk_user_id: string;
+  body: string;
+  created_at: string;
+}
