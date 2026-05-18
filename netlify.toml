@@ -4,6 +4,13 @@
   command = "npm run build"
   publish = ".next"
 
+# Where our Netlify Functions live. The submission-created.ts function fires
+# automatically whenever a form (waitlist or faithflow) receives a verified
+# submission, and sends a branded thank-you email via Resend.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
