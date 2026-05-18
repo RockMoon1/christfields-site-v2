@@ -21,8 +21,13 @@ export function TopBar() {
   const pathname = usePathname();
   const title = titleMap[pathname] ?? 'Dashboard';
 
+  // IMPORTANT: do NOT add backdrop-filter / backdrop-blur to the header below.
+  // backdrop-filter on a position: sticky element creates a CSS containing
+  // block that traps every position: fixed descendant inside its bounding
+  // rect. That breaks the MobileNav drawer (clips it to a 64px tall sliver)
+  // AND breaks the Clerk UserButton popover. Use a solid background here.
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border-sub bg-black-2/90 px-4 backdrop-blur-xl md:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border-sub bg-black-2 px-4 md:px-6">
       <div className="flex items-center gap-3">
         {/* Hamburger for mobile; hides on lg+ */}
         <MobileNav />

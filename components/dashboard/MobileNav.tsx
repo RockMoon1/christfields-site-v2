@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -16,7 +17,13 @@ import { cn } from '@/lib/utils';
  */
 export function MobileNav() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
+
+  // The drawer is rendered through a portal to document.body so it cannot be
+  // contained by any ancestor's transform/filter/backdrop-filter. Portal
+  // must wait for hydration to have a real document to mount into.
+  useEffect(() => setMounted(true), []);
 
   // Lock body scroll while the drawer is open.
   useEffect(() => {
@@ -52,22 +59,23 @@ export function MobileNav() {
         <MenuIcon />
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setOpen(false)}
-              className="fixed inset-0 z-[80] bg-black/80 backdrop-blur-sm lg:hidden"
-              aria-hidden
-            />
+      {mounted && createPortal(
+        <AnimatePresence>
+          {open && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                onClick={() => setOpen(false)}
+                className="fixed inset-0 z-[80] bg-black/80 backdrop-blur-sm lg:hidden"
+                aria-hidden
+              />
 
-            {/* Drawer */}
-            <motion.aside
+              {/* Drawer */}
+              <motion.aside
               role="dialog"
               aria-modal="true"
               aria-label="Dashboard navigation"
@@ -152,9 +160,11 @@ export function MobileNav() {
                 </p>
               </div>
             </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
     </>
   );
 }

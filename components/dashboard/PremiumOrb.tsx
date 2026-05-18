@@ -359,25 +359,29 @@ export function PremiumOrb({
 
   return (
     <div className={className}>
+      {/* IMPORTANT: Canvas props (gl, dpr) are STABLE — they never depend on
+          isMobile. R3F can throw if its renderer's DPR or context options
+          change after mount, and that was the cause of the "We could not
+          load this page" error on small viewports.
+          We still downgrade visuals on mobile by passing isMobile DOWN into
+          the scene (LogoMark uses it for plane segments, SweepLight is
+          conditional), which only changes the scene graph, not the renderer. */}
       <Canvas
         camera={{ position: [0, 0, 5], fov: 45 }}
         gl={{
-          antialias: !isMobile, // skip MSAA on mobile, saves significant GPU
+          antialias: true,
           alpha: true,
           powerPreference: 'high-performance',
           toneMapping: THREE.ACESFilmicToneMapping,
         }}
-        // On desktop: render at 1.5x to 3x DPR for crisp output.
-        // On mobile: cap at 1.5x so phones do not try to render at 3x retina.
-        dpr={isMobile ? [1, 1.5] : [1.5, 3]}
+        dpr={[1, 2]}
       >
         <ambientLight intensity={0.55} />
         <directionalLight position={[3, 4, 5]} intensity={1.8} color="#fff5d6" />
         <pointLight position={[-3, -2, -2]} intensity={0.6} color="#2d6a4f" />
         {/* SweepLight is a moving PointLight that creates the cinematic
-            highlight flash on the metallic mark. Beautiful on desktop,
-            expensive on mobile because every frame recomputes shading
-            for the highly-detailed PhysicalMaterial. Skip it on phones. */}
+            highlight flash on the metallic mark. Skip it on phones — it
+            forces per-frame shading recompute on the clearcoat material. */}
         {!isMobile && <SweepLight />}
         <Suspense fallback={null}>
           <LogoMark areas={areas} vitality={vitality} isMobile={isMobile} />
