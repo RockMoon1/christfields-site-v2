@@ -9,7 +9,27 @@ import { ClerkProvider } from '@clerk/nextjs';
  * marketing site (/, /journal, /faithflow) must work without Clerk env
  * vars present. By scoping ClerkProvider to /dashboard, the public site
  * never tries to initialize Clerk and never breaks if the keys are missing.
+ *
+ * Appearance notes:
+ * - `variables` set the CSS custom properties Clerk injects globally. These
+ *   work well for colors that Clerk components actually inherit.
+ * - `elements` can accept EITHER a Tailwind class string OR a CSS style
+ *   object. We use style objects for text-color overrides because Clerk's
+ *   internal CSS has higher specificity than a single Tailwind utility and
+ *   would win otherwise. Background/border overrides still use class strings
+ *   since those tend to be lower-specificity in Clerk's own sheets.
  */
+
+const IVORY = '#f0f2ee';
+const IVORY_DIM = '#c4ccca';
+const SILVER = '#8a9a92';
+const GOLD = '#c9a548';
+const GOLD_LT = '#e4c97a';
+const BLACK_2 = '#0c110e';
+const BLACK_3 = '#131a16';
+const BLACK_4 = '#1a221d';
+const BORDER = 'rgba(255,255,255,0.055)';
+
 export default function DashboardClerkLayout({
   children,
 }: {
@@ -19,13 +39,14 @@ export default function DashboardClerkLayout({
     <ClerkProvider
       appearance={{
         variables: {
-          colorPrimary: '#c9a548',
-          colorBackground: '#0c110e',
-          colorInputBackground: '#131a16',
-          colorInputText: '#f0f2ee',
-          colorText: '#f0f2ee',
-          colorTextSecondary: '#8a9a92',
-          colorNeutral: '#f0f2ee',
+          colorPrimary: GOLD,
+          colorBackground: BLACK_2,
+          colorInputBackground: BLACK_3,
+          colorInputText: IVORY,
+          colorText: IVORY,
+          // Raised from #8a9a92 so subtitles and secondary labels are legible
+          colorTextSecondary: IVORY_DIM,
+          colorNeutral: IVORY,
           colorDanger: '#dc2626',
           colorSuccess: '#2d6a4f',
           fontFamily: 'var(--font-inter)',
@@ -35,11 +56,11 @@ export default function DashboardClerkLayout({
           // ── Cards / containers ────────────────────────────────────────
           card: 'bg-black-2 border border-border-sub shadow-2xl',
           modalContent: 'bg-black-2 border border-border-sub',
-          modalCloseButton: 'text-silver hover:text-ivory',
+          modalCloseButton: { color: SILVER },
 
           // ── Auth page elements (sign-in / sign-up) ───────────────────
           headerTitle: 'font-display font-light text-ivory text-3xl',
-          headerSubtitle: 'text-silver',
+          headerSubtitle: { color: IVORY_DIM },
           socialButtonsBlockButton:
             'border-border-sub bg-black-3 hover:bg-black-4 text-ivory',
           formButtonPrimary:
@@ -47,47 +68,73 @@ export default function DashboardClerkLayout({
           footerActionLink: 'text-gold-lt hover:text-gold',
 
           // ── UserProfile "Manage account" modal ───────────────────────
-          // Sidebar nav
-          navbar: 'bg-black-3 border-r border-border-sub',
-          navbarButton: 'text-silver hover:text-ivory hover:bg-black-4',
-          navbarButtonIcon: 'text-muted',
 
-          // User preview (avatar + name) in sidebar
-          userPreviewMainIdentifier: 'text-ivory',
-          userPreviewSecondaryIdentifier: 'text-silver',
+          // Sidebar shell
+          navbar: `bg-black-3`,
+          navbarButton: { color: IVORY_DIM, borderRadius: '0.125rem' },
+          navbarButtonIcon: { color: SILVER },
+
+          // User preview (avatar + name at top of sidebar)
+          userPreviewMainIdentifier: { color: IVORY },
+          userPreviewSecondaryIdentifier: { color: IVORY_DIM },
 
           // Main content scroll area
-          pageScrollBox: 'bg-black-2',
-          scrollBox: 'bg-black-2',
+          pageScrollBox: { background: BLACK_2 },
+          scrollBox: { background: BLACK_2 },
 
-          // Page / section structure
-          profileSectionTitle: 'border-b border-border-sub',
-          profileSectionTitleText: 'text-ivory text-sm font-medium uppercase tracking-[0.12em]',
-          profileSectionContent: 'text-silver',
-          profileSectionItem: 'text-ivory',
-          profileSectionPrimaryButton:
-            'border border-border-sub bg-black-3 text-silver hover:bg-black-4 hover:text-ivory',
+          // Section structure in the profile content
+          profileSectionTitle: {
+            borderBottom: `1px solid ${BORDER}`,
+          },
+          profileSectionTitleText: {
+            color: IVORY,
+            fontSize: '0.7rem',
+            fontWeight: 500,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+          },
+          profileSectionContent: { color: IVORY_DIM },
+          profileSectionItem: { color: IVORY },
+          profileSectionPrimaryButton: {
+            color: IVORY_DIM,
+            background: BLACK_3,
+            border: `1px solid ${BORDER}`,
+            borderRadius: '0.125rem',
+          },
 
-          // Accordion sections
-          accordionTriggerButton: 'text-ivory hover:bg-black-3',
-          accordionContent: 'text-silver',
+          // Accordion sections (connected accounts, etc.)
+          accordionTriggerButton: { color: IVORY },
+          accordionContent: { color: IVORY_DIM },
 
           // Form elements inside the profile
-          formFieldLabel: 'text-silver text-xs uppercase tracking-[0.14em]',
-          formFieldInput: 'bg-black-3 border-border-sub text-ivory',
-          formFieldHintText: 'text-muted',
-          formFieldErrorText: 'text-red-400',
-          formButtonReset: 'text-gold-lt hover:text-gold',
+          formFieldLabel: {
+            color: SILVER,
+            fontSize: '0.7rem',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+          },
+          formFieldInput: {
+            color: IVORY,
+            background: BLACK_3,
+            border: `1px solid ${BORDER}`,
+          },
+          formFieldHintText: { color: SILVER },
+          formFieldErrorText: { color: '#f87171' },
+          formButtonReset: { color: GOLD_LT },
 
-          // Badge / identifier chips
-          badge: 'border border-border-sub bg-black-3 text-muted',
-          badgeText: 'text-muted text-xs',
+          // Badge chips (e.g. "Primary" next to email)
+          badge: {
+            color: SILVER,
+            background: BLACK_4,
+            border: `1px solid ${BORDER}`,
+          },
+          badgeText: { color: SILVER, fontSize: '0.7rem' },
 
-          // Danger zone / destructive actions
-          formButtonDanger: 'text-red-400 hover:bg-red-950 hover:text-red-300',
+          // Danger actions
+          formButtonDanger: { color: '#f87171' },
 
-          // Alert / info boxes
-          alertText: 'text-silver',
+          // Info / alert text
+          alertText: { color: IVORY_DIM },
         },
       }}
     >
