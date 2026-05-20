@@ -313,6 +313,54 @@ button:focus-visible {
 .ember.ember-lg { width: 4px; height: 4px; filter: blur(0.8px); }
 .ember.ember-sm { width: 2px; height: 2px; filter: blur(0.4px); }
 
+/* ============================================================
+   Clerk UserProfile dark-theme backstop
+   The appearance API covers most elements, but Clerk's own CSS can
+   win on deeply nested sub-elements. These rules target the modal
+   root and enforce ivory text across the board. They only fire
+   inside Clerk-rendered containers so they can't bleed elsewhere.
+   ============================================================ */
+
+/* Root containers Clerk renders for the modal and user profile */
+.cl-rootBox,
+.cl-modalContent,
+.cl-userProfile-root,
+.cl-card {
+  color-scheme: dark;
+  color: #f0f2ee;
+}
+
+/* Sidebar nav text — the most common element to lose the override */
+.cl-navbar,
+.cl-navbarButton,
+.cl-navbarButtonText {
+  color: #c4ccca;
+}
+
+.cl-navbarButton.cl-active,
+.cl-navbarButton[data-active="true"],
+.cl-navbarButton:hover {
+  color: #f0f2ee;
+}
+
+/* Profile section labels and descriptive text */
+.cl-profileSectionTitleText,
+.cl-profileSectionItem,
+.cl-profileSectionContent {
+  color: #f0f2ee;
+}
+
+/* Form field labels inside the profile */
+.cl-formFieldLabel {
+  color: #c4ccca;
+}
+
+/* Profile action buttons should be ghost/outlined, not gold */
+.cl-profileSectionPrimaryButton {
+  background: transparent !important;
+  color: #f0f2ee !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     opacity: 1;
