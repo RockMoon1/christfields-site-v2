@@ -314,50 +314,52 @@ button:focus-visible {
 .ember.ember-sm { width: 2px; height: 2px; filter: blur(0.4px); }
 
 /* ============================================================
-   Clerk UserProfile dark-theme backstop
-   The appearance API covers most elements, but Clerk's own CSS can
-   win on deeply nested sub-elements. These rules target the modal
-   root and enforce ivory text across the board. They only fire
-   inside Clerk-rendered containers so they can't bleed elsewhere.
+   Clerk dark-theme backstop
+   The appearance API is the first line of defense, but Clerk injects
+   its own <style> tag after globals.css which can beat our rules at
+   equal specificity. We use !important here only as a last resort so
+   any Clerk element that escapes the appearance API still renders
+   with legible light text.
+
+   We avoid guessing exact class names and instead target ALL elements
+   whose class attribute contains the "cl-" prefix that Clerk puts on
+   every one of its rendered nodes. Specific exceptions restore the
+   correct color for interactive elements (gold CTA buttons, etc.).
    ============================================================ */
 
-/* Root containers Clerk renders for the modal and user profile */
-.cl-rootBox,
-.cl-modalContent,
-.cl-userProfile-root,
-.cl-card {
-  color-scheme: dark;
-  color: #f0f2ee;
+/* Every Clerk element: default to readable ivory-dim text */
+[class*="cl-"] {
+  color: #c4ccca !important;
 }
 
-/* Sidebar nav text — the most common element to lose the override */
-.cl-navbar,
-.cl-navbarButton,
-.cl-navbarButtonText {
-  color: #c4ccca;
+/* Headings / primary identifiers should be full ivory */
+[class*="cl-headerTitle"],
+[class*="cl-userPreviewMainIdentifier"],
+[class*="cl-profileSectionTitleText"],
+[class*="cl-accordionTriggerButton"],
+[class*="cl-formFieldInputShowPasswordButton"] {
+  color: #f0f2ee !important;
 }
 
-.cl-navbarButton.cl-active,
-.cl-navbarButton[data-active="true"],
-.cl-navbarButton:hover {
-  color: #f0f2ee;
+/* Primary submit CTA (Sign in / Sign up) keeps dark text on gold bg */
+[class*="cl-formButtonPrimary"] {
+  color: #000000 !important;
 }
 
-/* Profile section labels and descriptive text */
-.cl-profileSectionTitleText,
-.cl-profileSectionItem,
-.cl-profileSectionContent {
-  color: #f0f2ee;
+/* Footer / link text stays gold */
+[class*="cl-footerActionLink"],
+[class*="cl-identityPreviewEditButton"] {
+  color: #e4c97a !important;
 }
 
-/* Form field labels inside the profile */
-.cl-formFieldLabel {
-  color: #c4ccca;
-}
-
-/* Profile action buttons should be ghost/outlined, not gold */
-.cl-profileSectionPrimaryButton {
+/* Profile action buttons: ghost style, no gold fill */
+[class*="cl-profileSectionPrimaryButton"] {
   background: transparent !important;
+  color: #f0f2ee !important;
+}
+
+/* Social icon buttons keep their own text (icon labels) */
+[class*="cl-socialButtonsBlockButton"] {
   color: #f0f2ee !important;
 }
 
