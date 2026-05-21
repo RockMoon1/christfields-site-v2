@@ -2,6 +2,11 @@ import { auth } from '@clerk/nextjs/server';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { TopBar } from '@/components/dashboard/TopBar';
 
+// The authenticated dashboard is per-user and dynamic (it reads Clerk auth and
+// Supabase on every request), so opt the whole segment out of static
+// generation. Keeps build logs clean and avoids prerendering private data.
+export const dynamic = 'force-dynamic';
+
 /**
  * Layout for the member dashboard. Wraps every /dashboard/* page (except the
  * sign-in / sign-up flows which use their own layout) with the sidebar and
