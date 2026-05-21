@@ -72,7 +72,8 @@ export function autoReplyHtml({ firstName, formName }: AutoReplyVars): string {
       <tr><td align="center" style="padding:40px 20px;">
         <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;background-color:#0c110e;border:1px solid #1a221d;border-radius:4px;">
           <tr><td style="height:2px;background:linear-gradient(to right, transparent, #c9a548, transparent);"></td></tr>
-          <tr><td style="padding:40px 40px 0 40px;text-align:center;">
+          <tr><td style="padding:36px 40px 0 40px;text-align:center;">
+            <img src="https://christfields2717.com/assets/logo.png" alt="Christ Fields" width="140" style="display:block;margin:0 auto 14px auto;width:140px;max-width:55%;height:auto;border:0;" />
             <p style="margin:0 0 8px 0;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#c9a548;font-weight:500;">Christ Fields</p>
             <p style="margin:0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#4e5e57;">Proverbs 27:17</p>
           </td></tr>
@@ -129,7 +130,8 @@ export function notificationHtml(v: {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#060908;"><tr><td align="center" style="padding:32px 20px;">
       <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;background-color:#0c110e;border:1px solid #1a221d;border-radius:4px;">
         <tr><td style="height:2px;background:linear-gradient(to right, transparent, #c9a548, transparent);"></td></tr>
-        <tr><td style="padding:28px 36px 8px 36px;">
+        <tr><td style="padding:24px 36px 8px 36px;">
+          <img src="https://christfields2717.com/assets/logo.png" alt="Christ Fields" width="120" style="display:block;margin:0 auto 14px auto;width:120px;max-width:50%;height:auto;border:0;" />
           <p style="margin:0 0 4px 0;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#c9a548;font-weight:500;">New ${escapeHtml(label)} submission</p>
           <h1 style="margin:0 0 18px 0;font-family:Georgia,'Times New Roman',serif;font-weight:300;font-size:26px;color:#f0f2ee;">${escapeHtml(v.name)}</h1>
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
