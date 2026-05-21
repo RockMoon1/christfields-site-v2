@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { getMemberDetail } from '@/app/dashboard/(leader)/leader/actions';
 import type { MemberSummary, MemberDetail, AreaStatus, GuidanceCard, Trend } from '@/lib/faithflow/types';
 import { bibleUrl } from '@/lib/faithflow/guidance';
+import { removeMemberVerse, resetMemberVerse } from '@/lib/faithflow/shepherd-actions';
 
 /* ============================================================
    Props
@@ -241,6 +242,23 @@ function MemberDrilldown({ detail }: { detail: MemberDetail }) {
 
   const lastActiveLabel = formatLastActive(detail.daysSinceActive);
 
+  // Local optimistic copy of verses so remove/reset update instantly.
+  const [verses, setVerses] = useState(detail.verses ?? []);
+
+  async function handleReset(verseId: string) {
+    const prev = verses;
+    setVerses((v) => v.map((x) => x.id === verseId ? { ...x, status: 'learning' as const } : x));
+    const res = await resetMemberVerse(detail.userId, verseId);
+    if (!res.ok) setVerses(prev);
+  }
+
+  async function handleRemove(verseId: string) {
+    const prev = verses;
+    setVerses((v) => v.filter((x) => x.id !== verseId));
+    const res = await removeMemberVerse(detail.userId, verseId);
+    if (!res.ok) setVerses(prev);
+  }
+
   return (
     <article className="flex flex-col gap-6">
       {/* Header */}
@@ -366,6 +384,99 @@ function MemberDrilldown({ detail }: { detail: MemberDetail }) {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+      </Section>
+
+      {/* Scripture memory */}
+      <Section title="Scripture memory">
+        <p className="mb-3 text-xs text-silver">
+          You can test them on these. Clear a verse they are not ready on, or send it back to learning.
+        </p>
+        {verses.length === 0 ? (
+          <p className="text-sm italic text-muted">No verses yet.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {verses.map((v) => (
+              <div
+                key={v.id}
+                className="relative overflow-hidden rounded-sm border border-border-sub bg-black-4 p-4 pl-5"
+              >
+                <div className="absolute inset-y-0 left-0 w-0.5 bg-gold/40" />
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <a
+                      href={bibleUrl(v.reference)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-gold-lt transition-colors hover:text-gold hover:underline"
+                    >
+                      {v.reference} &#8599;
+                    </a>
+                    <p className="mt-1 text-xs italic leading-relaxed text-silver">{v.text}</p>
+                    <p className="mt-1 text-[10px] text-muted">reviewed {v.reviews} {v.reviews === 1 ? 'time' : 'times'}</p>
+                  </div>
+                  <span
+                    className={cn(
+                      'shrink-0 rounded-sm border px-2 py-0.5 text-[9px] uppercase tracking-[0.14em]',
+                      v.status === 'memorized'
+                        ? 'border-emerald-lt/30 bg-emerald-lt/10 text-emerald-lt'
+                        : 'border-gold/30 bg-gold/[0.06] text-gold-lt',
+                    )}
+                  >
+                    {v.status === 'memorized' ? 'Memorized' : 'Learning'}
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleReset(v.id)}
+                    className="rounded-sm border border-border-sub px-3 py-1 text-[10px] uppercase tracking-[0.12em] text-silver transition-colors hover:border-border-gold hover:text-ivory"
+                  >
+                    Send back to learning
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(v.id)}
+                    className="rounded-sm border border-border-sub px-3 py-1 text-[10px] uppercase tracking-[0.12em] text-silver transition-colors hover:border-red-400/50 hover:text-red-400"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      {/* Shared with the community */}
+      <Section title="Shared with the community">
+        <p className="mb-3 text-xs text-silver">
+          These were posted to the community wall by {detail.name.split(' ')[0]}.
+        </p>
+        {(detail.community ?? []).length === 0 ? (
+          <p className="text-sm italic text-muted">Nothing shared to the wall yet.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {(detail.community ?? []).map((item) => (
+              <div
+                key={item.id}
+                className="rounded-sm border border-border-sub bg-black-4 p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-medium text-ivory">{item.title}</p>
+                  {item.answered && (
+                    <span className="shrink-0 rounded-sm border border-emerald-lt/30 bg-emerald-lt/10 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-emerald-lt">
+                      Answered
+                    </span>
+                  )}
+                </div>
+                {item.body && (
+                  <p className="mt-1.5 text-xs leading-relaxed text-silver">{item.body}</p>
+                )}
+                <p className="mt-2 text-[10px] text-muted">{item.prayCount} {item.prayCount === 1 ? 'person' : 'people'} praying</p>
+              </div>
+            ))}
           </div>
         )}
       </Section>

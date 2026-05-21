@@ -179,6 +179,11 @@ export function MemoryVerses({ learning, memorized, dueCount }: MemoryVersesProp
         )}
       </AnimatePresence>
 
+      {/* ---- Leader testing note ---- */}
+      <p className="text-sm leading-relaxed text-silver/80 italic">
+        Your leader may test you on these. If you are not ready for one yet, they can clear it, and you can always pick it back up later.
+      </p>
+
       {/* ---- Learning list ---- */}
       {learningList.length === 0 && !showAdd && (
         <EmptyState message="No verses in progress. Add one above or save today's verse." />

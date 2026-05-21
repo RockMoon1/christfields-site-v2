@@ -337,13 +337,14 @@ export async function computeMemberDetail(member: OrgMember): Promise<MemberDeta
     const sb = getSupabase();
     const since = lastNDays(30)[0];
 
-    const [areaRes, practiceRes, moodRes, prayerRes, sharedRes, memoryRes] = await Promise.all([
+    const [areaRes, practiceRes, moodRes, prayerRes, sharedRes, memoryRes, communityRes] = await Promise.all([
       sb.from('progress_areas').select('id, clerk_user_id, name, preset_key, color, target_score').eq('clerk_user_id', memberId),
       sb.from('practices').select('id, clerk_user_id, name, color, cadence, target_per_week').eq('archived', false).eq('clerk_user_id', memberId),
       sb.from('mood_checkins').select('clerk_user_id, mood, checked_at').eq('clerk_user_id', memberId).gte('checked_at', since).order('checked_at', { ascending: true }),
       sb.from('prayer_requests').select('status').eq('clerk_user_id', memberId),
       sb.from('prayer_requests').select('title, body, status').eq('clerk_user_id', memberId).eq('shared', true).order('created_at', { ascending: false }),
-      sb.from('memory_verses').select('status').eq('clerk_user_id', memberId),
+      sb.from('memory_verses').select('id, reference, verse_text, translation, status, reviews').eq('clerk_user_id', memberId).order('created_at', { ascending: false }),
+      sb.from('community_prayers').select('id, title, body, pray_count, answered').eq('clerk_user_id', memberId).order('created_at', { ascending: false }),
     ]);
 
     const areaRows = (areaRes.data as AreaRow[] | null) ?? [];
@@ -351,7 +352,23 @@ export async function computeMemberDetail(member: OrgMember): Promise<MemberDeta
     const moodRows = (moodRes.data as MoodRow[] | null) ?? [];
     const prayerRows = (prayerRes.data as { status: string }[] | null) ?? [];
     const sharedRows = (sharedRes.data as { title: string; body: string; status: string }[] | null) ?? [];
-    const memoryRows = (memoryRes.data as { status: string }[] | null) ?? [];
+    const memoryRows =
+      (memoryRes.data as {
+        id: string;
+        reference: string;
+        verse_text: string;
+        translation: string;
+        status: string;
+        reviews: number;
+      }[] | null) ?? [];
+    const communityRows =
+      (communityRes.data as {
+        id: string;
+        title: string;
+        body: string;
+        pray_count: number;
+        answered: boolean;
+      }[] | null) ?? [];
 
     const areaIds = areaRows.map((a) => a.id);
     const entryRes = areaIds.length
@@ -460,6 +477,21 @@ export async function computeMemberDetail(member: OrgMember): Promise<MemberDeta
         learning: memoryRows.filter((m) => m.status === 'learning').length,
         memorized: memoryRows.filter((m) => m.status === 'memorized').length,
       },
+      verses: memoryRows.map((v) => ({
+        id: v.id,
+        reference: v.reference,
+        text: v.verse_text,
+        translation: v.translation,
+        status: v.status === 'memorized' ? 'memorized' : 'learning',
+        reviews: v.reviews,
+      })),
+      community: communityRows.map((c) => ({
+        id: c.id,
+        title: c.title,
+        body: c.body,
+        prayCount: c.pray_count,
+        answered: c.answered,
+      })),
       guidance,
     };
   } catch (err) {

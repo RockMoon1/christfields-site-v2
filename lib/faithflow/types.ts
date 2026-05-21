@@ -71,6 +71,15 @@ export interface MemberDetail extends MemberSummary {
     shared: { title: string; body: string; answered: boolean }[];
   };
   memory: { learning: number; memorized: number };
+  verses: {
+    id: string;
+    reference: string;
+    text: string;
+    translation: string;
+    status: 'learning' | 'memorized';
+    reviews: number;
+  }[];
+  community: { id: string; title: string; body: string; prayCount: number; answered: boolean }[];
   guidance: GuidanceCard[];
 }
 
