@@ -8,24 +8,23 @@ import { TopBar } from '@/components/dashboard/TopBar';
 export const dynamic = 'force-dynamic';
 
 /**
- * Layout for the member dashboard. Wraps every /dashboard/* page (except the
- * sign-in / sign-up flows which use their own layout) with the sidebar and
- * top bar.
+ * Layout for the member dashboard. Wraps every /dashboard/(app)/* page with the
+ * sidebar and top bar. Auth is enforced upstream by middleware.ts.
  *
- * Auth is enforced upstream by middleware.ts. By the time we render here, the
- * user is signed in.
+ * We read the active org role here (free, from the session) to decide whether
+ * to show the leader entry in the sidebar. Org admins are FaithFlow leaders.
  */
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Touch auth so this layout is treated as protected by Clerk's server runtime.
-  await auth();
+  const { orgRole } = await auth();
+  const isLeader = orgRole === 'org:admin';
 
   return (
     <div className="min-h-screen bg-black-2 text-ivory">
-      <Sidebar />
+      <Sidebar isLeader={isLeader} />
       <div className="lg:pl-60">
         <TopBar />
         <main className="px-4 py-6 sm:px-6 md:p-10">{children}</main>

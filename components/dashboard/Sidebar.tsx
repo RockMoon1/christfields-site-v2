@@ -12,10 +12,13 @@ import { NAV_ITEMS } from './nav-data';
  * Active nav item gets a gold pill background that animates between items
  * via layoutId, same trick as the main site nav.
  *
+ * Leaders (org admins) also get a distinct "FaithFlow Leader" entry that
+ * crosses into the gated leader analytics area. Members never see it.
+ *
  * Hidden under lg breakpoint — mobile users get the MobileNav drawer
  * inside TopBar instead.
  */
-export function Sidebar() {
+export function Sidebar({ isLeader = false }: { isLeader?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -76,6 +79,21 @@ export function Sidebar() {
         </ul>
       </nav>
 
+      {/* Leader-only entry into the FaithFlow leader area */}
+      {isLeader && (
+        <div className="px-3 pb-2">
+          <Link
+            href="/dashboard/leader"
+            className="flex items-center gap-3 rounded-sm border border-border-gold bg-gold/[0.06] px-3 py-2.5 text-sm text-gold-lt transition-colors hover:bg-gold/[0.12]"
+          >
+            <span className="flex h-4 w-4 items-center justify-center text-gold">
+              <LeaderIcon />
+            </span>
+            FaithFlow Leader
+          </Link>
+        </div>
+      )}
+
       {/* Footer scripture */}
       <div className="border-t border-border-sub px-6 py-5">
         <p className="font-display text-sm italic leading-relaxed text-silver">
@@ -86,5 +104,16 @@ export function Sidebar() {
         </p>
       </div>
     </aside>
+  );
+}
+
+function LeaderIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
+      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="8" cy="3.6" r="1.2" fill="currentColor" />
+      <circle cx="3.9" cy="10" r="1.2" fill="currentColor" />
+      <circle cx="12.1" cy="10" r="1.2" fill="currentColor" />
+    </svg>
   );
 }
