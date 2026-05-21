@@ -154,15 +154,9 @@ export function GetInvolved() {
           </Reveal>
         ) : (
           <Reveal delay={0.15}>
-            <form
-              name="faithflow"
-              method="POST"
-              data-netlify="true"
-              data-netlify-honeypot="bot-field"
-              onSubmit={onSubmit}
-              className="mx-auto max-w-2xl text-left"
-            >
-              <input type="hidden" name="form-name" value="faithflow" />
+            <form onSubmit={onSubmit} className="mx-auto max-w-2xl text-left">
+              {/* Honeypot. Real people leave this blank; bots tend to fill it,
+                  and our /api/submit route silently drops anything that does. */}
               <p hidden>
                 <label>
                   Do not fill this out:&nbsp;

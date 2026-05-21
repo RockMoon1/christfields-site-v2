@@ -139,16 +139,9 @@ export function JoinForm() {
           </Reveal>
         ) : (
           <Reveal delay={0.15}>
-            <form
-              name="waitlist"
-              method="POST"
-              data-netlify="true"
-              data-netlify-honeypot="bot-field"
-              onSubmit={onSubmit}
-              className="mx-auto max-w-2xl text-left"
-            >
-              {/* Required by Netlify Forms to identify which form this is */}
-              <input type="hidden" name="form-name" value="waitlist" />
+            <form onSubmit={onSubmit} className="mx-auto max-w-2xl text-left">
+              {/* Honeypot. Real people leave this blank; bots tend to fill it,
+                  and our /api/submit route silently drops anything that does. */}
               <p hidden>
                 <label>
                   Do not fill this out:&nbsp;
