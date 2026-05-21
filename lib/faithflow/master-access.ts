@@ -1,16 +1,16 @@
 import { clerkClient, currentUser } from '@clerk/nextjs/server';
 import type { OrgMember } from './types';
+import { isLeaderRole, isMasterRole } from './roles';
 
 /**
  * The master tier sits above leaders. A master oversees every group across the
- * whole instance, for accountability and transparency. Master is NOT a Clerk
- * org role (those are per-group). It is an instance-level flag set on the Clerk
- * user: publicMetadata.role === 'master' (or privateMetadata, or the
- * MASTER_USER_IDS env allowlist). You grant or revoke it from the Clerk
- * Dashboard, for yourself and anyone you trust.
+ * whole instance, for accountability and transparency.
+ *
+ * A user is a master if they hold the org:master role in any organization, OR
+ * they are flagged on their Clerk user (publicMetadata.role === 'master', or
+ * privateMetadata, or the MASTER_USER_IDS env allowlist). org:master is
+ * instance-wide power, so grant it carefully.
  */
-
-const ADMIN_ROLE = 'org:admin';
 
 export interface LeaderActivity {
   userId: string;
@@ -42,23 +42,32 @@ export async function isMaster(): Promise<boolean> {
     const user = await currentUser();
     if (!user) return false;
     if (metaSaysMaster(user.publicMetadata) || metaSaysMaster(user.privateMetadata)) return true;
+
     const allow = (process.env.MASTER_USER_IDS || '')
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
-    return allow.includes(user.id);
+    if (allow.includes(user.id)) return true;
+
+    // Or holds the org:master role in any organization.
+    const client = await clerkClient();
+    const res = await client.users.getOrganizationMembershipList({ userId: user.id });
+    return res.data.some((m) => isMasterRole(m.role));
   } catch {
     return false;
   }
 }
 
-function membershipToMember(role: string, pud: {
-  userId?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  identifier?: string | null;
-  imageUrl?: string | null;
-} | null): OrgMember {
+function membershipToMember(
+  role: string,
+  pud: {
+    userId?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    identifier?: string | null;
+    imageUrl?: string | null;
+  } | null,
+): OrgMember {
   const name =
     [pud?.firstName, pud?.lastName].filter(Boolean).join(' ') || pud?.identifier || 'Member';
   return {
@@ -67,7 +76,7 @@ function membershipToMember(role: string, pud: {
     email: pud?.identifier ?? '',
     imageUrl: pud?.imageUrl ?? '',
     role,
-    isLeader: role === ADMIN_ROLE,
+    isLeader: isLeaderRole(role),
   };
 }
 

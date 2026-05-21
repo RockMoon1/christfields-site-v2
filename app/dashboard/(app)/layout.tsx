@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { TopBar } from '@/components/dashboard/TopBar';
+import { isLeaderRole } from '@/lib/faithflow/roles';
 
 // The authenticated dashboard is per-user and dynamic (it reads Clerk auth and
 // Supabase on every request), so opt the whole segment out of static
@@ -20,7 +21,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { orgRole } = await auth();
-  const isLeader = orgRole === 'org:admin';
+  const isLeader = isLeaderRole(orgRole);
 
   return (
     <div className="min-h-screen bg-black-2 text-ivory">

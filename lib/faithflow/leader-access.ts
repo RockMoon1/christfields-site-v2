@@ -1,17 +1,17 @@
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import type { OrgMember } from './types';
+import { isLeaderRole } from './roles';
 
 /**
- * Clerk Organizations power FaithFlow groups: an organization is a group, the
- * org admin is the leader, members are students. This module is the single
- * place that decides who is a leader and which members a leader may view.
+ * Clerk Organizations power FaithFlow groups: an organization is a group, a
+ * leader holds org:leader (or org:master, the full role), members are students.
+ * This module is the single place that decides who is a leader and which
+ * members a leader may view.
  *
  * Authorization rule: a leader may only see members of an organization where
- * they are the admin, and only for the organization currently active in their
- * session.
+ * they hold a leader role, and only for the organization currently active in
+ * their session.
  */
-
-const ADMIN_ROLE = 'org:admin';
 
 export interface LeaderContext {
   orgId: string;
@@ -20,18 +20,18 @@ export interface LeaderContext {
   members: OrgMember[];
 }
 
-/** True if the user is the admin of their currently active organization. */
+/** True if the user holds a leader role in their currently active organization. */
 export async function isActiveLeader(): Promise<boolean> {
   try {
     const { orgId, orgRole } = await auth();
-    return Boolean(orgId) && orgRole === ADMIN_ROLE;
+    return Boolean(orgId) && isLeaderRole(orgRole);
   } catch {
     return false;
   }
 }
 
 /**
- * True if the user is an admin of ANY organization. Used to decide whether to
+ * True if the user is a leader of ANY organization. Used to decide whether to
  * show the leader entry in the member dashboard, even if no org is active yet.
  */
 export async function isLeaderAnywhere(): Promise<boolean> {
@@ -40,7 +40,7 @@ export async function isLeaderAnywhere(): Promise<boolean> {
     if (!userId) return false;
     const client = await clerkClient();
     const res = await client.users.getOrganizationMembershipList({ userId });
-    return res.data.some((m) => m.role === ADMIN_ROLE);
+    return res.data.some((m) => isLeaderRole(m.role));
   } catch {
     return false;
   }
@@ -48,13 +48,12 @@ export async function isLeaderAnywhere(): Promise<boolean> {
 
 /**
  * Returns the active organization plus its members, but only if the signed-in
- * user is the admin of that organization. Returns null otherwise (not a leader,
- * no active org, or Organizations not enabled yet).
+ * user holds a leader role in that organization. Returns null otherwise.
  */
 export async function getLeaderContext(): Promise<LeaderContext | null> {
   try {
     const { userId, orgId, orgRole } = await auth();
-    if (!userId || !orgId || orgRole !== ADMIN_ROLE) return null;
+    if (!userId || !orgId || !isLeaderRole(orgRole)) return null;
 
     const client = await clerkClient();
     const [org, memberships] = await Promise.all([
@@ -75,7 +74,7 @@ export async function getLeaderContext(): Promise<LeaderContext | null> {
           email: pud?.identifier ?? '',
           imageUrl: pud?.imageUrl ?? '',
           role: m.role,
-          isLeader: m.role === ADMIN_ROLE,
+          isLeader: isLeaderRole(m.role),
         };
       })
       .filter((m) => m.userId);
@@ -89,7 +88,7 @@ export async function getLeaderContext(): Promise<LeaderContext | null> {
 
 /**
  * Authorization gate for individual member data. True only if the requester is
- * the admin of the active org AND the target member belongs to it.
+ * a leader of the active org AND the target member belongs to it.
  */
 export async function canViewMember(memberId: string): Promise<boolean> {
   const ctx = await getLeaderContext();
