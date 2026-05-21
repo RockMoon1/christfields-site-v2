@@ -7,18 +7,26 @@
       <stop offset="100%" stop-color="#060908"/>
     </radialGradient>
     <linearGradient id="flame" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#f1da8c"/>
-      <stop offset="55%" stop-color="#e4c97a"/>
+      <stop offset="0%" stop-color="#f6df8f"/>
+      <stop offset="50%" stop-color="#e4c97a"/>
       <stop offset="100%" stop-color="#c9a548"/>
     </linearGradient>
+    <radialGradient id="core" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff4d2" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#fff4d2" stop-opacity="0"/>
+    </radialGradient>
   </defs>
 
   <rect x="0" y="0" width="480" height="480" fill="url(#bg)"/>
 
-  <!-- Flame: the fire of Christ Fields -->
-  <path d="M240 84 C 314 180 348 240 348 306 C 348 384 300 436 240 436 C 180 436 132 384 132 306 C 132 232 176 166 240 84 Z" fill="url(#flame)"/>
+  <!-- Flame: concave sides that pinch up to a sharp, slightly leaning tip,
+       with a rounded base. This is what reads as fire instead of a water drop. -->
+  <path d="M244 78 C 250 152 290 184 314 236 C 333 278 331 334 305 370 C 283 402 262 420 240 420 C 218 420 197 402 175 370 C 149 334 147 278 166 236 C 190 184 230 152 244 78 Z" fill="url(#flame)"/>
 
-  <!-- Cross, set within the flame -->
-  <rect x="226" y="168" width="28" height="208" rx="6" fill="#f7f3ea"/>
-  <rect x="186" y="234" width="108" height="28" rx="6" fill="#f7f3ea"/>
+  <!-- Hot inner glow -->
+  <ellipse cx="240" cy="338" rx="58" ry="90" fill="url(#core)"/>
+
+  <!-- Cross at the heart of the fire -->
+  <rect x="228" y="194" width="24" height="198" rx="6" fill="#f7f3ea"/>
+  <rect x="190" y="264" width="100" height="24" rx="6" fill="#f7f3ea"/>
 </svg>
