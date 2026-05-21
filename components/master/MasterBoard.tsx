@@ -2,10 +2,12 @@
 
 import { useState, useTransition } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
+import Link from 'next/link';
 import type { MasterGroupOverview } from '@/app/dashboard/(master)/master/actions';
 import { getMemberForMaster } from '@/app/dashboard/(master)/master/actions';
 import type { LeaderActivity } from '@/lib/faithflow/master-access';
 import type { MemberDetail, MemberSummary, GuidanceCard, Trend } from '@/lib/faithflow/types';
+import { bibleUrl } from '@/lib/faithflow/guidance';
 
 /* ============================================================
    Props
@@ -20,6 +22,7 @@ interface MasterBoardProps {
     activeThisWeek: number;
     needsAttention: number;
   };
+  guidance: GuidanceCard[];
 }
 
 /* ============================================================
@@ -162,6 +165,108 @@ function MoodSparkline({ entries }: { entries: { date: string; mood: number }[] 
         </linearGradient>
       </defs>
     </svg>
+  );
+}
+
+/* ============================================================
+   Master guidance section: leading the leaders this season.
+   Same warm GuidanceCard shape the leader view uses, one tier up.
+   ============================================================ */
+
+function MasterGuidanceSection({ cards }: { cards: GuidanceCard[] }) {
+  if (cards.length === 0) return null;
+  return (
+    <section aria-label="Leading the leaders this season" className="mb-12">
+      <motion.p
+        {...fadeUp(0)}
+        className="mb-1 text-[10px] font-medium uppercase tracking-[0.22em] text-muted"
+      >
+        Leading the leaders this season
+      </motion.p>
+      <motion.p {...fadeUp(1)} className="mb-6 text-sm text-silver">
+        These are prayerful starting points drawn from what the data is showing across your groups.
+        They are not scripts. Bring them to prayer first, then to your leaders.
+      </motion.p>
+      <div className="grid gap-4 lg:grid-cols-2">
+        {cards.map((card, i) => (
+          <motion.article
+            key={i}
+            {...fadeUp(2 + i)}
+            className="relative overflow-hidden rounded-sm border border-border-sub bg-black-3 p-6"
+          >
+            <motion.div
+              aria-hidden
+              className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent"
+              animate={{ opacity: [0.25, 0.65, 0.25] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: i * 0.5 }}
+            />
+
+            <p className="mb-4 text-sm leading-relaxed text-ivory-dim">{card.signal}</p>
+
+            {card.scriptures.length > 0 && (
+              <div className="mb-4">
+                <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-muted">
+                  Scripture
+                </p>
+                <ul className="flex flex-col gap-2">
+                  {card.scriptures.map((s, j) => (
+                    <li key={j} className="flex flex-col gap-0.5">
+                      <a
+                        href={bibleUrl(s.ref)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-medium text-gold-lt hover:underline"
+                      >
+                        {s.ref}&#8599;
+                      </a>
+                      <span className="text-xs text-silver">{s.why}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {card.studyIdeas.length > 0 && (
+              <div className="mb-4">
+                <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-muted">
+                  Study ideas
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {card.studyIdeas.map((idea, j) => (
+                    <span
+                      key={j}
+                      className="rounded-sm border border-border-sub bg-black-4 px-2.5 py-1 text-xs text-ivory-dim"
+                    >
+                      {idea}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {card.leaderActions.length > 0 && (
+              <div>
+                <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-muted">
+                  For you, leading the leaders
+                </p>
+                <ul className="flex flex-col gap-2">
+                  {card.leaderActions.map((action, j) => (
+                    <li key={j} className="flex items-start gap-2 text-xs text-silver">
+                      <span className="mt-0.5 h-4 w-4 shrink-0">
+                        <svg viewBox="0 0 16 16" fill="none" aria-hidden>
+                          <rect x={2} y={2} width={12} height={12} rx={2} stroke="rgba(201,165,72,0.4)" strokeWidth={1} />
+                        </svg>
+                      </span>
+                      {action}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </motion.article>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -574,7 +679,14 @@ function MemberDetailView({ detail }: { detail: MemberDetail }) {
                   <ul className="mb-3 flex flex-col gap-1.5">
                     {card.scriptures.map((s, j) => (
                       <li key={j}>
-                        <span className="text-xs font-medium text-gold-lt">{s.ref}</span>
+                        <a
+                          href={bibleUrl(s.ref)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-medium text-gold-lt hover:underline"
+                        >
+                          {s.ref}&#8599;
+                        </a>
                         <span className="ml-1.5 text-xs text-silver">{s.why}</span>
                       </li>
                     ))}
@@ -700,23 +812,34 @@ function GroupCard({
           </div>
         )}
 
-        {/* Expand control */}
-        {group.members.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setExpanded((v) => !v)}
-            className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-silver transition-colors hover:text-ivory"
-          >
-            <motion.svg
-              viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5"
-              animate={{ rotate: expanded ? 90 : 0 }}
-              transition={{ duration: 0.25, ease: EASE }}
+        {/* Controls row: expand members + full group view link */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {group.members.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-silver transition-colors hover:text-ivory"
             >
+              <motion.svg
+                viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5"
+                animate={{ rotate: expanded ? 90 : 0 }}
+                transition={{ duration: 0.25, ease: EASE }}
+              >
+                <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              </motion.svg>
+              {expanded ? 'Hide members' : `See all ${group.memberCount} members`}
+            </button>
+          )}
+          <Link
+            href={`/dashboard/master/group/${group.orgId}`}
+            className="flex items-center gap-1.5 rounded-sm border border-border-gold px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] text-gold-lt transition-colors hover:bg-gold/10"
+          >
+            Open full group view
+            <svg viewBox="0 0 16 16" fill="none" className="h-3 w-3" aria-hidden>
               <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-            </motion.svg>
-            {expanded ? 'Hide members' : `See all ${group.memberCount} members`}
-          </button>
-        )}
+            </svg>
+          </Link>
+        </div>
       </div>
 
       {/* Expanded member list */}
@@ -755,7 +878,7 @@ function GroupCard({
    Main MasterBoard component
    ============================================================ */
 
-export function MasterBoard({ groups, totals }: MasterBoardProps) {
+export function MasterBoard({ groups, totals, guidance }: MasterBoardProps) {
   const [panelDetail, setPanelDetail] = useState<MemberDetail | null | 'loading' | 'not-found'>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -775,6 +898,9 @@ export function MasterBoard({ groups, totals }: MasterBoardProps) {
     <>
       {/* Instance totals */}
       <TotalsRow totals={totals} />
+
+      {/* Master guidance: leading the leaders */}
+      <MasterGuidanceSection cards={guidance} />
 
       {/* Groups */}
       <section aria-label="All groups">

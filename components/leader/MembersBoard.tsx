@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { getMemberDetail } from '@/app/dashboard/(leader)/leader/actions';
 import type { MemberSummary, MemberDetail, AreaStatus, GuidanceCard, Trend } from '@/lib/faithflow/types';
+import { bibleUrl } from '@/lib/faithflow/guidance';
 
 /* ============================================================
    Props
@@ -23,32 +24,37 @@ export function MembersBoard({ members }: MembersBoardProps) {
     members.length > 0 ? members[0].userId : null,
   );
   const [detail, setDetail] = useState<MemberDetail | null | 'error'>(null);
-  const [isPending, startTransition] = useTransition();
+  const [loading, setLoading] = useState(false);
+
+  // Load the selected member's detail whenever the selection changes. This MUST
+  // live in an effect, never during render: kicking off a state update during
+  // render causes an update-in-render loop that crashes the page.
+  useEffect(() => {
+    if (selectedId === null) {
+      setDetail(null);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setDetail(null);
+    getMemberDetail(selectedId)
+      .then((d) => {
+        if (!cancelled) setDetail(d ?? 'error');
+      })
+      .catch(() => {
+        if (!cancelled) setDetail('error');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId]);
 
   function selectMember(userId: string) {
     if (userId === selectedId) return;
     setSelectedId(userId);
-    setDetail(null);
-    startTransition(async () => {
-      try {
-        const d = await getMemberDetail(userId);
-        setDetail(d ?? 'error');
-      } catch {
-        setDetail('error');
-      }
-    });
-  }
-
-  // Auto-load the first member on mount (only once, when detail is null and selectedId is set)
-  if (detail === null && selectedId !== null && !isPending) {
-    startTransition(async () => {
-      try {
-        const d = await getMemberDetail(selectedId);
-        setDetail(d ?? 'error');
-      } catch {
-        setDetail('error');
-      }
-    });
   }
 
   const selected = members.find((m) => m.userId === selectedId) ?? null;
@@ -81,7 +87,7 @@ export function MembersBoard({ members }: MembersBoardProps) {
           <div className="flex h-48 items-center justify-center rounded-sm border border-border-sub bg-black-3">
             <p className="text-sm text-muted">Select a member to see their journey.</p>
           </div>
-        ) : isPending ? (
+        ) : loading ? (
           <LoadingPanel name={selected?.name} />
         ) : detail === 'error' ? (
           <div className="flex h-48 items-center justify-center rounded-sm border border-border-sub bg-black-3">
@@ -508,7 +514,14 @@ function GuidanceCardView({ card }: { card: GuidanceCard }) {
         <div className="mb-4 flex flex-col gap-2">
           {card.scriptures.map((s) => (
             <div key={s.ref} className="border-l-2 border-gold/40 pl-3">
-              <p className="text-xs font-medium text-gold-lt">{s.ref}</p>
+              <a
+                href={bibleUrl(s.ref)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-medium text-gold-lt transition-colors hover:text-gold hover:underline"
+              >
+                {s.ref} &#8599;
+              </a>
               <p className="mt-0.5 text-xs text-silver">{s.why}</p>
             </div>
           ))}

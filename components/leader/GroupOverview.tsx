@@ -2,6 +2,7 @@
 
 import { motion } from 'motion/react';
 import type { GroupAnalytics, MemberSummary } from '@/lib/faithflow/types';
+import { bibleUrl } from '@/lib/faithflow/guidance';
 
 interface GroupOverviewProps {
   org: { id: string; name: string };
@@ -240,7 +241,14 @@ function GuidanceCardView({ card, index }: { card: GuidanceCardData; index: numb
           <ul className="flex flex-col gap-2">
             {card.scriptures.map((s, i) => (
               <li key={i} className="flex flex-col gap-0.5">
-                <span className="text-xs font-medium text-gold-lt">{s.ref}</span>
+                <a
+                  href={bibleUrl(s.ref)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-medium text-gold-lt hover:underline"
+                >
+                  {s.ref}&#8599;
+                </a>
                 <span className="text-xs text-silver">{s.why}</span>
               </li>
             ))}

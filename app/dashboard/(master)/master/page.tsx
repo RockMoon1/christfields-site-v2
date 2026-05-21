@@ -52,7 +52,7 @@ export default async function MasterOversightPage() {
       )}
 
       {data.state === 'ready' && (
-        <MasterBoard groups={data.groups} totals={data.totals} />
+        <MasterBoard groups={data.groups} totals={data.totals} guidance={data.guidance} />
       )}
     </div>
   );
