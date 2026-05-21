@@ -8,7 +8,8 @@ import { cn } from '@/lib/utils';
 /**
  * FaithFlow leader navigation. A fixed vertical rail on desktop, a simple
  * horizontal strip on smaller screens (the leader dashboard is desktop and
- * iPad first). Active tab gets an animated gold pill.
+ * iPad first). Active tab gets an animated gold pill. Masters also get a link
+ * up to the oversight tier.
  */
 
 const TABS = [
@@ -21,7 +22,7 @@ function isActive(href: string, pathname: string) {
   return href === '/dashboard/leader' ? pathname === href : pathname.startsWith(href);
 }
 
-export function LeaderNav() {
+export function LeaderNav({ isMaster = false }: { isMaster?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -67,7 +68,18 @@ export function LeaderNav() {
           </ul>
         </nav>
 
-        <div className="border-t border-border-sub px-3 py-4">
+        <div className="space-y-1 border-t border-border-sub px-3 py-4">
+          {isMaster && (
+            <Link
+              href="/dashboard/master"
+              className="flex items-center gap-3 rounded-sm border border-border-gold bg-gold/[0.06] px-3 py-2.5 text-sm text-gold-lt transition-colors hover:bg-gold/[0.12]"
+            >
+              <span className="flex h-4 w-4 items-center justify-center text-gold">
+                <CrownIcon />
+              </span>
+              Master oversight
+            </Link>
+          )}
           <Link
             href="/dashboard"
             className="flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm text-silver transition-colors hover:text-ivory"
@@ -106,6 +118,14 @@ export function LeaderNav() {
             </Link>
           );
         })}
+        {isMaster && (
+          <Link
+            href="/dashboard/master"
+            className="flex shrink-0 items-center rounded-sm border border-border-gold px-3 py-2 text-xs font-medium uppercase tracking-[0.12em] text-gold-lt"
+          >
+            Master
+          </Link>
+        )}
         <Link
           href="/dashboard"
           className="ml-auto flex shrink-0 items-center rounded-sm px-3 py-2 text-xs font-medium uppercase tracking-[0.12em] text-silver hover:text-ivory"
@@ -147,6 +167,18 @@ function BackIcon() {
   return (
     <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
       <path d="M9 4L5 8l4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function CrownIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
+      <path
+        d="M2.5 5.5l2.5 2 3-3.5 3 3.5 2.5-2-1 6.5h-9l-1-6.5z"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
