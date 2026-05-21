@@ -61,7 +61,7 @@ export function DashboardInvite() {
             <Reveal delay={0.1}>
               <p className="mb-8 max-w-xl text-lg leading-relaxed text-ivory-dim">
                 Your dashboard holds the real, ordinary practices of faith. Keep your rhythms,
-                bring him your prayers, be honest about how you are, and walk alongside others.
+                take what is on your heart straight to him, be honest about where you are, and walk alongside others.
                 Built on grace, not pressure.
               </p>
             </Reveal>

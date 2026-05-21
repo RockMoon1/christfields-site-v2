@@ -9,14 +9,14 @@ import { NAV_ITEMS } from './nav-data';
 
 /**
  * Desktop sidebar for the dashboard. Sticky, dark, with brand logo at top.
- * Active nav item gets a gold pill background that animates between items
- * via layoutId, same trick as the main site nav.
+ * Active nav item gets a gold pill background that animates between items.
  *
- * Leaders (org admins) also get a distinct "FaithFlow Leader" entry that
- * crosses into the gated leader analytics area. Members never see it.
+ * Each item has a hover tooltip that briefly explains what the section is and
+ * why to use it, so a new member can learn the dashboard by exploring rather
+ * than sitting through a forced tour.
  *
- * Hidden under lg breakpoint — mobile users get the MobileNav drawer
- * inside TopBar instead.
+ * Leaders (org admins) also get a "FaithFlow Leader" entry. Members never see
+ * it. Hidden under lg breakpoint; mobile users get the MobileNav drawer.
  */
 export function Sidebar({ isLeader = false }: { isLeader?: boolean }) {
   const pathname = usePathname();
@@ -33,9 +33,7 @@ export function Sidebar({ isLeader = false }: { isLeader?: boolean }) {
           <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-gold">
             Christ Fields
           </p>
-          <p className="text-[10px] uppercase tracking-[0.18em] text-muted">
-            Dashboard
-          </p>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted">Dashboard</p>
         </div>
       </Link>
 
@@ -48,7 +46,7 @@ export function Sidebar({ isLeader = false }: { isLeader?: boolean }) {
                 ? pathname === '/dashboard'
                 : pathname.startsWith(item.href);
             return (
-              <li key={item.href} className="relative">
+              <li key={item.href} className="group relative">
                 {active && (
                   <motion.div
                     layoutId="dash-active-pill"
@@ -73,6 +71,7 @@ export function Sidebar({ isLeader = false }: { isLeader?: boolean }) {
                   </span>
                   {item.label}
                 </Link>
+                <NavTooltip label={item.label} hint={item.hint} />
               </li>
             );
           })}
@@ -81,7 +80,7 @@ export function Sidebar({ isLeader = false }: { isLeader?: boolean }) {
 
       {/* Leader-only entry into the FaithFlow leader area */}
       {isLeader && (
-        <div className="px-3 pb-2">
+        <div className="group relative px-3 pb-2">
           <Link
             href="/dashboard/leader"
             className="flex items-center gap-3 rounded-sm border border-border-gold bg-gold/[0.06] px-3 py-2.5 text-sm text-gold-lt transition-colors hover:bg-gold/[0.12]"
@@ -91,6 +90,10 @@ export function Sidebar({ isLeader = false }: { isLeader?: boolean }) {
             </span>
             FaithFlow Leader
           </Link>
+          <NavTooltip
+            label="FaithFlow Leader"
+            hint="Lead your group. See how each person is walking and find prayerful ways to shepherd them."
+          />
         </div>
       )}
 
@@ -104,6 +107,24 @@ export function Sidebar({ isLeader = false }: { isLeader?: boolean }) {
         </p>
       </div>
     </aside>
+  );
+}
+
+/**
+ * Hover card that explains a nav item. Pure CSS (group-hover), so it costs
+ * nothing and never blocks clicks. Appears to the right of the rail.
+ */
+function NavTooltip({ label, hint }: { label: string; hint: string }) {
+  return (
+    <span
+      role="tooltip"
+      className="pointer-events-none absolute left-full top-1/2 z-50 ml-3 hidden w-60 -translate-y-1/2 rounded-sm border border-border-gold bg-black-2 p-3 opacity-0 shadow-2xl transition-opacity duration-200 group-hover:opacity-100 lg:block"
+    >
+      <span className="block text-[11px] font-medium uppercase tracking-[0.16em] text-gold-lt">
+        {label}
+      </span>
+      <span className="mt-1.5 block text-[11px] leading-relaxed text-silver">{hint}</span>
+    </span>
   );
 }
 

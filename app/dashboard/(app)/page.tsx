@@ -86,7 +86,7 @@ export default async function DashboardHome() {
 
             <p className="max-w-md text-base leading-relaxed text-silver">
               This is your space to walk with God a little more closely. Keep your
-              rhythms, bring him your prayers, and be honest about how you are. There
+              rhythms, take what is on your heart straight to him, and be honest about how you are. There
               is grace here for every day.
             </p>
 
@@ -197,7 +197,7 @@ export default async function DashboardHome() {
           headline={
             prayers.open.length > 0
               ? `${prayers.open.length} on your heart`
-              : 'Bring him your requests'
+              : 'What is on your heart'
           }
           sub={
             prayers.answered.length > 0

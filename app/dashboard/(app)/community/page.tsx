@@ -21,12 +21,13 @@ export default async function CommunityPage() {
           Community
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-silver">
-          Share what you are carrying and pray for those who share theirs. As iron sharpens iron,
-          praying for each other by name changes things in ways we cannot predict.
+          This is not a place to get prayers answered faster. It is the body of Christ doing what
+          it is made for: bearing one another&rsquo;s burdens, praying for each other, and showing
+          up. Share what you are walking through, and stand with others in theirs.
         </p>
         {data.totalPrayed > 0 && (
           <p className="mt-3 text-sm text-gold-lt">
-            Together we have prayed {data.totalPrayed.toLocaleString()}{' '}
+            We have prayed for one another {data.totalPrayed.toLocaleString()}{' '}
             {data.totalPrayed === 1 ? 'time' : 'times'}.
           </p>
         )}

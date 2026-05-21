@@ -339,8 +339,8 @@ function PrayerCard({ prayer, onPray, onAnswered, onDelete, isPending }: PrayerC
             )}
             aria-label={
               prayer.prayedByMe
-                ? 'You are praying for this'
-                : 'I prayed for this'
+                ? 'You are praying with them'
+                : 'Pray with them'
             }
           >
             {prayer.prayedByMe ? (
@@ -351,7 +351,7 @@ function PrayerCard({ prayer, onPray, onAnswered, onDelete, isPending }: PrayerC
             ) : (
               <>
                 <HandsPrayIcon />
-                I prayed for this
+                Pray with them
               </>
             )}
           </button>

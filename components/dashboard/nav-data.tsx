@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 export interface NavItem {
   href: string;
   label: string;
+  hint: string;
   icon: ReactNode;
 }
 
@@ -11,15 +12,60 @@ export interface NavItem {
  * the mobile MobileNav drawer so the two stay in sync automatically.
  */
 export const NAV_ITEMS: NavItem[] = [
-  { href: '/dashboard', label: 'Overview', icon: <DotIcon /> },
-  { href: '/dashboard/rhythms', label: 'Rhythms', icon: <FlameIcon /> },
-  { href: '/dashboard/prayer', label: 'Prayer', icon: <PrayerIcon /> },
-  { href: '/dashboard/reflect', label: 'Reflect', icon: <MoonIcon /> },
-  { href: '/dashboard/scripture', label: 'Scripture', icon: <ScrollIcon /> },
-  { href: '/dashboard/progress', label: 'Progress', icon: <BarIcon /> },
-  { href: '/dashboard/resources', label: 'Resources', icon: <BookIcon /> },
-  { href: '/dashboard/community', label: 'Community', icon: <PeopleIcon /> },
-  { href: '/dashboard/settings', label: 'Settings', icon: <GearIcon /> },
+  {
+    href: '/dashboard',
+    label: 'Overview',
+    hint: 'Your home base. Today’s verse, your rhythms, and where things stand at a glance.',
+    icon: <DotIcon />,
+  },
+  {
+    href: '/dashboard/rhythms',
+    label: 'Rhythms',
+    hint: 'Your daily and weekly practices. Tap one to check it off and build gentle, lasting habits.',
+    icon: <FlameIcon />,
+  },
+  {
+    href: '/dashboard/prayer',
+    label: 'Prayer',
+    hint: 'Hold what you are praying about, and mark answers as God moves. Between you and him.',
+    icon: <PrayerIcon />,
+  },
+  {
+    href: '/dashboard/reflect',
+    label: 'Reflect',
+    hint: 'A few honest minutes. Log your mood, name what you are thankful for, and review the day with God.',
+    icon: <MoonIcon />,
+  },
+  {
+    href: '/dashboard/scripture',
+    label: 'Scripture',
+    hint: 'A verse to carry today, and the verses you are learning by heart.',
+    icon: <ScrollIcon />,
+  },
+  {
+    href: '/dashboard/progress',
+    label: 'Progress',
+    hint: 'Track growth in the areas you care about, one honest score at a time.',
+    icon: <BarIcon />,
+  },
+  {
+    href: '/dashboard/resources',
+    label: 'Resources',
+    hint: 'Scripture, prompts, and next steps matched to where you are in each area.',
+    icon: <BookIcon />,
+  },
+  {
+    href: '/dashboard/community',
+    label: 'Community',
+    hint: 'Carry each other. Share what you are walking through and stand with others in theirs.',
+    icon: <PeopleIcon />,
+  },
+  {
+    href: '/dashboard/settings',
+    label: 'Settings',
+    hint: 'Your account details and a quick guide to the dashboard.',
+    icon: <GearIcon />,
+  },
 ];
 
 /* ============================================================

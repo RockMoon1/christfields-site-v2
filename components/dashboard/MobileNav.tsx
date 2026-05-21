@@ -129,7 +129,7 @@ export function MobileNav() {
                           href={item.href}
                           onClick={() => setOpen(false)}
                           className={cn(
-                            'flex items-center gap-3 rounded-sm border px-3 py-3 text-sm transition-colors',
+                            'flex items-start gap-3 rounded-sm border px-3 py-3 text-sm transition-colors',
                             active
                               ? 'border-border-gold bg-gold/[0.07] text-gold-lt'
                               : 'border-transparent text-silver hover:text-ivory',
@@ -137,13 +137,18 @@ export function MobileNav() {
                         >
                           <span
                             className={cn(
-                              'flex h-4 w-4 flex-shrink-0 items-center justify-center',
+                              'mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center',
                               active ? 'text-gold' : 'text-muted',
                             )}
                           >
                             {item.icon}
                           </span>
-                          {item.label}
+                          <span className="min-w-0">
+                            <span className="block">{item.label}</span>
+                            <span className="mt-0.5 block text-[11px] leading-snug text-muted">
+                              {item.hint}
+                            </span>
+                          </span>
                         </Link>
                       </li>
                     );

@@ -12,13 +12,15 @@ export default async function PrayerPage() {
     <div className="mx-auto max-w-6xl">
       <header className="mb-10">
         <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.22em] text-gold">
-          Bring it to God
+          Between you and God
         </p>
         <h1 className="font-display text-4xl font-light text-ivory md:text-5xl">
           Prayer
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-silver">
-          Keep your requests here, and look back at what he has answered.
+          Your prayers are between you and the Father. This is just a place to hold them, to keep
+          praying, and to remember his faithfulness. Pray honestly, and lean on his will more than
+          your wants.
         </p>
       </header>
 
