@@ -115,11 +115,26 @@ export function ProgressBoard({ initialAreas }: ProgressBoardProps) {
     });
   }
 
+  const presence = areas.find((a) => a.presetKey === 'presence') ?? null;
+  const rest = areas.filter((a) => a.presetKey !== 'presence');
+
   return (
     <div>
+      {presence && (
+        <motion.div layout className="mb-6">
+          <AreaCard
+            area={presence}
+            onLog={handleLog}
+            onRemove={handleRemove}
+            featured
+            featuredLabel="The heart of FaithFlow"
+          />
+        </motion.div>
+      )}
+
       <div className="grid gap-6 md:grid-cols-2">
         <AnimatePresence mode="popLayout">
-          {areas.map((area) => (
+          {rest.map((area) => (
             <motion.div
               key={area.id}
               layout
@@ -299,9 +314,11 @@ interface AreaCardProps {
   area: AreaWithEntries;
   onLog: (areaId: string, score: number, note: string) => void;
   onRemove: (areaId: string) => void;
+  featured?: boolean;
+  featuredLabel?: string;
 }
 
-function AreaCard({ area, onLog, onRemove }: AreaCardProps) {
+function AreaCard({ area, onLog, onRemove, featured = false, featuredLabel }: AreaCardProps) {
   const latest = area.entries[area.entries.length - 1];
   const prev = area.entries[area.entries.length - 2];
   const delta = latest && prev ? latest.score - prev.score : 0;
@@ -317,7 +334,14 @@ function AreaCard({ area, onLog, onRemove }: AreaCardProps) {
   }
 
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-sm border border-border-sub bg-black-3 p-6 pl-7 transition-colors hover:border-border-gold">
+    <article
+      className={cn(
+        'group relative flex h-full flex-col overflow-hidden rounded-sm border p-6 pl-7 transition-colors',
+        featured
+          ? 'border-border-gold bg-gradient-to-br from-black-3 to-black-2 shadow-[0_0_45px_rgba(201,165,72,0.10)]'
+          : 'border-border-sub bg-black-3 hover:border-border-gold',
+      )}
+    >
       {/* Color stripe: ties this card visually to its dot on the orb */}
       <div
         aria-hidden
@@ -328,6 +352,12 @@ function AreaCard({ area, onLog, onRemove }: AreaCardProps) {
         aria-hidden
         className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
       />
+
+      {featured && featuredLabel && (
+        <p className="mb-3 inline-flex w-fit items-center gap-2 rounded-sm border border-gold/30 bg-gold/[0.06] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.22em] text-gold">
+          {featuredLabel}
+        </p>
+      )}
 
       <div className="mb-4 flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
