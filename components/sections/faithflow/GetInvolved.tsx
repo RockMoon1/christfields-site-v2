@@ -70,20 +70,21 @@ export function GetInvolved() {
     setLastSubmitAt(now);
 
     try {
-      const params = new URLSearchParams();
-      formData.forEach((value, key) => {
-        params.append(key, value.toString());
-      });
-
-      // POST to /__forms.html (the static file Netlify owns), NOT to /
-      // which is a Next.js route. Posting to a Next route makes Next return
-      // 200 with the page HTML and Netlify never sees the submission.
-      const res = await fetch('/__forms.html', {
+      // Send to our own API route, which emails the team and the person via
+      // Resend. This does not rely on Netlify Forms intercepting the POST.
+      const res = await fetch('/api/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString(),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          formName: 'faithflow',
+          name,
+          email,
+          interest,
+          message: String(formData.get('message') || ''),
+          botField: String(formData.get('bot-field') || ''),
+        }),
       });
-      if (!res.ok && !res.redirected) {
+      if (!res.ok) {
         throw new Error(`Status ${res.status}`);
       }
 
