@@ -22,12 +22,19 @@
   /* Emerald */
   --color-emerald: #1b4332;
   --color-emerald-lt: #2d6a4f;
+  /* Brighter emerald for status TEXT (Active / Present / Answered): emerald-lt
+     fails WCAG AA as text on dark, so foreground labels use this, while
+     emerald / emerald-lt stay for fills and borders. */
+  --color-emerald-bright: #5cab7d;
 
   /* Whites and silvers */
   --color-ivory: #f0f2ee;
   --color-ivory-dim: #c4ccca;
   --color-silver: #8a9a92;
-  --color-muted: #4e5e57;
+  /* Lightened from #4e5e57 (which failed WCAG AA on every dark background) so
+     normal text clears ~4.5:1, while staying dimmer than --color-silver so the
+     muted-vs-primary text hierarchy still reads. */
+  --color-muted: #7e8c84;
 
   /* Borders */
   --color-border-gold: rgba(201, 165, 72, 0.14);
