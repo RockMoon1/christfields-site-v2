@@ -315,7 +315,7 @@ function MemberDrilldown({ detail }: { detail: MemberDetail }) {
                 />
                 <span className="min-w-0 flex-1 truncate text-sm text-ivory-dim">{r.name}</span>
                 {r.doneToday && (
-                  <span className="rounded-sm bg-emerald-lt/20 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.12em] text-emerald-lt">
+                  <span className="rounded-sm bg-emerald-lt/20 px-1.5 py-0.5 text-[9px] uppercase tracking-[0.12em] text-emerald-bright">
                     Done today
                   </span>
                 )}
@@ -375,7 +375,7 @@ function MemberDrilldown({ detail }: { detail: MemberDetail }) {
                   <div className="flex items-start justify-between gap-3">
                     <p className="text-sm font-medium text-ivory">{p.title}</p>
                     {p.answered && (
-                      <span className="shrink-0 rounded-sm border border-emerald-lt/30 bg-emerald-lt/10 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-emerald-lt">
+                      <span className="shrink-0 rounded-sm border border-emerald-lt/30 bg-emerald-lt/10 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-emerald-bright">
                         Answered
                       </span>
                     )}
@@ -420,7 +420,7 @@ function MemberDrilldown({ detail }: { detail: MemberDetail }) {
                     className={cn(
                       'shrink-0 rounded-sm border px-2 py-0.5 text-[9px] uppercase tracking-[0.14em]',
                       v.status === 'memorized'
-                        ? 'border-emerald-lt/30 bg-emerald-lt/10 text-emerald-lt'
+                        ? 'border-emerald-lt/30 bg-emerald-lt/10 text-emerald-bright'
                         : 'border-gold/30 bg-gold/[0.06] text-gold-lt',
                     )}
                   >
@@ -466,7 +466,7 @@ function MemberDrilldown({ detail }: { detail: MemberDetail }) {
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-sm font-medium text-ivory">{item.title}</p>
                   {item.answered && (
-                    <span className="shrink-0 rounded-sm border border-emerald-lt/30 bg-emerald-lt/10 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-emerald-lt">
+                    <span className="shrink-0 rounded-sm border border-emerald-lt/30 bg-emerald-lt/10 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-emerald-bright">
                       Answered
                     </span>
                   )}
@@ -514,7 +514,7 @@ function AreaRow({ area }: { area: AreaStatus }) {
   const tierColor: Record<string, string> = {
     struggling: 'text-red-400',
     growing: 'text-gold',
-    leading: 'text-emerald-lt',
+    leading: 'text-emerald-bright',
     none: 'text-muted',
   };
 

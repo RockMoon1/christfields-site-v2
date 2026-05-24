@@ -34,7 +34,7 @@ export function FFHero() {
 
       <motion.div style={{ opacity: contentOpacity }} className="relative z-10 mx-auto max-w-3xl text-center">
         <Reveal>
-          <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-lt/35 bg-emerald-lt/15 px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.16em] text-emerald-lt">
+          <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-lt/35 bg-emerald-lt/15 px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.16em] text-emerald-bright">
             <span className="inline-block h-1.5 w-1.5 animate-[ffPulse_2s_ease-in-out_infinite] rounded-full bg-emerald-lt shadow-[0_0_8px_var(--color-emerald-lt)]" />
             First Group Active
           </span>

@@ -47,7 +47,7 @@ function TrendArrow({ trend }: { trend: Trend }) {
       <svg
         viewBox="0 0 12 12"
         fill="none"
-        className="ml-1.5 inline-block h-3 w-3 text-emerald-lt"
+        className="ml-1.5 inline-block h-3 w-3 text-emerald-bright"
         aria-label="trending up"
       >
         <path d="M2 9 L6 3 L10 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -172,7 +172,7 @@ function AreaBar({ name, avg, color, annotation }: AreaBarProps) {
         {avg.toFixed(1)}
       </span>
       {annotation === 'strong' && (
-        <span className="ml-1 text-[10px] uppercase tracking-[0.16em] text-emerald-lt">
+        <span className="ml-1 text-[10px] uppercase tracking-[0.16em] text-emerald-bright">
           strong
         </span>
       )}

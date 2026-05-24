@@ -412,7 +412,7 @@ function AreaCard({ area, onLog, onRemove, featured = false, featuredLabel }: Ar
           <p
             className={cn(
               'pb-1 text-xs font-medium',
-              delta > 0 ? 'text-emerald-lt' : 'text-red-400',
+              delta > 0 ? 'text-emerald-bright' : 'text-red-400',
             )}
           >
             {delta > 0 ? '+' : ''}

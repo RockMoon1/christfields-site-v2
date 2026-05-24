@@ -47,7 +47,7 @@ const projects: ProjectCard[] = [
 ];
 
 const badgeStyles: Record<ProjectCard['badgeTone'], string> = {
-  active: 'border-emerald-lt/40 bg-emerald-lt/15 text-emerald-lt',
+  active: 'border-emerald-lt/40 bg-emerald-lt/15 text-emerald-bright',
   planned: 'border-gold/30 bg-gold/10 text-gold',
   dev: 'border-border-sub bg-black-4 text-silver',
 };

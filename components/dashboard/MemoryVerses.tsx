@@ -426,7 +426,7 @@ function LearningCard({ verse, onReview, onMoveToMemorized, onDelete }: Learning
             <button
               type="button"
               onClick={handleGotIt}
-              className="rounded-sm border border-emerald-lt/40 px-4 py-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-emerald-lt transition-colors hover:bg-emerald-lt/10"
+              className="rounded-sm border border-emerald-lt/40 px-4 py-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-emerald-bright transition-colors hover:bg-emerald-lt/10"
             >
               Got it
             </button>
@@ -468,7 +468,7 @@ function LearningCard({ verse, onReview, onMoveToMemorized, onDelete }: Learning
                     onMoveToMemorized(verse.id);
                     setOfferMemorized(false);
                   }}
-                  className="rounded-sm bg-emerald-lt/20 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.1em] text-emerald-lt transition-colors hover:bg-emerald-lt/30"
+                  className="rounded-sm bg-emerald-lt/20 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.1em] text-emerald-bright transition-colors hover:bg-emerald-lt/30"
                 >
                   Move
                 </button>
@@ -583,7 +583,7 @@ function XIcon() {
 
 function CheckIcon() {
   return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 flex-none text-emerald-lt">
+    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 flex-none text-emerald-bright">
       <path
         d="M3 8l3.5 3.5L13 5"
         stroke="currentColor"

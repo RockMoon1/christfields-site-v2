@@ -150,7 +150,7 @@ export function AttendanceBoard({ initial }: { initial: ReadyBoard }) {
               className={cn(
                 'flex shrink-0 items-center gap-2 rounded-sm border px-3.5 py-2 text-xs font-medium uppercase tracking-[0.08em] transition-colors',
                 member.confirmed
-                  ? 'border-emerald bg-emerald/15 text-emerald-lt'
+                  ? 'border-emerald bg-emerald/15 text-emerald-bright'
                   : 'border-border-sub text-silver hover:border-border-gold hover:text-ivory',
               )}
             >

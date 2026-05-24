@@ -60,7 +60,7 @@ export function ScholarFlowPreview() {
               <span className="text-[10px] uppercase tracking-[0.16em] text-silver">
                 Today
               </span>
-              <span className="rounded-sm border border-emerald-lt/35 bg-emerald-lt/15 px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-emerald-lt">
+              <span className="rounded-sm border border-emerald-lt/35 bg-emerald-lt/15 px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-emerald-bright">
                 On Track
               </span>
             </div>

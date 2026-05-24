@@ -299,7 +299,7 @@ function PrayerCard({ prayer, onPray, onAnswered, onDelete, isPending }: PrayerC
         </div>
 
         {prayer.answered && (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-lt/40 bg-emerald-lt/10 px-3 py-0.5 text-[11px] font-medium uppercase tracking-[0.16em] text-emerald-lt">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-lt/40 bg-emerald-lt/10 px-3 py-0.5 text-[11px] font-medium uppercase tracking-[0.16em] text-emerald-bright">
             <CheckCircleIcon />
             Answered
           </span>
@@ -372,7 +372,7 @@ function PrayerCard({ prayer, onPray, onAnswered, onDelete, isPending }: PrayerC
               type="button"
               onClick={() => onAnswered(prayer.id)}
               disabled={isPending || prayer.id.startsWith('temp-')}
-              className="text-[10px] uppercase tracking-[0.14em] text-muted transition-colors hover:text-emerald-lt disabled:opacity-50"
+              className="text-[10px] uppercase tracking-[0.14em] text-muted transition-colors hover:text-emerald-bright disabled:opacity-50"
             >
               Mark answered
             </button>

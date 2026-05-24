@@ -482,7 +482,7 @@ function OpenCard({ request, onMarkAnswered, onShare, onDelete }: OpenCardProps)
           <button
             type="button"
             onClick={() => setShowAnswerInput(true)}
-            className="rounded-sm border border-emerald-lt/40 px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-emerald-lt transition-colors hover:bg-emerald-lt/10"
+            className="rounded-sm border border-emerald-lt/40 px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-emerald-bright transition-colors hover:bg-emerald-lt/10"
           >
             Answered
           </button>
@@ -517,7 +517,7 @@ function AnsweredCard({ request, onReopen, onDelete }: AnsweredCardProps) {
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="mb-1.5 flex items-center gap-2">
-            <span className="rounded-sm border border-emerald-lt/40 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.14em] text-emerald-lt">
+            <span className="rounded-sm border border-emerald-lt/40 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.14em] text-emerald-bright">
               Answered
             </span>
             {request.answered_at && (

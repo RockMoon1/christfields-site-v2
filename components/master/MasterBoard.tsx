@@ -76,7 +76,7 @@ function TrendArrow({ trend }: { trend: Trend }) {
   }
   if (trend === 'up') {
     return (
-      <svg viewBox="0 0 12 12" fill="none" className="ml-1 inline-block h-3 w-3 text-emerald-lt" aria-label="up">
+      <svg viewBox="0 0 12 12" fill="none" className="ml-1 inline-block h-3 w-3 text-emerald-bright" aria-label="up">
         <path d="M2 9 L6 3 L10 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     );
@@ -357,7 +357,7 @@ function LeaderRow({ leader }: { leader: LeaderActivity }) {
             className={
               'rounded-sm border px-1.5 py-0.5 text-[9px] uppercase tracking-[0.16em] ' +
               (engaged
-                ? 'border-emerald-lt/30 text-emerald-lt'
+                ? 'border-emerald-lt/30 text-emerald-bright'
                 : 'border-gold/30 text-gold')
             }
           >
@@ -665,7 +665,7 @@ function MemberDetailView({ detail }: { detail: MemberDetail }) {
                 <div className="mb-1 flex items-center justify-between">
                   <p className="text-sm font-medium text-ivory-dim">{p.title}</p>
                   {p.answered && (
-                    <span className="text-[9px] uppercase tracking-[0.16em] text-emerald-lt">
+                    <span className="text-[9px] uppercase tracking-[0.16em] text-emerald-bright">
                       answered
                     </span>
                   )}
@@ -712,7 +712,7 @@ function MemberDetailView({ detail }: { detail: MemberDetail }) {
                     className={
                       'shrink-0 rounded-sm border px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] ' +
                       (v.status === 'memorized'
-                        ? 'border-emerald-lt/30 bg-emerald-lt/10 text-emerald-lt'
+                        ? 'border-emerald-lt/30 bg-emerald-lt/10 text-emerald-bright'
                         : 'border-gold/30 bg-gold/[0.06] text-gold-lt')
                     }
                   >
@@ -761,7 +761,7 @@ function MemberDetailView({ detail }: { detail: MemberDetail }) {
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-sm font-medium text-ivory-dim">{item.title}</p>
                   {item.answered && (
-                    <span className="shrink-0 rounded-sm border border-emerald-lt/30 bg-emerald-lt/10 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-emerald-lt">
+                    <span className="shrink-0 rounded-sm border border-emerald-lt/30 bg-emerald-lt/10 px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-emerald-bright">
                       Answered
                     </span>
                   )}

@@ -110,7 +110,7 @@ export function VerseOfDayCard({ verse }: VerseOfDayCardProps) {
             className={cn(
               'rounded-sm px-5 py-2 text-[11px] font-medium uppercase tracking-[0.07em] transition-all duration-300',
               isSaveDone
-                ? 'border border-emerald-lt/40 bg-transparent text-emerald-lt cursor-default'
+                ? 'border border-emerald-lt/40 bg-transparent text-emerald-bright cursor-default'
                 : 'border border-gold/45 bg-transparent text-gold hover:bg-gold hover:text-black disabled:opacity-60',
             )}
           >

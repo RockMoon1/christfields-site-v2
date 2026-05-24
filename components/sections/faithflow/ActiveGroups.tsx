@@ -46,7 +46,7 @@ export function ActiveGroups() {
                   Colorado · Local Community
                 </p>
               </div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-lt/40 bg-emerald-lt/15 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-emerald-lt">
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-lt/40 bg-emerald-lt/15 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-emerald-bright">
                 <span className="inline-block h-1.5 w-1.5 animate-[ffPulse_2s_ease-in-out_infinite] rounded-full bg-emerald-lt shadow-[0_0_8px_var(--color-emerald-lt)]" />
                 Active
               </span>
