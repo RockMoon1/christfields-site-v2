@@ -135,3 +135,46 @@ export async function setMemberAttendance(
   revalidatePath('/dashboard', 'layout');
   return { ok: true };
 }
+
+/**
+ * TEMPORARY — testing only. Simulates `weeks` of confirmed in-person attendance
+ * for a member (clearing any existing for this org first) and resets their
+ * journey high-water mark, so a leader can preview each stage's dashboard.
+ * Delete this action and its UI panel before real use.
+ */
+export async function devSetAttendanceWeeks(
+  memberId: string,
+  weeks: number,
+): Promise<{ ok: boolean }> {
+  const ctx = await getLeaderContext();
+  if (!ctx) return { ok: false };
+  if (!ctx.members.some((m) => m.userId === memberId)) return { ok: false };
+
+  const { userId: leaderId } = await auth();
+  const sb = getSupabase();
+  const n = Math.max(0, Math.min(12, Math.floor(weeks)));
+
+  await sb.from('group_attendance').delete().eq('org_id', ctx.orgId).eq('clerk_user_id', memberId);
+
+  if (n > 0) {
+    const rows = Array.from({ length: n }, (_, i) => ({
+      org_id: ctx.orgId,
+      clerk_user_id: memberId,
+      gathering_date: weekAnchorUTC(new Date(Date.now() - i * 7 * 86_400_000)),
+      checked_in: true,
+      confirmed: true,
+      confirmed_by: leaderId,
+    }));
+    await sb.from('group_attendance').insert(rows);
+  }
+
+  // Reset the high-water mark so the stage can move up or down while testing.
+  await sb
+    .from('dashboard_prefs')
+    .update({ journey_seen_stage: 'seed', updated_at: new Date().toISOString() })
+    .eq('clerk_user_id', memberId);
+
+  revalidatePath('/dashboard/leader/attendance');
+  revalidatePath('/dashboard', 'layout');
+  return { ok: true };
+}

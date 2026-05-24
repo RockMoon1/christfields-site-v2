@@ -80,7 +80,6 @@ async function gatherSignals(
   const dailyIds = new Set(practiceRows.filter((p) => p.cadence === 'daily').map((p) => p.id));
 
   const empty = Promise.resolve({ data: [] as Record<string, unknown>[], count: 0 });
-  const emptyCount = Promise.resolve({ count: 0 });
 
   const [
     entriesRes,
@@ -109,8 +108,12 @@ async function gatherSignals(
     sb.from('memory_verses').select('id', { count: 'exact', head: true }).eq('clerk_user_id', userId).gte('created_at', startedAtISO),
     sb.from('community_prayers').select('id', { count: 'exact', head: true }).eq('clerk_user_id', userId).gte('created_at', startedAtISO),
     sb.from('community_intercessions').select('id', { count: 'exact', head: true }).eq('clerk_user_id', userId).gte('created_at', startedAtISO),
+    // All leader-confirmed weeks count. (Attendance lives on a week's Sunday
+    // anchor, so we must NOT filter by the mid-week journey_started_at, or the
+    // current week would be wrongly excluded. The table is created at launch,
+    // so there is no stale history to guard against.)
     orgId
-      ? sb.from('group_attendance').select('gathering_date').eq('clerk_user_id', userId).eq('confirmed', true).gte('gathering_date', startDate)
+      ? sb.from('group_attendance').select('gathering_date').eq('clerk_user_id', userId).eq('confirmed', true)
       : empty,
   ]);
 
@@ -149,8 +152,6 @@ async function gatherSignals(
   // Distinct confirmed in-person weeks.
   const attendanceRows = (attendanceRes.data as { gathering_date: string }[] | null) ?? [];
   const confirmedWeeks = new Set(attendanceRows.map((r) => dayKey(r.gathering_date))).size;
-
-  void emptyCount; // (kept for clarity; head-count queries return their own shape)
 
   return {
     daysSinceStart,

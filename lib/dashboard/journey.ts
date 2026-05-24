@@ -109,14 +109,27 @@ export const GATE = {
 } as const;
 
 /**
- * The ceiling set by showing up in person. Without it a member can still grow
- * to Sprout through the private walk, but no further. This is what makes the
- * gathering, not the app, the heart of the thing.
+ * The ceiling set by showing up in person. Engagement alone cannot pass this:
+ * without attendance a member can still grow to Sprout through the private
+ * walk, but no further. This is what makes the gathering, not the app, the gate.
  */
 export function attendanceCeiling(confirmedWeeks: number): JourneyStage {
   if (confirmedWeeks >= GATE.fruitWeeks) return 'fruit';
   if (confirmedWeeks >= GATE.rootsWeeks) return 'roots';
   return 'sprout';
+}
+
+/**
+ * The stage showing up in person earns directly. In-person presence is the
+ * heartbeat, so it is the main driver: each gathering moves the member forward
+ * on its own, regardless of the private walk. Engagement matters too (see
+ * computeJourney), but it cannot, by itself, carry someone past the gate.
+ */
+export function attendanceFloor(confirmedWeeks: number): JourneyStage {
+  if (confirmedWeeks >= GATE.fruitWeeks) return 'fruit';
+  if (confirmedWeeks >= GATE.rootsWeeks) return 'roots';
+  if (confirmedWeeks >= 1) return 'sprout';
+  return 'seed';
 }
 
 /* ============================================================
@@ -268,6 +281,7 @@ export interface Journey {
  */
 export function computeJourney(signals: JourneySignals, floorStage: JourneyStage = 'seed'): Journey {
   const ceiling = attendanceCeiling(signals.confirmedWeeks);
+  const floor = attendanceFloor(signals.confirmedWeeks);
   const engagement = engagementScore(signals);
 
   let reachedByEngagement = engagementStage(engagement);
@@ -275,10 +289,13 @@ export function computeJourney(signals: JourneySignals, floorStage: JourneyStage
   // how fast they fill things in.
   if (signals.daysSinceStart < SEED_FLOOR_DAYS) reachedByEngagement = 'seed';
 
-  // The gate wins: you cannot pass the ceiling set by showing up in person.
-  const gated = minStage(ceiling, reachedByEngagement);
+  // Engagement, but never past the in-person gate.
+  const byEngagement = minStage(ceiling, reachedByEngagement);
+  // Showing up is the main driver: take whichever is further along, the stage
+  // earned by attendance or the stage earned by the (gated) private walk.
+  const earned = maxStage(floor, byEngagement);
   // Grace: never reveal less than the high-water mark already reached.
-  const stage = maxStage(gated, floorStage);
+  const stage = maxStage(earned, floorStage);
   const gatedByAttendance = stageRank(reachedByEngagement) > stageRank(ceiling);
 
   return {

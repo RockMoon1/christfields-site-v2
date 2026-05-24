@@ -3,7 +3,11 @@
 import { useState, useTransition } from 'react';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
-import { getAttendanceBoard, setMemberAttendance } from '@/app/dashboard/(leader)/leader/actions';
+import {
+  getAttendanceBoard,
+  setMemberAttendance,
+  devSetAttendanceWeeks,
+} from '@/app/dashboard/(leader)/leader/actions';
 import type { AttendanceBoardResult, AttendanceMemberRow } from '@/lib/faithflow/types';
 
 type ReadyBoard = Extract<AttendanceBoardResult, { state: 'ready' }>;
@@ -59,6 +63,15 @@ export function AttendanceBoard({ initial }: { initial: ReadyBoard }) {
     }));
     startTransition(async () => {
       await setMemberAttendance(member.userId, board.weekAnchor, next);
+      const res = await getAttendanceBoard(board.weekAnchor);
+      if (res.state === 'ready') setBoard(res);
+    });
+  }
+
+  // TEMPORARY — testing only. Jumps a member to the attendance for a stage.
+  function dev(memberId: string, weeks: number) {
+    startTransition(async () => {
+      await devSetAttendanceWeeks(memberId, weeks);
       const res = await getAttendanceBoard(board.weekAnchor);
       if (res.state === 'ready') setBoard(res);
     });
@@ -156,8 +169,49 @@ export function AttendanceBoard({ initial }: { initial: ReadyBoard }) {
 
       <p className="text-xs leading-relaxed text-muted">
         Only confirmed weeks count toward a member&rsquo;s walk. Showing up in person is the
-        heartbeat of this — the dashboard only reflects it.
+        heartbeat of this. The dashboard only reflects it.
       </p>
+
+      {/* TEMPORARY testing panel. Delete this block (and devSetAttendanceWeeks)
+          before real use. Simulates confirmed weeks so you can preview each
+          stage's member dashboard. */}
+      <details className="rounded-sm border border-dashed border-gold/40 bg-black-3/40 p-4">
+        <summary className="cursor-pointer text-[11px] font-medium uppercase tracking-[0.16em] text-gold">
+          Testing — preview a member&rsquo;s stage (temporary)
+        </summary>
+        <p className="mt-2 text-xs leading-relaxed text-muted">
+          Simulates confirmed in-person weeks for a member, then resets their journey so it
+          recomputes. Open that member&rsquo;s own dashboard to see the stage. Seed = 0 weeks,
+          Sprout = 1, Roots = 2, Fruit = 5. Remove this panel before real use.
+        </p>
+        <ul className="mt-4 flex flex-col gap-2">
+          {board.rows.map((m) => (
+            <li
+              key={m.userId}
+              className="flex flex-wrap items-center justify-between gap-2 border-t border-border-sub pt-2"
+            >
+              <span className="truncate text-sm text-ivory">{m.name}</span>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { label: 'Seed', weeks: 0 },
+                  { label: 'Sprout', weeks: 1 },
+                  { label: 'Roots', weeks: 2 },
+                  { label: 'Fruit', weeks: 5 },
+                ].map((b) => (
+                  <button
+                    key={b.label}
+                    type="button"
+                    onClick={() => dev(m.userId, b.weeks)}
+                    className="rounded-sm border border-border-sub px-2.5 py-1 text-[11px] uppercase tracking-[0.08em] text-silver transition-colors hover:border-border-gold hover:text-ivory"
+                  >
+                    {b.label}
+                  </button>
+                ))}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </details>
     </div>
   );
 }
