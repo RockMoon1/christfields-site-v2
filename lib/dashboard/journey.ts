@@ -259,7 +259,14 @@ export interface Journey {
   signals: JourneySignals;
 }
 
-export function computeJourney(signals: JourneySignals): Journey {
+/**
+ * @param floorStage The highest stage the member has already reached (their
+ *   high-water mark). Growth only ever moves forward: a quiet week may lower
+ *   what engagement alone would support, but it never reveals less than what
+ *   has already been unlocked. Because the attendance ceiling is cumulative,
+ *   this floor can never push a member past the in-person gate.
+ */
+export function computeJourney(signals: JourneySignals, floorStage: JourneyStage = 'seed'): Journey {
   const ceiling = attendanceCeiling(signals.confirmedWeeks);
   const engagement = engagementScore(signals);
 
@@ -269,7 +276,9 @@ export function computeJourney(signals: JourneySignals): Journey {
   if (signals.daysSinceStart < SEED_FLOOR_DAYS) reachedByEngagement = 'seed';
 
   // The gate wins: you cannot pass the ceiling set by showing up in person.
-  const stage = minStage(ceiling, reachedByEngagement);
+  const gated = minStage(ceiling, reachedByEngagement);
+  // Grace: never reveal less than the high-water mark already reached.
+  const stage = maxStage(gated, floorStage);
   const gatedByAttendance = stageRank(reachedByEngagement) > stageRank(ceiling);
 
   return {

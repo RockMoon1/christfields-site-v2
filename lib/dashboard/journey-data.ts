@@ -176,7 +176,8 @@ export const getJourney = cache(async (): Promise<JourneyView> => {
 
     const prefs = await ensurePrefs(userId);
     const signals = await gatherSignals(userId, orgId ?? null, prefs.journey_started_at);
-    const journey = computeJourney(signals);
+    // Floor the journey at the high-water mark so growth only ever moves forward.
+    const journey = computeJourney(signals, prefs.journey_seen_stage);
     const sections = withRevealAll(journey.sections, prefs.reveal_all);
     const crossedInto =
       stageRank(journey.stage) > stageRank(prefs.journey_seen_stage) ? journey.stage : null;
