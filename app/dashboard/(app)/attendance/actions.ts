@@ -1,0 +1,87 @@
+'use server';
+
+import { auth } from '@clerk/nextjs/server';
+import { revalidatePath } from 'next/cache';
+import { getSupabase } from '@/lib/supabase';
+import { weekAnchorUTC } from '@/lib/dashboard/journey';
+
+/**
+ * Member side of in-person attendance: a simple weekly "I was there." A leader
+ * confirms it later (leader actions live in the leader dashboard). Only
+ * leader-confirmed weeks count toward the journey gate, so a self check-in is
+ * an honest flag, never a way to unlock the deeper stages on its own.
+ */
+
+export interface MyAttendanceWeek {
+  weekAnchor: string; // YYYY-MM-DD (Sunday, UTC)
+  checkedIn: boolean;
+  confirmed: boolean;
+}
+
+async function requireUser(): Promise<string> {
+  const { userId } = await auth();
+  if (!userId) throw new Error('Not signed in');
+  return userId;
+}
+
+/** Mark "I was at group this week." Upserts one row per member per week. */
+export async function checkInThisWeek(): Promise<{ ok: boolean; reason?: string }> {
+  const { userId, orgId } = await auth();
+  if (!userId) return { ok: false, reason: 'not-signed-in' };
+  if (!orgId) return { ok: false, reason: 'no-group' };
+
+  const sb = getSupabase();
+  const gatheringDate = weekAnchorUTC();
+
+  const { error } = await sb.from('group_attendance').upsert(
+    {
+      org_id: orgId,
+      clerk_user_id: userId,
+      gathering_date: gatheringDate,
+      checked_in: true,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'org_id,clerk_user_id,gathering_date' },
+  );
+  if (error) {
+    console.error('checkInThisWeek failed', error);
+    return { ok: false, reason: 'error' };
+  }
+
+  revalidatePath('/dashboard', 'layout');
+  return { ok: true };
+}
+
+/** The member's own recent weeks (for showing their check-in / confirmed state). */
+export async function getMyAttendance(weeks = 6): Promise<MyAttendanceWeek[]> {
+  const userId = await requireUser();
+  const sb = getSupabase();
+
+  // The Sunday anchors for the last `weeks` weeks, newest first.
+  const anchors: string[] = [];
+  for (let i = 0; i < weeks; i += 1) {
+    anchors.push(weekAnchorUTC(new Date(Date.now() - i * 7 * 86_400_000)));
+  }
+  const earliest = anchors[anchors.length - 1];
+
+  const { data } = await sb
+    .from('group_attendance')
+    .select('gathering_date, checked_in, confirmed')
+    .eq('clerk_user_id', userId)
+    .gte('gathering_date', earliest);
+
+  const byAnchor = new Map(
+    ((data as { gathering_date: string; checked_in: boolean; confirmed: boolean }[] | null) ?? []).map(
+      (r) => [r.gathering_date.slice(0, 10), r],
+    ),
+  );
+
+  return anchors.map((weekAnchor) => {
+    const row = byAnchor.get(weekAnchor);
+    return {
+      weekAnchor,
+      checkedIn: Boolean(row?.checked_in),
+      confirmed: Boolean(row?.confirmed),
+    };
+  });
+}

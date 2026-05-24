@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { JourneyStage } from '@/lib/dashboard/journey';
 
 /**
  * Server-side Supabase client. Uses the service-role key, which bypasses
@@ -188,4 +189,30 @@ export interface CommunityIntercession {
   community_prayer_id: string;
   clerk_user_id: string;
   created_at: string;
+}
+
+/* ============================================================
+   Dashboard v3 — the "grows with you" journey.
+   Matches db/dashboard-v3.sql.
+   ============================================================ */
+
+export interface DashboardPrefs {
+  clerk_user_id: string;
+  reveal_all: boolean;
+  welcome_seen: boolean;
+  journey_seen_stage: JourneyStage;
+  journey_started_at: string;
+  updated_at: string;
+}
+
+export interface GroupAttendance {
+  id: string;
+  org_id: string;
+  clerk_user_id: string;
+  gathering_date: string; // YYYY-MM-DD week anchor (Sunday, UTC)
+  checked_in: boolean;
+  confirmed: boolean;
+  confirmed_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
