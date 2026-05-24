@@ -23,6 +23,7 @@ import type { JourneyStage } from '@/lib/dashboard/journey';
 export function StageCrossing({ stage }: { stage: JourneyStage | null }) {
   const [open, setOpen] = useState<boolean>(Boolean(stage));
   const [flights, setFlights] = useState<{ dx: number; dy: number; deg: number }[] | null>(null);
+  const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
   const cardRefs = useRef<Array<HTMLLIElement | null>>([]);
   const reduce = useReducedMotion();
 
@@ -31,13 +32,21 @@ export function StageCrossing({ stage }: { stage: JourneyStage | null }) {
     setFlights(null);
   }, [stage]);
 
+  // The crossing animation is desktop-only. On phones the dashboard simply
+  // updates to the new stage with no blocking overlay, so it never gets stuck.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setIsDesktop(window.matchMedia('(min-width: 1024px)').matches);
+  }, []);
+
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    document.body.style.overflow = open ? 'hidden' : '';
+    const showing = open && isDesktop === true;
+    document.body.style.overflow = showing ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
-  }, [open]);
+  }, [open, isDesktop]);
 
   if (!stage) return null;
   const moment = STAGE_MOMENTS[stage];
@@ -105,7 +114,7 @@ export function StageCrossing({ stage }: { stage: JourneyStage | null }) {
 
   return (
     <AnimatePresence>
-      {open && (
+      {open && isDesktop === true && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
