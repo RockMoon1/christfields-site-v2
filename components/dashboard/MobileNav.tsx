@@ -14,8 +14,14 @@ import { cn } from '@/lib/utils';
  * navigation items as the desktop Sidebar. Tapping a link or the backdrop
  * closes the drawer. Lives inside TopBar so it sits in the right place
  * automatically without a layout shuffle.
+ *
+ * Leaders also get a "FaithFlow Leader" entry pinned at the bottom of the
+ * drawer. The leader dashboard is built for phone, tablet, and desktop, so
+ * leaders must be able to reach it from mobile, not only from the desktop
+ * rail. (Master oversight stays desktop-only by design, so it is not added
+ * here; masters still reach it from the avatar menu.)
  */
-export function MobileNav() {
+export function MobileNav({ isLeader = false }: { isLeader?: boolean }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
@@ -156,6 +162,29 @@ export function MobileNav() {
                 </ul>
               </nav>
 
+              {/* Leader-only entry, pinned above the footer so it is always
+                  visible without scrolling the nav list. */}
+              {isLeader && (
+                <div className="border-t border-border-sub px-3 py-4">
+                  <Link
+                    href="/dashboard/leader"
+                    onClick={() => setOpen(false)}
+                    className="flex items-start gap-3 rounded-sm border border-border-gold bg-gold/[0.06] px-3 py-3 text-sm text-gold-lt transition-colors hover:bg-gold/[0.12]"
+                  >
+                    <span className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center text-gold">
+                      <LeaderIcon />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block">FaithFlow Leader</span>
+                      <span className="mt-0.5 block text-[11px] leading-snug text-muted">
+                        Lead your group. See how each person is walking and find
+                        prayerful ways to shepherd them.
+                      </span>
+                    </span>
+                  </Link>
+                </div>
+              )}
+
               <div className="border-t border-border-sub px-5 py-5">
                 <p className="font-display text-sm italic leading-relaxed text-silver">
                   &ldquo;I planted, Apollos watered, but God gave the growth.&rdquo;
@@ -171,6 +200,17 @@ export function MobileNav() {
         document.body,
       )}
     </>
+  );
+}
+
+function LeaderIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
+      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="8" cy="3.6" r="1.2" fill="currentColor" />
+      <circle cx="3.9" cy="10" r="1.2" fill="currentColor" />
+      <circle cx="12.1" cy="10" r="1.2" fill="currentColor" />
+    </svg>
   );
 }
 

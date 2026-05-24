@@ -42,7 +42,7 @@ export function TopBar({
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border-sub bg-black-2 px-4 md:px-6">
       <div className="flex items-center gap-3">
-        <MobileNav />
+        <MobileNav isLeader={isLeader} />
         <p className="hidden text-[10px] font-medium uppercase tracking-[0.22em] text-muted lg:block">
           Christ Fields
         </p>
