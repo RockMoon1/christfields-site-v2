@@ -1,12 +1,18 @@
 import { ReflectPanel } from '@/components/dashboard/ReflectPanel';
+import { SectionIntro } from '@/components/dashboard/SectionIntro';
 import { getTodayReflect, getThoughtRecords } from './actions';
+import { getJourney } from '@/lib/dashboard/journey-data';
 
 /**
  * Reflect page. Fetches today's check-in data server-side and passes it to
  * the client ReflectPanel for interaction.
  */
 export default async function ReflectPage() {
-  const [today, reframes] = await Promise.all([getTodayReflect(), getThoughtRecords()]);
+  const [today, reframes, journey] = await Promise.all([
+    getTodayReflect(),
+    getThoughtRecords(),
+    getJourney(),
+  ]);
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -21,6 +27,8 @@ export default async function ReflectPage() {
           Check in with yourself and with God. Be honest. There is grace here.
         </p>
       </header>
+
+      <SectionIntro section="reflect" depth={journey.sections.reflect} />
 
       <ReflectPanel today={today} reframes={reframes} />
     </div>

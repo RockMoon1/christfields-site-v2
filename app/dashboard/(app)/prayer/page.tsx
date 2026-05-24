@@ -1,12 +1,14 @@
 import { PrayerBoard } from '@/components/dashboard/PrayerBoard';
+import { SectionIntro } from '@/components/dashboard/SectionIntro';
 import { getPrayers } from './actions';
+import { getJourney } from '@/lib/dashboard/journey-data';
 
 /**
  * Prayer page. Fetches the signed-in user's open and answered requests
  * server-side and passes them as initial data to the client PrayerBoard.
  */
 export default async function PrayerPage() {
-  const { open, answered } = await getPrayers();
+  const [{ open, answered }, journey] = await Promise.all([getPrayers(), getJourney()]);
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -23,6 +25,8 @@ export default async function PrayerPage() {
           your wants.
         </p>
       </header>
+
+      <SectionIntro section="prayer" depth={journey.sections.prayer} />
 
       <PrayerBoard initialOpen={open} initialAnswered={answered} />
     </div>

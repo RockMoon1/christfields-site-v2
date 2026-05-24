@@ -3,6 +3,8 @@ import { getAllJournalsByArea } from './actions';
 import { ResourceCard } from '@/components/dashboard/ResourceCard';
 import { ScrollTilt } from '@/components/dashboard/ScrollTilt';
 import { MorphBlob } from '@/components/motion/MorphBlob';
+import { SectionIntro } from '@/components/dashboard/SectionIntro';
+import { getJourney } from '@/lib/dashboard/journey-data';
 
 /**
  * Resources page. For each progress area, shows resources tailored to the
@@ -15,9 +17,10 @@ import { MorphBlob } from '@/components/motion/MorphBlob';
 export default async function ResourcesPage() {
   // Fetch areas and ALL journals in parallel. The journals query returns
   // a Map keyed by area id so each card just pulls its own slice in O(1).
-  const [areas, journalsByArea] = await Promise.all([
+  const [areas, journalsByArea, journey] = await Promise.all([
     getAreas(),
     getAllJournalsByArea(),
+    getJourney(),
   ]);
 
   return (
@@ -42,6 +45,8 @@ export default async function ResourcesPage() {
           Reflect at the bottom of each card — only you see what you write.
         </p>
       </header>
+
+      <SectionIntro section="resources" depth={journey.sections.resources} />
 
       {areas.length === 0 ? (
         <div className="rounded-sm border border-dashed border-border-sub bg-black-3/40 p-12 text-center">

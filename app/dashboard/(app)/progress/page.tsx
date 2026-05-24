@@ -1,12 +1,14 @@
 import { ProgressBoard } from '@/components/dashboard/ProgressBoard';
+import { SectionIntro } from '@/components/dashboard/SectionIntro';
 import { getAreas } from './actions';
+import { getJourney } from '@/lib/dashboard/journey-data';
 
 /**
  * Progress page. Fetches the signed-in user's areas + entries server-side and
  * hands them to the client ProgressBoard for rendering and interaction.
  */
 export default async function ProgressPage() {
-  const areas = await getAreas();
+  const [areas, journey] = await Promise.all([getAreas(), getJourney()]);
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -22,6 +24,8 @@ export default async function ProgressPage() {
           point is honesty over time, not perfect numbers.
         </p>
       </header>
+
+      <SectionIntro section="progress" depth={journey.sections.progress} />
 
       <ProgressBoard initialAreas={areas} />
     </div>

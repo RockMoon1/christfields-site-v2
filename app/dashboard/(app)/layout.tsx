@@ -2,6 +2,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { TopBar } from '@/components/dashboard/TopBar';
 import { WelcomeOverlay } from '@/components/dashboard/WelcomeOverlay';
+import { StageCrossing } from '@/components/dashboard/StageCrossing';
 import { isLeaderRole } from '@/lib/faithflow/roles';
 import { getJourney } from '@/lib/dashboard/journey-data';
 
@@ -36,6 +37,7 @@ export default async function DashboardLayout({
       </div>
 
       {!journey.welcomeSeen && <WelcomeOverlay firstName={firstName} />}
+      {journey.welcomeSeen && <StageCrossing stage={journey.crossedInto} />}
     </div>
   );
 }

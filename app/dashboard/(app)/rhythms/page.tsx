@@ -1,12 +1,14 @@
 import { RhythmBoard } from '@/components/dashboard/RhythmBoard';
+import { SectionIntro } from '@/components/dashboard/SectionIntro';
 import { getRhythms } from './actions';
+import { getJourney } from '@/lib/dashboard/journey-data';
 
 /**
  * Rhythms page. Fetches the user's practices and logs server-side, then
  * hands them to the client RhythmBoard for interaction and animation.
  */
 export default async function RhythmsPage() {
-  const rhythms = await getRhythms();
+  const [rhythms, journey] = await Promise.all([getRhythms(), getJourney()]);
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -19,6 +21,8 @@ export default async function RhythmsPage() {
           The practices you keep returning to. This is about faithfulness, not perfection.
         </p>
       </header>
+
+      <SectionIntro section="rhythms" depth={journey.sections.rhythms} />
 
       <RhythmBoard initialRhythms={rhythms} />
     </div>

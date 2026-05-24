@@ -132,7 +132,7 @@ export default async function DashboardHome() {
             </div>
           </div>
 
-          <div className="relative aspect-square w-full max-w-[360px] justify-self-end">
+          <div className="relative aspect-square w-full max-w-[260px] justify-self-center sm:max-w-[320px] md:max-w-[360px] md:justify-self-end">
             <PremiumOrb
               className="h-full w-full"
               areas={areas.map((a) => ({ id: a.id, name: a.name, color: a.color }))}

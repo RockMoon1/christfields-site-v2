@@ -1,5 +1,7 @@
 import { CommunityWall } from '@/components/dashboard/CommunityWall';
+import { SectionIntro } from '@/components/dashboard/SectionIntro';
 import { getCommunity } from './actions';
+import { getJourney } from '@/lib/dashboard/journey-data';
 
 /**
  * Community page. Fetches the shared prayer wall server-side and hands
@@ -9,7 +11,7 @@ import { getCommunity } from './actions';
  * Galatians 6:2
  */
 export default async function CommunityPage() {
-  const data = await getCommunity();
+  const [data, journey] = await Promise.all([getCommunity(), getJourney()]);
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -32,6 +34,8 @@ export default async function CommunityPage() {
           </p>
         )}
       </header>
+
+      <SectionIntro section="community" depth={journey.sections.community} />
 
       <CommunityWall initial={data.prayers} totalPrayed={data.totalPrayed} />
     </div>

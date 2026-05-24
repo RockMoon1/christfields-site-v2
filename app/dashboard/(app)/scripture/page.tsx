@@ -1,13 +1,15 @@
 import { VerseOfDayCard } from '@/components/dashboard/VerseOfDayCard';
 import { MemoryVerses } from '@/components/dashboard/MemoryVerses';
+import { SectionIntro } from '@/components/dashboard/SectionIntro';
 import { getScripture } from './actions';
+import { getJourney } from '@/lib/dashboard/journey-data';
 
 /**
  * Scripture page. Fetches the verse of the day and the user's memory verses
  * server-side, then hands them to client components for rendering and interaction.
  */
 export default async function ScripturePage() {
-  const data = await getScripture();
+  const [data, journey] = await Promise.all([getScripture(), getJourney()]);
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -22,6 +24,8 @@ export default async function ScripturePage() {
           A verse to carry today, and the ones you are learning by heart.
         </p>
       </header>
+
+      <SectionIntro section="scripture" depth={journey.sections.scripture} />
 
       <div className="space-y-10">
         <VerseOfDayCard verse={data.verseOfDay} />
