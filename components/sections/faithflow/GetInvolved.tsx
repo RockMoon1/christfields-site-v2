@@ -173,6 +173,7 @@ export function GetInvolved() {
                 <select
                   name="interest"
                   required
+                  aria-label="What brings you here?"
                   value={interest}
                   onChange={(e) => setInterest(e.target.value as InterestKey)}
                   className="w-full rounded-sm border border-border-sub bg-black-3 px-4 py-3 text-sm text-ivory focus:border-gold focus:outline-none"

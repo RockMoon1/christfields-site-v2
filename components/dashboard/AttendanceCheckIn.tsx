@@ -56,6 +56,8 @@ export function AttendanceCheckIn({ initial }: { initial: MyAttendanceWeek[] }) 
         In person
       </p>
 
+      {/* Announce the state change (after check-in) to screen readers. */}
+      <div aria-live="polite">
       {state === 'confirmed' && (
         <>
           <h3 className="font-display text-2xl font-light text-ivory">You were there.</h3>
@@ -93,6 +95,7 @@ export function AttendanceCheckIn({ initial }: { initial: MyAttendanceWeek[] }) 
           </button>
         </>
       )}
+      </div>
 
       {/* Recent weeks, oldest to newest. Quiet dots, no scores. */}
       <div className="mt-5 flex items-center gap-2">
@@ -102,6 +105,10 @@ export function AttendanceCheckIn({ initial }: { initial: MyAttendanceWeek[] }) 
           .map((w) => (
             <span
               key={w.weekAnchor}
+              role="img"
+              aria-label={`Week of ${w.weekAnchor}: ${
+                w.confirmed ? 'present' : w.checkedIn ? 'checked in' : 'no gathering logged'
+              }`}
               title={w.confirmed ? 'Present' : w.checkedIn ? 'Checked in' : 'No gathering logged'}
               className={cn(
                 'h-2.5 w-2.5 rounded-full',
@@ -118,6 +125,7 @@ export function AttendanceCheckIn({ initial }: { initial: MyAttendanceWeek[] }) 
 
       {note && (
         <motion.p
+          role="alert"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="mt-3 text-xs text-silver"

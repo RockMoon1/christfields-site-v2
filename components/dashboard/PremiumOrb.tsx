@@ -382,7 +382,11 @@ export function PremiumOrb({
   // viewport. The orb costs a little more on phones but the page actually
   // renders, which is the trade we want.
   return (
-    <div className={className}>
+    <div
+      className={className}
+      role="img"
+      aria-label="A glowing emblem that grows as your walk with God deepens"
+    >
       <Canvas
         camera={{ position: [0, 0, 5], fov: 45 }}
         gl={{

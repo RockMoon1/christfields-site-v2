@@ -155,7 +155,7 @@ export function JoinForm() {
               </div>
 
               <div className="mt-4">
-                <Select name="interest" defaultValue="">
+                <Select name="interest" defaultValue="" aria-label="What are you most interested in?">
                   <option value="" disabled>What are you most interested in?</option>
                   <option value="scholarflow">ScholarFlow, Productivity and Discipline App</option>
                   <option value="faithflow">FaithFlow, Weekly Small Groups and Community</option>
