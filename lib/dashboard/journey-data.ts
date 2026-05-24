@@ -53,11 +53,7 @@ function dayKey(s: string): string {
   return s.slice(0, 10);
 }
 
-async function gatherSignals(
-  userId: string,
-  orgId: string | null,
-  startedAtISO: string,
-): Promise<JourneySignals> {
+async function gatherSignals(userId: string, startedAtISO: string): Promise<JourneySignals> {
   const sb = getSupabase();
   const startDate = dayKey(startedAtISO);
   const daysSinceStart = Math.max(
@@ -108,13 +104,13 @@ async function gatherSignals(
     sb.from('memory_verses').select('id', { count: 'exact', head: true }).eq('clerk_user_id', userId).gte('created_at', startedAtISO),
     sb.from('community_prayers').select('id', { count: 'exact', head: true }).eq('clerk_user_id', userId).gte('created_at', startedAtISO),
     sb.from('community_intercessions').select('id', { count: 'exact', head: true }).eq('clerk_user_id', userId).gte('created_at', startedAtISO),
-    // All leader-confirmed weeks count. (Attendance lives on a week's Sunday
-    // anchor, so we must NOT filter by the mid-week journey_started_at, or the
-    // current week would be wrongly excluded. The table is created at launch,
-    // so there is no stale history to guard against.)
-    orgId
-      ? sb.from('group_attendance').select('gathering_date').eq('clerk_user_id', userId).eq('confirmed', true)
-      : empty,
+    // ALL of this member's leader-confirmed weeks, counted by their own user id
+    // and NOT gated on the session's active organization. Gating on orgId was
+    // the bug: a session with no active org (common on a phone) counted zero
+    // weeks, so the member stayed stuck at the first stage until the high-water
+    // mark was advanced from another device. Attendance also lives on a week's
+    // Sunday anchor, so we avoid filtering by the mid-week journey_started_at.
+    sb.from('group_attendance').select('gathering_date').eq('clerk_user_id', userId).eq('confirmed', true),
   ]);
 
   const entryRows = (entriesRes.data as { logged_at: string }[] | null) ?? [];
@@ -172,11 +168,11 @@ async function gatherSignals(
  */
 export const getJourney = cache(async (): Promise<JourneyView> => {
   try {
-    const { userId, orgId } = await auth();
+    const { userId } = await auth();
     if (!userId) return fallbackJourneyView();
 
     const prefs = await ensurePrefs(userId);
-    const signals = await gatherSignals(userId, orgId ?? null, prefs.journey_started_at);
+    const signals = await gatherSignals(userId, prefs.journey_started_at);
     // Floor the journey at the high-water mark so growth only ever moves forward.
     const journey = computeJourney(signals, prefs.journey_seen_stage);
     const sections = withRevealAll(journey.sections, prefs.reveal_all);
