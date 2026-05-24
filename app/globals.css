@@ -383,4 +383,11 @@ button:focus-visible {
   .scroll-line {
     animation: none !important;
   }
+  /* Stop looping decorative CSS animations (status pulses, the pinging dot,
+     skeleton shimmer) for users who prefer reduced motion. */
+  .animate-ping,
+  .animate-pulse,
+  [class*="ffPulse"] {
+    animation: none !important;
+  }
 }

@@ -85,15 +85,10 @@ export function StatCard({
       <motion.span
         aria-hidden
         className="absolute right-4 top-4 inline-block h-1.5 w-1.5 rounded-full"
-        style={{ backgroundColor: accent }}
-        animate={{
-          opacity: [0.45, 1, 0.45],
-          boxShadow: [
-            `0 0 0px ${accent}`,
-            `0 0 10px ${accent}`,
-            `0 0 0px ${accent}`,
-          ],
-        }}
+        // Static glow (no per-frame box-shadow paint); only opacity pulses,
+        // which the compositor handles cheaply.
+        style={{ backgroundColor: accent, boxShadow: `0 0 8px ${accent}66` }}
+        animate={{ opacity: [0.45, 1, 0.45] }}
         transition={{
           duration: 2.4,
           repeat: Infinity,

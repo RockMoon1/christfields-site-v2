@@ -31,11 +31,13 @@ export function MorphBlob({
         background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
         filter: 'blur(60px)',
       }}
+      // Only transform props (scale/x/y) animate — they run on the compositor.
+      // The borderRadius morph was dropped: it forces a paint every frame and is
+      // invisible under the 60px blur anyway.
       animate={{
         scale: [1, 1.15, 0.95, 1.08, 1],
         x: [0, 30, -20, 15, 0],
         y: [0, -25, 15, -10, 0],
-        borderRadius: ['50%', '40% 60% 55% 45%', '55% 45% 40% 60%', '45% 55% 60% 40%', '50%'],
       }}
       transition={{
         duration: 20,
