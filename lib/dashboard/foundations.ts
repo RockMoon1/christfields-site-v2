@@ -174,6 +174,73 @@ export const SECTION_FOUNDATIONS: Record<SectionKey, SectionFoundation> = {
    new stage. A Scripture and a whisper. The stage is never named.
    ============================================================ */
 
+export interface StageUnlock {
+  title: string;
+  intro: string;
+  items: { label: string; note: string; href: string }[];
+}
+
+/**
+ * What newly opens up at each crossing, named plainly so a member notices the
+ * change and actually uses what they have been given. (Seed has the welcome
+ * instead, so it has no unlock list.)
+ */
+export const STAGE_UNLOCKS: Partial<Record<JourneyStage, StageUnlock>> = {
+  sprout: {
+    title: 'Your space just grew',
+    intro: 'As you keep showing up, a little more opens up. Two new places to explore:',
+    items: [
+      {
+        label: 'Reflect',
+        note: 'A few honest minutes: how you really are, and what you are thankful for.',
+        href: '/dashboard/reflect',
+      },
+      {
+        label: 'Scripture',
+        note: 'A verse to carry today, and the ones you are learning by heart.',
+        href: '/dashboard/scripture',
+      },
+    ],
+  },
+  roots: {
+    title: 'You are going deeper',
+    intro: 'New ground as your roots grow down:',
+    items: [
+      {
+        label: 'Resources',
+        note: 'Scripture and next steps matched to right where you are.',
+        href: '/dashboard/resources',
+      },
+      {
+        label: 'Reflect, deeper',
+        note: 'The nightly examen, and a gentle way to reframe a hard thought.',
+        href: '/dashboard/reflect',
+      },
+      {
+        label: 'Scripture memory',
+        note: 'Hide verses in your heart and return to them over time.',
+        href: '/dashboard/scripture',
+      },
+    ],
+  },
+  fruit: {
+    title: 'Time to bear fruit',
+    intro: 'This part of the walk turns outward, toward the people around you:',
+    items: [
+      {
+        label: 'Sharpening others',
+        note: 'Help someone else grow, as iron sharpens iron.',
+        href: '/dashboard/progress',
+      },
+      {
+        label: 'Carrying the community',
+        note: 'Bear one another’s burdens, and so fulfill the law of Christ.',
+        href: '/dashboard/community',
+      },
+    ],
+  },
+};
+
 export const STAGE_MOMENTS: Record<JourneyStage, { verse: string; ref: string; whisper: string }> = {
   seed: {
     verse: 'Come to me, all who labor and are heavy laden, and I will give you rest.',
