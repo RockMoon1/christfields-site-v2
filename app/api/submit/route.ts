@@ -27,12 +27,63 @@ const REPLY_TO = process.env.REPLY_TO_EMAIL || 'proverbs@christfields2717.com';
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
 
+/**
+ * Best-effort in-memory rate limit. On serverless this is per-instance and
+ * resets on cold start, so it is not a hard guarantee, but it stops casual
+ * abuse, scripted bursts that hit a warm instance, and accidental double
+ * submits without adding infrastructure. For a hard global limit, back this
+ * with Upstash/Supabase later.
+ */
+const RATE_LIMIT = 5; // submissions ...
+const RATE_WINDOW_MS = 10 * 60 * 1000; // ... per 10 minutes per IP
+const hits = new Map<string, number[]>();
+
+function clientIp(req: Request): string {
+  const h = req.headers;
+  return (
+    h.get('x-nf-client-connection-ip') ||
+    h.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    'unknown'
+  );
+}
+
+function rateLimited(ip: string): boolean {
+  const now = Date.now();
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
+  if (recent.length >= RATE_LIMIT) {
+    hits.set(ip, recent);
+    return true;
+  }
+  recent.push(now);
+  hits.set(ip, recent);
+  // Opportunistic cleanup so the map cannot grow unbounded.
+  if (hits.size > 5000) {
+    for (const [k, v] of hits) {
+      if (v.every((t) => now - t >= RATE_WINDOW_MS)) hits.delete(k);
+    }
+  }
+  return false;
+}
+
 export async function POST(req: Request) {
   let data: Record<string, unknown>;
   try {
     data = await req.json();
   } catch {
     return NextResponse.json({ ok: false, error: 'Invalid body' }, { status: 400 });
+  }
+
+  // Reject non-object bodies (arrays, primitives) before coercing fields.
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+    return NextResponse.json({ ok: false, error: 'Invalid body' }, { status: 400 });
+  }
+
+  // Server-side rate limit (every POST counts, regardless of the honeypot).
+  if (rateLimited(clientIp(req))) {
+    return NextResponse.json(
+      { ok: false, error: 'Please wait a moment before sending another message.' },
+      { status: 429 },
+    );
   }
 
   // Honeypot: a bot filled the hidden field. Pretend success, send nothing.
