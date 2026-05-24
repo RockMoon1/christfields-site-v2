@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { markStageSeen } from '@/app/dashboard/(app)/prefs/actions';
 import { STAGE_MOMENTS, STAGE_UNLOCKS } from '@/lib/dashboard/foundations';
 import type { JourneyStage } from '@/lib/dashboard/journey';
+import { useFocusTrap } from '@/lib/hooks/useFocusTrap';
 
 /**
  * The one moment a member crosses into a new stage. Two beats:
@@ -25,6 +26,7 @@ export function StageCrossing({ stage }: { stage: JourneyStage | null }) {
   const [flights, setFlights] = useState<{ dx: number; dy: number; deg: number }[] | null>(null);
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
   const cardRefs = useRef<Array<HTMLLIElement | null>>([]);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
 
   useEffect(() => {
@@ -48,14 +50,17 @@ export function StageCrossing({ stage }: { stage: JourneyStage | null }) {
     };
   }, [open, isDesktop]);
 
+  function close() {
+    setOpen(false);
+    if (stage) void markStageSeen(stage);
+  }
+
+  // Contain focus while the (desktop-only) overlay is shown; Escape dismisses.
+  useFocusTrap(dialogRef, open && isDesktop === true, close);
+
   if (!stage) return null;
   const moment = STAGE_MOMENTS[stage];
   const unlocks = STAGE_UNLOCKS[stage];
-
-  function close() {
-    setOpen(false);
-    void markStageSeen(stage as JourneyStage);
-  }
 
   /** Find the on-screen button a card should fly into. */
   function targetElFor(href: string): HTMLElement | null {
@@ -120,6 +125,7 @@ export function StageCrossing({ stage }: { stage: JourneyStage | null }) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.5 } }}
           transition={{ duration: 0.6 }}
+          ref={dialogRef}
           className="fixed inset-0 z-[110] overflow-y-auto bg-black/95"
           role="dialog"
           aria-modal="true"

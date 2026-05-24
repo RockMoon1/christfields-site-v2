@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import Link from 'next/link';
@@ -10,6 +10,7 @@ import { NAV_ITEMS } from './nav-data';
 import { cn } from '@/lib/utils';
 import { isRevealed, type SectionDepth, type SectionKey } from '@/lib/dashboard/journey';
 import { RevealToggle } from './RevealToggle';
+import { useFocusTrap } from '@/lib/hooks/useFocusTrap';
 
 /**
  * Hamburger button shown on mobile, plus a slide-in drawer with the same
@@ -32,6 +33,7 @@ export function MobileNav({
 }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const drawerRef = useRef<HTMLElement>(null);
   const pathname = usePathname();
 
   const items = NAV_ITEMS.filter(
@@ -55,15 +57,9 @@ export function MobileNav({
     }
   }, [open]);
 
-  // Close on Escape.
-  useEffect(() => {
-    if (!open) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false);
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
+  // Contain focus in the drawer, restore it to the hamburger on close, and
+  // dismiss on Escape.
+  useFocusTrap(drawerRef, open, () => setOpen(false));
 
   return (
     <>
@@ -95,6 +91,7 @@ export function MobileNav({
 
               {/* Drawer */}
               <motion.aside
+              ref={drawerRef}
               role="dialog"
               aria-modal="true"
               aria-label="Dashboard navigation"

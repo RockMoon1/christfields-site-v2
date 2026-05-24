@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { markWelcomeSeen } from '@/app/dashboard/(app)/prefs/actions';
 import { WELCOME } from '@/lib/dashboard/foundations';
+import { useFocusTrap } from '@/lib/hooks/useFocusTrap';
 
 /**
  * The one-time welcome a member meets on first sign-in. Shown only when their
@@ -14,6 +15,7 @@ import { WELCOME } from '@/lib/dashboard/foundations';
 export function WelcomeOverlay({ firstName }: { firstName?: string }) {
   const [open, setOpen] = useState(true);
   const [, startTransition] = useTransition();
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -30,6 +32,9 @@ export function WelcomeOverlay({ firstName }: { firstName?: string }) {
     });
   }
 
+  // Contain focus in the dialog, restore it on close, and dismiss on Escape.
+  useFocusTrap(dialogRef, open, enter);
+
   const item = (delay: number) => ({
     initial: { opacity: 0, y: 16 },
     animate: { opacity: 1, y: 0 },
@@ -40,6 +45,7 @@ export function WelcomeOverlay({ firstName }: { firstName?: string }) {
     <AnimatePresence>
       {open && (
         <motion.div
+          ref={dialogRef}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.6 } }}
