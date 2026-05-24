@@ -1,6 +1,6 @@
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 import { getSupabase } from '@/lib/supabase';
 import { weekAnchorUTC } from '@/lib/dashboard/journey';
@@ -24,18 +24,38 @@ async function requireUser(): Promise<string> {
   return userId;
 }
 
+/**
+ * The group this member belongs to. Prefer the session's active org, but fall
+ * back to their Clerk org membership, so check-in works even when the session
+ * has no active org set (common on a phone). Members belong to one group; if
+ * somehow more than one, we use the first.
+ */
+async function resolveMemberOrgId(userId: string, activeOrgId: string | null): Promise<string | null> {
+  if (activeOrgId) return activeOrgId;
+  try {
+    const client = await clerkClient();
+    const res = await client.users.getOrganizationMembershipList({ userId });
+    return res.data[0]?.organization?.id ?? null;
+  } catch (err) {
+    console.error('resolveMemberOrgId failed', err);
+    return null;
+  }
+}
+
 /** Mark "I was at group this week." Upserts one row per member per week. */
 export async function checkInThisWeek(): Promise<{ ok: boolean; reason?: string }> {
   const { userId, orgId } = await auth();
   if (!userId) return { ok: false, reason: 'not-signed-in' };
-  if (!orgId) return { ok: false, reason: 'no-group' };
+
+  const groupId = await resolveMemberOrgId(userId, orgId ?? null);
+  if (!groupId) return { ok: false, reason: 'no-group' };
 
   const sb = getSupabase();
   const gatheringDate = weekAnchorUTC();
 
   const { error } = await sb.from('group_attendance').upsert(
     {
-      org_id: orgId,
+      org_id: groupId,
       clerk_user_id: userId,
       gathering_date: gatheringDate,
       checked_in: true,
