@@ -75,8 +75,10 @@ export function StageCrossing({ stage }: { stage: JourneyStage | null }) {
     }
   }
 
+  const STEP = 0.14; // stagger between cards, so each flight reads on its own
+
   function onContinue() {
-    if (reduce || !unlocks) {
+    if (!unlocks) {
       close();
       return;
     }
@@ -92,12 +94,13 @@ export function StageCrossing({ stage }: { stage: JourneyStage | null }) {
       const ty = t.top + t.height / 2;
       const dx = tx - cx;
       const dy = ty - cy;
-      // Flare the destination roughly as the card arrives.
-      if (target) window.setTimeout(() => flare(target), 430);
+      // Flare the destination as this card arrives.
+      if (target) window.setTimeout(() => flare(target), (i * STEP + 0.45) * 1000);
       return { dx, dy, deg: (Math.atan2(dy, dx) * 180) / Math.PI };
     });
     setFlights(computed);
-    window.setTimeout(close, 900);
+    const last = (unlocks.items.length - 1) * STEP;
+    window.setTimeout(close, (last + 0.95) * 1000);
   }
 
   return (
@@ -108,7 +111,7 @@ export function StageCrossing({ stage }: { stage: JourneyStage | null }) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.5 } }}
           transition={{ duration: 0.6 }}
-          className="fixed inset-0 z-[110] flex items-center justify-center overflow-y-auto bg-black/95"
+          className="fixed inset-0 z-[110] overflow-y-auto bg-black/95"
           role="dialog"
           aria-modal="true"
           aria-label="A moment"
@@ -122,7 +125,8 @@ export function StageCrossing({ stage }: { stage: JourneyStage | null }) {
             }}
           />
 
-          <div className="relative mx-auto w-full max-w-lg px-6 py-16 text-center">
+          <div className="relative flex min-h-full items-center justify-center">
+            <div className="w-full max-w-lg px-6 py-16 text-center">
             {/* Beat 1 — the sacred moment. Fades as the cards begin to fly. */}
             <motion.div animate={{ opacity: flights ? 0 : 1 }} transition={{ duration: 0.4 }}>
               {reduce ? (
@@ -186,19 +190,32 @@ export function StageCrossing({ stage }: { stage: JourneyStage | null }) {
                       initial={{ opacity: 0, x: -14 }}
                       animate={
                         flights
-                          ? {
-                              x: flights[i].dx,
-                              y: flights[i].dy,
-                              rotate: flights[i].deg,
-                              scaleX: [1, 1.35, 0.03],
-                              scaleY: [1, 0.45, 0.03],
-                              opacity: [1, 1, 0],
-                            }
+                          ? reduce
+                            ? {
+                                // Gentler absorb for reduced-motion: move + shrink + fade,
+                                // no wild stretch, but still flies to the button.
+                                x: flights[i].dx,
+                                y: flights[i].dy,
+                                scale: 0.2,
+                                opacity: [1, 1, 0],
+                              }
+                            : {
+                                x: flights[i].dx,
+                                y: flights[i].dy,
+                                rotate: flights[i].deg,
+                                scaleX: [1, 1.35, 0.03],
+                                scaleY: [1, 0.45, 0.03],
+                                opacity: [1, 1, 0],
+                              }
                           : { opacity: 1, x: 0 }
                       }
                       transition={
                         flights
-                          ? { duration: 0.8, ease: [0.6, 0, 0.85, 0] }
+                          ? {
+                              duration: reduce ? 0.7 : 0.8,
+                              ease: reduce ? 'easeInOut' : [0.6, 0, 0.85, 0],
+                              delay: i * STEP,
+                            }
                           : { delay: (reduce ? 0.25 : 2.0) + i * 0.12, duration: 0.5 }
                       }
                       style={{ transformOrigin: 'center', willChange: 'transform' }}
@@ -235,6 +252,7 @@ export function StageCrossing({ stage }: { stage: JourneyStage | null }) {
             >
               Continue
             </motion.button>
+            </div>
           </div>
         </motion.div>
       )}
