@@ -2,7 +2,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import { PremiumOrb } from '@/components/dashboard/PremiumOrb';
+import { OrbLazy } from '@/components/dashboard/OrbLazy';
 import { TronScrollEffect } from '@/components/dashboard/TronScrollEffect';
 import { HeroPanel } from '@/components/dashboard/HeroPanel';
 import { StatCard } from '@/components/dashboard/StatCard';
@@ -133,7 +133,7 @@ export default async function DashboardHome() {
           </div>
 
           <div className="relative aspect-square w-full max-w-[260px] justify-self-center sm:max-w-[320px] md:max-w-[360px] md:justify-self-end">
-            <PremiumOrb
+            <OrbLazy
               className="h-full w-full"
               areas={areas.map((a) => ({ id: a.id, name: a.name, color: a.color }))}
               vitality={vitality}

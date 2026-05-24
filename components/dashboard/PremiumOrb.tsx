@@ -131,10 +131,11 @@ function LogoMark({ areas, vitality, growth }: OrbCoreProps) {
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  // Plane segment count for the displacement-mapped logo. Held stable so we
-  // never remount the geometry mid-life from a viewport change. 96 is the
-  // sweet spot: visibly smooth displacement, still light enough for mobile.
-  const planeSegments = 96;
+  // Plane segment count for the displacement-mapped logo. Held stable (never
+  // viewport-driven) so we never remount the geometry mid-life. 64 keeps the
+  // displacement smooth at this size while roughly halving the vertex count
+  // versus the old 96 — most noticeable on phones.
+  const planeSegments = 64;
 
   // Load the logo PNG once. drei's useTexture suspends until ready.
   const logoTex = useTexture('/assets/logo.png');
@@ -282,9 +283,8 @@ function LogoMark({ areas, vitality, growth }: OrbCoreProps) {
           <boxGeometry args={[1.9, 1.9, 0.18]} />
         </mesh>
 
-        {/* Front-face 3D logo. Plane subdivisions tuned by device — 160 on
-            desktop for smooth displacement, 80 on mobile to halve the vertex
-            count and keep GPUs happy. */}
+        {/* Front-face 3D logo on a high-segment plane; the displacementMap
+            pushes the bright cross/flame pixels forward into real geometry. */}
         <mesh position={[0, 0, 0.092]} material={logoMaterial}>
           <planeGeometry args={[1.7, 1.7, planeSegments, planeSegments]} />
         </mesh>
@@ -391,7 +391,7 @@ export function PremiumOrb({
           powerPreference: 'high-performance',
           toneMapping: THREE.ACESFilmicToneMapping,
         }}
-        dpr={[1, 2]}
+        dpr={[1, 1.5]}
       >
         <ambientLight intensity={0.55} />
         <directionalLight position={[3, 4, 5]} intensity={1.8} color="#fff5d6" />
