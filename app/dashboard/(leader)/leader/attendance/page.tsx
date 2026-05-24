@@ -44,6 +44,20 @@ export default async function AttendancePage() {
     );
   }
 
+  if (data.state === 'error') {
+    return (
+      <div className="mx-auto max-w-4xl px-6 py-20">
+        <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-gold">
+          Attendance
+        </p>
+        <h1 className="font-display text-4xl font-light text-ivory md:text-5xl">{data.org.name}</h1>
+        <p className="mt-3 max-w-md text-sm leading-relaxed text-silver">
+          We could not load attendance just now. Please refresh in a moment.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 md:px-6 md:py-12">
       <header className="mb-8">

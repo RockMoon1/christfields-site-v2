@@ -126,6 +126,7 @@ export interface AttendanceMemberRow {
 export type AttendanceBoardResult =
   | { state: 'not-leader' }
   | { state: 'no-members'; org: { id: string; name: string } }
+  | { state: 'error'; org: { id: string; name: string } }
   | {
       state: 'ready';
       org: { id: string; name: string };

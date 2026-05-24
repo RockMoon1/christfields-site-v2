@@ -18,12 +18,6 @@ export interface MyAttendanceWeek {
   confirmed: boolean;
 }
 
-async function requireUser(): Promise<string> {
-  const { userId } = await auth();
-  if (!userId) throw new Error('Not signed in');
-  return userId;
-}
-
 /**
  * The group this member belongs to. Prefer the session's active org, but fall
  * back to their Clerk org membership, so check-in works even when the session
@@ -74,34 +68,49 @@ export async function checkInThisWeek(): Promise<{ ok: boolean; reason?: string 
 
 /** The member's own recent weeks (for showing their check-in / confirmed state). */
 export async function getMyAttendance(weeks = 6): Promise<MyAttendanceWeek[]> {
-  const userId = await requireUser();
-  const sb = getSupabase();
-
-  // The Sunday anchors for the last `weeks` weeks, newest first.
+  // Build the week scaffold up front so we can always return something usable,
+  // even if auth or the database is momentarily unavailable. This function runs
+  // on the dashboard home, so it must degrade gracefully rather than throw and
+  // take the whole page down.
   const anchors: string[] = [];
   for (let i = 0; i < weeks; i += 1) {
     anchors.push(weekAnchorUTC(new Date(Date.now() - i * 7 * 86_400_000)));
   }
-  const earliest = anchors[anchors.length - 1];
+  const blank = (): MyAttendanceWeek[] =>
+    anchors.map((weekAnchor) => ({ weekAnchor, checkedIn: false, confirmed: false }));
 
-  const { data } = await sb
-    .from('group_attendance')
-    .select('gathering_date, checked_in, confirmed')
-    .eq('clerk_user_id', userId)
-    .gte('gathering_date', earliest);
+  try {
+    const { userId } = await auth();
+    if (!userId) return blank();
 
-  const byAnchor = new Map(
-    ((data as { gathering_date: string; checked_in: boolean; confirmed: boolean }[] | null) ?? []).map(
-      (r) => [r.gathering_date.slice(0, 10), r],
-    ),
-  );
+    const sb = getSupabase();
+    const earliest = anchors[anchors.length - 1];
+    const { data, error } = await sb
+      .from('group_attendance')
+      .select('gathering_date, checked_in, confirmed')
+      .eq('clerk_user_id', userId)
+      .gte('gathering_date', earliest);
+    if (error) {
+      console.error('getMyAttendance failed', error);
+      return blank();
+    }
 
-  return anchors.map((weekAnchor) => {
-    const row = byAnchor.get(weekAnchor);
-    return {
-      weekAnchor,
-      checkedIn: Boolean(row?.checked_in),
-      confirmed: Boolean(row?.confirmed),
-    };
-  });
+    const byAnchor = new Map(
+      ((data as { gathering_date: string; checked_in: boolean; confirmed: boolean }[] | null) ?? []).map(
+        (r) => [r.gathering_date.slice(0, 10), r] as const,
+      ),
+    );
+
+    return anchors.map((weekAnchor) => {
+      const row = byAnchor.get(weekAnchor);
+      return {
+        weekAnchor,
+        checkedIn: Boolean(row?.checked_in),
+        confirmed: Boolean(row?.confirmed),
+      };
+    });
+  } catch (err) {
+    console.error('getMyAttendance failed', err);
+    return blank();
+  }
 }
