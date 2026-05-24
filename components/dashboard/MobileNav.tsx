@@ -72,6 +72,7 @@ export function MobileNav({
         onClick={() => setOpen(true)}
         aria-label="Open navigation menu"
         aria-expanded={open}
+        data-nav-burger
         className="flex h-10 w-10 items-center justify-center rounded-sm border border-border-sub text-ivory transition-colors hover:border-border-gold active:bg-black-3 lg:hidden"
       >
         <MenuIcon />

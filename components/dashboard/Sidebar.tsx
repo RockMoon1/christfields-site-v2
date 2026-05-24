@@ -74,6 +74,7 @@ export function Sidebar({
                 )}
                 <Link
                   href={item.href}
+                  data-nav-href={item.href}
                   className={cn(
                     'relative flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm transition-colors',
                     active ? 'text-gold-lt' : 'text-silver hover:text-ivory',
