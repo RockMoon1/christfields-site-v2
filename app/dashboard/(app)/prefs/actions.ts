@@ -22,8 +22,10 @@ export async function markWelcomeSeen(): Promise<void> {
   const sb = getSupabase();
   await sb
     .from('dashboard_prefs')
-    .update({ welcome_seen: true, updated_at: new Date().toISOString() })
-    .eq('clerk_user_id', userId);
+    .upsert(
+      { clerk_user_id: userId, welcome_seen: true, updated_at: new Date().toISOString() },
+      { onConflict: 'clerk_user_id' },
+    );
   revalidatePath('/dashboard');
 }
 
@@ -33,8 +35,10 @@ export async function setRevealAll(value: boolean): Promise<void> {
   const sb = getSupabase();
   await sb
     .from('dashboard_prefs')
-    .update({ reveal_all: Boolean(value), updated_at: new Date().toISOString() })
-    .eq('clerk_user_id', userId);
+    .upsert(
+      { clerk_user_id: userId, reveal_all: Boolean(value), updated_at: new Date().toISOString() },
+      { onConflict: 'clerk_user_id' },
+    );
   revalidatePath('/dashboard', 'layout');
 }
 

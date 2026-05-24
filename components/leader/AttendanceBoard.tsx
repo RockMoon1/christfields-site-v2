@@ -44,8 +44,12 @@ export function AttendanceBoard({ initial }: { initial: ReadyBoard }) {
   function loadWeek(anchor: string) {
     if (anchor === board.weekAnchor) return;
     startTransition(async () => {
-      const res = await getAttendanceBoard(anchor);
-      if (res.state === 'ready') setBoard(res);
+      try {
+        const res = await getAttendanceBoard(anchor);
+        if (res.state === 'ready') setBoard(res);
+      } catch {
+        // Keep the current week shown if the switch fails.
+      }
     });
   }
 
@@ -58,9 +62,17 @@ export function AttendanceBoard({ initial }: { initial: ReadyBoard }) {
       confirmedCount: b.confirmedCount + (next ? 1 : -1),
     }));
     startTransition(async () => {
-      await setMemberAttendance(member.userId, board.weekAnchor, next);
-      const res = await getAttendanceBoard(board.weekAnchor);
-      if (res.state === 'ready') setBoard(res);
+      try {
+        await setMemberAttendance(member.userId, board.weekAnchor, next);
+      } catch {
+        // Fall through to the re-sync, which corrects the optimistic flip.
+      }
+      try {
+        const res = await getAttendanceBoard(board.weekAnchor);
+        if (res.state === 'ready') setBoard(res);
+      } catch {
+        // Leave the optimistic state; the next interaction will re-sync.
+      }
     });
   }
 

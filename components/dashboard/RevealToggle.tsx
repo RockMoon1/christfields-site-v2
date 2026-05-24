@@ -18,7 +18,11 @@ export function RevealToggle({ revealAll }: { revealAll: boolean }) {
       disabled={pending}
       onClick={() =>
         startTransition(async () => {
-          await setRevealAll(!revealAll);
+          try {
+            await setRevealAll(!revealAll);
+          } catch {
+            // Non-critical: the preference just will not persist this time.
+          }
         })
       }
       className={cn(

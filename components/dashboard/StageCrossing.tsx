@@ -52,7 +52,7 @@ export function StageCrossing({ stage }: { stage: JourneyStage | null }) {
 
   function close() {
     setOpen(false);
-    if (stage) void markStageSeen(stage);
+    if (stage) void markStageSeen(stage).catch(() => {});
   }
 
   // Contain focus while the (desktop-only) overlay is shown; Escape dismisses.

@@ -28,7 +28,11 @@ export function WelcomeOverlay({ firstName }: { firstName?: string }) {
   function enter() {
     setOpen(false);
     startTransition(async () => {
-      await markWelcomeSeen();
+      try {
+        await markWelcomeSeen();
+      } catch {
+        // Non-critical: we already closed optimistically; it retries next load.
+      }
     });
   }
 
