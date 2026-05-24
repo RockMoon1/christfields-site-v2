@@ -168,11 +168,19 @@ export async function devSetAttendanceWeeks(
     await sb.from('group_attendance').insert(rows);
   }
 
-  // Reset the high-water mark so the stage can move up or down while testing.
-  await sb
-    .from('dashboard_prefs')
-    .update({ journey_seen_stage: 'seed', updated_at: new Date().toISOString() })
-    .eq('clerk_user_id', memberId);
+  // Reset the high-water mark so the stage can move up or down while testing,
+  // and for Seed (0 weeks) replay the one-time welcome screen too, so the full
+  // brand-new-member experience can be previewed. Upsert so this works even if
+  // the member has not loaded their dashboard yet.
+  await sb.from('dashboard_prefs').upsert(
+    {
+      clerk_user_id: memberId,
+      journey_seen_stage: 'seed',
+      welcome_seen: n > 0,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'clerk_user_id' },
+  );
 
   revalidatePath('/dashboard/leader/attendance');
   revalidatePath('/dashboard', 'layout');

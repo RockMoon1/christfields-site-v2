@@ -182,7 +182,8 @@ export function AttendanceBoard({ initial }: { initial: ReadyBoard }) {
         <p className="mt-2 text-xs leading-relaxed text-muted">
           Simulates confirmed in-person weeks for a member, then resets their journey so it
           recomputes. Open that member&rsquo;s own dashboard to see the stage. Seed = 0 weeks,
-          Sprout = 1, Roots = 2, Fruit = 5. Remove this panel before real use.
+          Sprout = 1, Roots = 2, Fruit = 5. Seed also replays the one-time welcome screen.
+          Remove this panel before real use.
         </p>
         <ul className="mt-4 flex flex-col gap-2">
           {board.rows.map((m) => (
