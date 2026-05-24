@@ -109,3 +109,28 @@ export type GroupDataResult =
   | { state: 'ready'; org: { id: string; name: string }; members: MemberSummary[]; group: GroupAnalytics }
   | { state: 'not-leader' }
   | { state: 'no-members'; org: { id: string; name: string } };
+
+/* ---- attendance (in-person presence) ---- */
+
+export interface AttendanceMemberRow {
+  userId: string;
+  name: string;
+  imageUrl: string;
+  isLeader: boolean;
+  /** The member tapped "I was there" for this week. */
+  checkedIn: boolean;
+  /** A leader confirmed the member was present. Only this counts toward the gate. */
+  confirmed: boolean;
+}
+
+export type AttendanceBoardResult =
+  | { state: 'not-leader' }
+  | { state: 'no-members'; org: { id: string; name: string } }
+  | {
+      state: 'ready';
+      org: { id: string; name: string };
+      weekAnchor: string; // YYYY-MM-DD (Sunday, UTC)
+      rows: AttendanceMemberRow[];
+      recentWeeks: string[]; // anchors for the week switcher, newest first
+      confirmedCount: number;
+    };

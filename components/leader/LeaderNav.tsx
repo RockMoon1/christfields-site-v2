@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 
 const TABS = [
   { href: '/dashboard/leader', label: 'Group', icon: <GroupIcon /> },
+  { href: '/dashboard/leader/attendance', label: 'Attendance', icon: <AttendanceIcon /> },
   { href: '/dashboard/leader/members', label: 'Members', icon: <MembersIcon /> },
   { href: '/dashboard/leader/roster', label: 'Roster', icon: <RosterIcon /> },
 ];
@@ -160,6 +161,15 @@ function RosterIcon() {
   return (
     <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
       <path d="M3 4h10M3 8h10M3 12h6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+function AttendanceIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
+      <rect x="2.5" y="3" width="11" height="10.5" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M2.5 6h11M5.5 1.5v3M10.5 1.5v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M5.8 9.6l1.4 1.4 3-3.2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
