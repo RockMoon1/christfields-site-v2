@@ -57,6 +57,22 @@ export default async function SettingsPage() {
         </div>
       </section>
 
+      {/* What we stand for */}
+      <Link
+        href="/dashboard/foundation"
+        className="group mb-6 flex items-center justify-between gap-4 rounded-sm border border-border-sub bg-black-3 p-6 transition-colors hover:border-border-gold"
+      >
+        <div>
+          <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.22em] text-gold">
+            What we stand for
+          </p>
+          <p className="text-sm text-silver">
+            What Christ Fields is, what we believe, and why we do the things we do.
+          </p>
+        </div>
+        <span className="text-gold transition-transform group-hover:translate-x-1">&rarr;</span>
+      </Link>
+
       {/* Your data */}
       <section className="mb-6 rounded-sm border border-border-sub bg-black-3 p-8">
         <h3 className="mb-4 font-display text-xl font-light text-ivory">Your data</h3>
