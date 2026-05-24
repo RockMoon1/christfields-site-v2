@@ -8,6 +8,8 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { NAV_ITEMS } from './nav-data';
 import { cn } from '@/lib/utils';
+import { isRevealed, type SectionDepth, type SectionKey } from '@/lib/dashboard/journey';
+import { RevealToggle } from './RevealToggle';
 
 /**
  * Hamburger button shown on mobile, plus a slide-in drawer with the same
@@ -17,11 +19,24 @@ import { cn } from '@/lib/utils';
  *
  * Leader access lives on the Settings page (a plain in-page link), not here,
  * so leaders reach their dashboard from mobile through Settings.
+ *
+ * Items reveal progressively with the member's journey, with an always-present
+ * "show me everything" so nothing is ever gated.
  */
-export function MobileNav() {
+export function MobileNav({
+  sections,
+  revealAll = false,
+}: {
+  sections?: Record<SectionKey, SectionDepth>;
+  revealAll?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
+
+  const items = NAV_ITEMS.filter(
+    (it) => !it.section || revealAll || !sections || isRevealed(sections[it.section]),
+  );
 
   // The drawer is rendered through a portal to document.body so it cannot be
   // contained by any ancestor's transform/filter/backdrop-filter. Portal
@@ -121,7 +136,7 @@ export function MobileNav() {
 
               <nav className="flex-1 overflow-y-auto px-3 py-5">
                 <ul className="flex flex-col gap-1">
-                  {NAV_ITEMS.map((item) => {
+                  {items.map((item) => {
                     const active =
                       item.href === '/dashboard'
                         ? pathname === '/dashboard'
@@ -159,6 +174,21 @@ export function MobileNav() {
                 </ul>
               </nav>
 
+              {/* Always available: what we stand for + show everything */}
+              <div className="border-t border-border-sub px-3 py-3">
+                <Link
+                  href="/dashboard/foundation"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm text-silver transition-colors hover:text-ivory"
+                >
+                  <span className="flex h-4 w-4 items-center justify-center text-muted">
+                    <FoundationIcon />
+                  </span>
+                  What we stand for
+                </Link>
+                <RevealToggle revealAll={revealAll} />
+              </div>
+
               <div className="border-t border-border-sub px-5 py-5">
                 <p className="font-display text-sm italic leading-relaxed text-silver">
                   &ldquo;I planted, Apollos watered, but God gave the growth.&rdquo;
@@ -174,6 +204,15 @@ export function MobileNav() {
         document.body,
       )}
     </>
+  );
+}
+
+function FoundationIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
+      <path d="M8 2.5l5 2.2-5 2.2-5-2.2 5-2.2z" stroke="currentColor" strokeWidth="1.1" strokeLinejoin="round" />
+      <path d="M3 8l5 2.2L13 8M3 11l5 2.2L13 11" stroke="currentColor" strokeWidth="1.1" strokeLinejoin="round" />
+    </svg>
   );
 }
 

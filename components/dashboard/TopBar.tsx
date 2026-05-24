@@ -3,6 +3,7 @@
 import { UserButton } from '@clerk/nextjs';
 import { usePathname } from 'next/navigation';
 import { MobileNav } from './MobileNav';
+import type { SectionDepth, SectionKey } from '@/lib/dashboard/journey';
 
 const titleMap: Record<string, string> = {
   '/dashboard': 'Overview',
@@ -28,14 +29,20 @@ const titleMap: Record<string, string> = {
  * backdrop-filter on a sticky element traps fixed descendants (the MobileNav
  * drawer and the Clerk popovers). Use a solid background here.
  */
-export function TopBar() {
+export function TopBar({
+  sections,
+  revealAll = false,
+}: {
+  sections?: Record<SectionKey, SectionDepth>;
+  revealAll?: boolean;
+}) {
   const pathname = usePathname();
   const title = titleMap[pathname] ?? 'Dashboard';
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border-sub bg-black-2 px-4 md:px-6">
       <div className="flex items-center gap-3">
-        <MobileNav />
+        <MobileNav sections={sections} revealAll={revealAll} />
         <p className="hidden text-[10px] font-medium uppercase tracking-[0.22em] text-muted lg:block">
           Christ Fields
         </p>

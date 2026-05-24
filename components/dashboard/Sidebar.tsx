@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { NAV_ITEMS } from './nav-data';
+import { isRevealed, type SectionDepth, type SectionKey } from '@/lib/dashboard/journey';
+import { RevealToggle } from './RevealToggle';
 
 /**
  * Desktop sidebar for the dashboard. Sticky, dark, with brand logo at top.
@@ -18,8 +20,24 @@ import { NAV_ITEMS } from './nav-data';
  * Leaders (org admins) also get a "FaithFlow Leader" entry. Members never see
  * it. Hidden under lg breakpoint; mobile users get the MobileNav drawer.
  */
-export function Sidebar({ isLeader = false }: { isLeader?: boolean }) {
+export function Sidebar({
+  isLeader = false,
+  sections,
+  revealAll = false,
+}: {
+  isLeader?: boolean;
+  sections?: Record<SectionKey, SectionDepth>;
+  revealAll?: boolean;
+}) {
   const pathname = usePathname();
+
+  // Reveal items progressively: an item with a section shows once the journey
+  // reaches it, or whenever the member has chosen to see everything. Items with
+  // no section (Overview, Settings) are always present. If we have no journey
+  // data (a degraded load), show everything rather than hide.
+  const items = NAV_ITEMS.filter(
+    (it) => !it.section || revealAll || !sections || isRevealed(sections[it.section]),
+  );
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-border-sub bg-black-2 lg:flex">
@@ -40,7 +58,7 @@ export function Sidebar({ isLeader = false }: { isLeader?: boolean }) {
       {/* Nav */}
       <nav className="flex-1 px-3 py-6">
         <ul className="flex flex-col gap-1">
-          {NAV_ITEMS.map((item) => {
+          {items.map((item) => {
             const active =
               item.href === '/dashboard'
                 ? pathname === '/dashboard'
@@ -97,6 +115,25 @@ export function Sidebar({ isLeader = false }: { isLeader?: boolean }) {
         </div>
       )}
 
+      {/* Always available: what we stand for + show everything */}
+      <div className="border-t border-border-sub px-3 py-3">
+        <Link
+          href="/dashboard/foundation"
+          className={cn(
+            'flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs transition-colors',
+            pathname.startsWith('/dashboard/foundation')
+              ? 'text-gold-lt'
+              : 'text-muted hover:text-silver',
+          )}
+        >
+          <span className="flex h-4 w-4 items-center justify-center">
+            <FoundationIcon />
+          </span>
+          What we stand for
+        </Link>
+        <RevealToggle revealAll={revealAll} />
+      </div>
+
       {/* Footer scripture */}
       <div className="border-t border-border-sub px-6 py-5">
         <p className="font-display text-sm italic leading-relaxed text-silver">
@@ -135,6 +172,15 @@ function LeaderIcon() {
       <circle cx="8" cy="3.6" r="1.2" fill="currentColor" />
       <circle cx="3.9" cy="10" r="1.2" fill="currentColor" />
       <circle cx="12.1" cy="10" r="1.2" fill="currentColor" />
+    </svg>
+  );
+}
+
+function FoundationIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
+      <path d="M8 2.5l5 2.2-5 2.2-5-2.2 5-2.2z" stroke="currentColor" strokeWidth="1.1" strokeLinejoin="round" />
+      <path d="M3 8l5 2.2L13 8M3 11l5 2.2L13 11" stroke="currentColor" strokeWidth="1.1" strokeLinejoin="round" />
     </svg>
   );
 }

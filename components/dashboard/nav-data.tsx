@@ -1,10 +1,17 @@
 import type { ReactNode } from 'react';
+import type { SectionKey } from '@/lib/dashboard/journey';
 
 export interface NavItem {
   href: string;
   label: string;
   hint: string;
   icon: ReactNode;
+  /**
+   * The journey section this item maps to. Items with a section are revealed
+   * progressively (unless the member has chosen "show me everything"). Items
+   * with no section (Overview, Settings) are always shown.
+   */
+  section?: SectionKey;
 }
 
 /**
@@ -23,42 +30,49 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Rhythms',
     hint: 'Your daily and weekly practices. Tap one to check it off and build gentle, lasting habits.',
     icon: <FlameIcon />,
+    section: 'rhythms',
   },
   {
     href: '/dashboard/prayer',
     label: 'Prayer',
     hint: 'Hold what you are praying about, and mark answers as God moves. Between you and him.',
     icon: <PrayerIcon />,
+    section: 'prayer',
   },
   {
     href: '/dashboard/reflect',
     label: 'Reflect',
     hint: 'A few honest minutes. Log your mood, name what you are thankful for, and review the day with God.',
     icon: <MoonIcon />,
+    section: 'reflect',
   },
   {
     href: '/dashboard/scripture',
     label: 'Scripture',
     hint: 'A verse to carry today, and the verses you are learning by heart.',
     icon: <ScrollIcon />,
+    section: 'scripture',
   },
   {
     href: '/dashboard/progress',
     label: 'Progress',
     hint: 'Track growth in the areas you care about, one honest score at a time.',
     icon: <BarIcon />,
+    section: 'progress',
   },
   {
     href: '/dashboard/resources',
     label: 'Resources',
     hint: 'Scripture, prompts, and next steps matched to where you are in each area.',
     icon: <BookIcon />,
+    section: 'resources',
   },
   {
     href: '/dashboard/community',
     label: 'Community',
     hint: 'Carry each other. Share what you are walking through and stand with others in theirs.',
     icon: <PeopleIcon />,
+    section: 'community',
   },
   {
     href: '/dashboard/settings',

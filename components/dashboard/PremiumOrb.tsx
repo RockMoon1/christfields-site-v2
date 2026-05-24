@@ -4,6 +4,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, useTexture } from '@react-three/drei';
 import { Suspense, useMemo, useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
+import type { JourneyStage } from '@/lib/dashboard/journey';
 
 export interface OrbArea {
   id: string;
@@ -15,6 +16,8 @@ interface OrbCoreProps {
   areas: OrbArea[];
   /** Average of the most recent score across areas, 0-10. Drives glow. */
   vitality: number;
+  /** 0..1 growth factor from the journey stage. Brightens and enriches the orb. */
+  growth: number;
 }
 
 /**
@@ -95,7 +98,7 @@ function Node({
  * across the metallic mark as it rotates, giving the spinning logo a
  * cinematic flash of light effect.
  */
-function SweepLight() {
+function SweepLight({ growth = 0 }: { growth?: number }) {
   const lightRef = useRef<THREE.PointLight>(null);
 
   useFrame((state) => {
@@ -106,7 +109,7 @@ function SweepLight() {
     lightRef.current.position.y = Math.sin(t * 0.35) * 1.5;
   });
 
-  return <pointLight ref={lightRef} color="#fff8d6" intensity={6} distance={12} />;
+  return <pointLight ref={lightRef} color="#fff8d6" intensity={5 + growth * 5} distance={12} />;
 }
 
 /**
@@ -120,7 +123,7 @@ function SweepLight() {
  * surface dramatically. Combined with the orbiting SweepLight, the mark
  * gets a true "flash of light" as it rotates.
  */
-function LogoMark({ areas, vitality }: OrbCoreProps) {
+function LogoMark({ areas, vitality, growth }: OrbCoreProps) {
   const markGroupRef = useRef<THREE.Group>(null);
   const haloRef = useRef<THREE.Mesh>(null);
   const wireRef = useRef<THREE.Mesh>(null);
@@ -176,7 +179,7 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
     return out;
   }, [areas.length]);
 
-  const wireDetail = Math.min(2 + Math.floor(areas.length / 3), 4);
+  const wireDetail = Math.min(2 + Math.floor(areas.length / 3) + Math.round(growth), 4);
   const emissive = 0.45 + Math.min(vitality, 10) * 0.05;
 
   // The card itself. Warmer, brighter gold than before so the logo on top
@@ -220,9 +223,9 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
       color: new THREE.Color('#f3d97a'),
       emissive: new THREE.Color('#e4c97a'),
       emissiveMap: logoTex,
-      emissiveIntensity: emissive + 0.4,
+      emissiveIntensity: emissive + 0.4 + growth * 0.6,
     });
-  }, [logoTex, emissive]);
+  }, [logoTex, emissive, growth]);
 
   useFrame((state, delta) => {
     if (markGroupRef.current) {
@@ -263,10 +266,11 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
 
   return (
     <group>
-      {/* Soft gold halo behind the mark — depth and warmth. */}
+      {/* Soft gold halo behind the mark — depth and warmth. Grows brighter as
+          the member's walk deepens. */}
       <mesh ref={haloRef} position={[0, 0, -0.4]}>
         <circleGeometry args={[1.5, 64]} />
-        <meshBasicMaterial color="#c9a548" transparent opacity={0.08} />
+        <meshBasicMaterial color="#c9a548" transparent opacity={0.06 + growth * 0.12} />
       </mesh>
 
       {/* Card + truly 3D logo. Card is a thin metallic gold box; logo lives
@@ -298,7 +302,7 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
       {/* Wireframe cage stays — the webbing around the mark. */}
       <mesh ref={wireRef}>
         <icosahedronGeometry args={[1.55, wireDetail]} />
-        <meshBasicMaterial color="#e4c97a" wireframe transparent opacity={0.18} />
+        <meshBasicMaterial color="#e4c97a" wireframe transparent opacity={0.14 + growth * 0.18} />
       </mesh>
 
       {/* Orbiting area nodes with hover labels */}
@@ -332,7 +336,7 @@ function LogoMark({ areas, vitality }: OrbCoreProps) {
                   new THREE.LineBasicMaterial({
                     color: new THREE.Color(area.color),
                     transparent: true,
-                    opacity: 0.18,
+                    opacity: 0.12 + growth * 0.14,
                   }),
                 )
               }
@@ -348,13 +352,25 @@ interface PremiumOrbProps {
   className?: string;
   areas?: OrbArea[];
   vitality?: number;
+  /** The journey stage. Drives a quiet, wordless evolution of the orb. */
+  stage?: JourneyStage;
 }
+
+/** How "grown" each stage looks, 0..1. Seed is humble; fruit is radiant. */
+const STAGE_GROWTH: Record<JourneyStage, number> = {
+  seed: 0,
+  sprout: 0.34,
+  roots: 0.67,
+  fruit: 1,
+};
 
 export function PremiumOrb({
   className = '',
   areas = [],
   vitality = 0,
+  stage = 'seed',
 }: PremiumOrbProps) {
+  const growth = STAGE_GROWTH[stage] ?? 0;
   // IMPORTANT: PremiumOrb deliberately does NOT use useIsMobile anywhere.
   // The Suspense boundary inside the Canvas (around LogoMark, for the texture
   // load) cannot tolerate updates during hydration. A viewport-change-driven
@@ -380,9 +396,9 @@ export function PremiumOrb({
         <ambientLight intensity={0.55} />
         <directionalLight position={[3, 4, 5]} intensity={1.8} color="#fff5d6" />
         <pointLight position={[-3, -2, -2]} intensity={0.6} color="#2d6a4f" />
-        <SweepLight />
+        <SweepLight growth={growth} />
         <Suspense fallback={null}>
-          <LogoMark areas={areas} vitality={vitality} />
+          <LogoMark areas={areas} vitality={vitality} growth={growth} />
         </Suspense>
       </Canvas>
     </div>
