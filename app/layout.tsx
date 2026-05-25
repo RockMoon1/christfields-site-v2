@@ -45,7 +45,7 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: '/assets/logo.png',
-    apple: '/assets/logo.png',
+    apple: '/icons/apple-icon-180.png',
   },
   // Lets iOS "Add to Home Screen" launch full-screen (no Safari chrome) with
   // the right title. Android/desktop standalone comes from the web manifest.

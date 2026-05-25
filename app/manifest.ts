@@ -23,8 +23,11 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: '#060908',
     theme_color: '#060908',
     icons: [
+      { src: '/icons/icon-192.png', type: 'image/png', sizes: '192x192', purpose: 'any' },
+      { src: '/icons/icon-512.png', type: 'image/png', sizes: '512x512', purpose: 'any' },
+      { src: '/icons/icon-512.png', type: 'image/png', sizes: '512x512', purpose: 'maskable' },
+      // Bonus: crisp at any size on browsers that support SVG manifest icons.
       { src: '/bimi-logo.svg', type: 'image/svg+xml', sizes: 'any', purpose: 'any' },
-      { src: '/bimi-logo.svg', type: 'image/svg+xml', sizes: 'any', purpose: 'maskable' },
     ],
   };
 }
