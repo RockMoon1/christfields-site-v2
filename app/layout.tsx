@@ -47,6 +47,13 @@ export const metadata: Metadata = {
     icon: '/assets/logo.png',
     apple: '/assets/logo.png',
   },
+  // Lets iOS "Add to Home Screen" launch full-screen (no Safari chrome) with
+  // the right title. Android/desktop standalone comes from the web manifest.
+  appleWebApp: {
+    capable: true,
+    title: 'Christ Fields',
+    statusBarStyle: 'black-translucent',
+  },
 };
 
 export const viewport: Viewport = {
