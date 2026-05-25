@@ -1,6 +1,7 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import Link from 'next/link';
 import { isLeaderRole } from '@/lib/faithflow/roles';
+import { InstallAppCard } from '@/components/dashboard/InstallAppCard';
 
 export default async function SettingsPage() {
   const user = await currentUser();
@@ -72,6 +73,9 @@ export default async function SettingsPage() {
         </div>
         <span className="text-gold transition-transform group-hover:translate-x-1">&rarr;</span>
       </Link>
+
+      {/* Install as an app (PWA) */}
+      <InstallAppCard />
 
       {/* Your data */}
       <section className="mb-6 rounded-sm border border-border-sub bg-black-3 p-8">
