@@ -174,9 +174,14 @@ export function JoinForm() {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                 />
-                <div className={cn('mt-1 text-right text-xs', charsClass)}>
+                <div aria-hidden className={cn('mt-1 text-right text-xs', charsClass)}>
                   {message.length} / {MAX_MESSAGE_CHARS}
                 </div>
+                {message.length > MAX_MESSAGE_CHARS * 0.85 && (
+                  <span role="status" className="sr-only">
+                    {MAX_MESSAGE_CHARS - message.length} characters left
+                  </span>
+                )}
               </div>
 
               <button

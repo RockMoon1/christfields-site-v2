@@ -3,6 +3,7 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, useTexture } from '@react-three/drei';
 import { Suspense, useMemo, useRef, useState, useEffect } from 'react';
+import { useReducedMotion } from 'motion/react';
 import * as THREE from 'three';
 import type { JourneyStage } from '@/lib/dashboard/journey';
 
@@ -100,9 +101,10 @@ function Node({
  */
 function SweepLight({ growth = 0 }: { growth?: number }) {
   const lightRef = useRef<THREE.PointLight>(null);
+  const reduce = useReducedMotion();
 
   useFrame((state) => {
-    if (!lightRef.current) return;
+    if (reduce || !lightRef.current) return;
     const t = state.clock.elapsedTime;
     lightRef.current.position.x = Math.cos(t * 0.5) * 4;
     lightRef.current.position.z = Math.sin(t * 0.5) * 4 + 2;
@@ -130,6 +132,7 @@ function LogoMark({ areas, vitality, growth }: OrbCoreProps) {
   const nodesRef = useRef<THREE.Group>(null);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const reduce = useReducedMotion();
 
   // Plane segment count for the displacement-mapped logo. Held stable (never
   // viewport-driven) so we never remount the geometry mid-life. 64 keeps the
@@ -229,6 +232,8 @@ function LogoMark({ areas, vitality, growth }: OrbCoreProps) {
   }, [logoTex, emissive, growth]);
 
   useFrame((state, delta) => {
+    // Honor prefers-reduced-motion: hold the mark still (it still renders).
+    if (reduce) return;
     if (markGroupRef.current) {
       // Rotate the whole mark group (card + both 3D logo planes together).
       markGroupRef.current.rotation.y += delta * 0.45;
