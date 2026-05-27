@@ -65,20 +65,73 @@ export function EventBanner({ events }: { events: MemberEvent[] }) {
   }
 
   return (
-    <section
-      className="relative mb-10 overflow-hidden rounded-md border bg-black-3"
-      style={{ borderColor: `${theme.accent}55` }}
+    <motion.section
+      className="relative mb-10 min-h-[260px] overflow-hidden rounded-lg border-2 bg-black-3 md:min-h-[300px]"
+      style={{ borderColor: `${theme.accent}77` }}
       aria-label="Upcoming event"
+      initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.82, y: 28 }}
+      animate={
+        reduced
+          ? { opacity: 1 }
+          : { opacity: 1, scale: [0.82, 1.07, 0.97, 1.02, 1], y: [28, 0, 0, 0, 0] }
+      }
+      transition={
+        reduced
+          ? { duration: 0.4 }
+          : { duration: 1.05, times: [0, 0.42, 0.66, 0.85, 1], ease: 'easeOut' }
+      }
     >
-      {/* Themed ambient gradient + animated motif behind the content */}
+      {/* Themed ambient gradient */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
-          background: `radial-gradient(120% 120% at 15% 0%, ${theme.accent}22 0%, transparent 55%), radial-gradient(120% 140% at 100% 100%, ${theme.accent2}1f 0%, transparent 60%)`,
+          background: `radial-gradient(130% 130% at 15% 0%, ${theme.accent}2e 0%, transparent 55%), radial-gradient(130% 150% at 100% 100%, ${theme.accent2}26 0%, transparent 60%)`,
         }}
       />
+
+      {/* Grand light shaft from the top (a "temple" feel). */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute -top-10 left-1/2 h-[140%] w-72 -translate-x-1/2 blur-2xl"
+        style={{ background: `linear-gradient(180deg, ${theme.accent}33, transparent 70%)` }}
+        animate={reduced ? {} : { opacity: [0.5, 0.85, 0.5], scaleX: [1, 1.12, 1] }}
+        transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+      />
+
       <Motif motif={theme.motif} theme={theme} reduced={!!reduced} />
+
+      {/* Breathing glow + inner border, so it keeps catching the eye after it lands. */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-lg"
+        style={{ boxShadow: `inset 0 0 0 1px ${theme.accent}55, 0 0 46px ${theme.glow}` }}
+        animate={reduced ? {} : { opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+      />
+
+      {/* Light beams. On load: three fast sweeps ("zoom across three times").
+          Then a slow shimmer keeps crossing so it never goes fully still. */}
+      {!reduced && (
+        <>
+          <motion.div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 w-1/3 blur-md"
+            style={{ background: `linear-gradient(100deg, transparent, ${theme.accent2}66, transparent)` }}
+            initial={{ x: '-160%' }}
+            animate={{ x: '360%' }}
+            transition={{ duration: 0.55, repeat: 2, repeatDelay: 0.12, ease: 'easeIn' }}
+          />
+          <motion.div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 w-1/4 blur-md"
+            style={{ background: `linear-gradient(100deg, transparent, ${theme.accent2}3a, transparent)` }}
+            initial={{ x: '-160%' }}
+            animate={{ x: ['-160%', '360%'] }}
+            transition={{ duration: 2.4, repeat: Infinity, repeatDelay: 4.5, ease: 'easeInOut', delay: 2.2 }}
+          />
+        </>
+      )}
 
       {/* Top shimmer hairline */}
       <div
@@ -111,9 +164,16 @@ export function EventBanner({ events }: { events: MemberEvent[] }) {
         </div>
 
         {/* Title */}
-        <h2 className="max-w-2xl font-display text-3xl font-light leading-tight text-ivory md:text-4xl">
+        <motion.h2
+          initial={reduced ? false : { opacity: 0, scale: 0.9, y: 8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={
+            reduced ? { duration: 0.3 } : { delay: 0.55, type: 'spring', stiffness: 320, damping: 18 }
+          }
+          className="max-w-2xl font-display text-4xl font-light leading-tight text-ivory md:text-5xl"
+        >
           {event.title}
-        </h2>
+        </motion.h2>
 
         {/* When / where */}
         <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-silver">
@@ -205,7 +265,7 @@ export function EventBanner({ events }: { events: MemberEvent[] }) {
           </div>
         )}
       </motion.div>
-    </section>
+    </motion.section>
   );
 }
 
@@ -246,12 +306,12 @@ function Motif({ motif, theme, reduced }: { motif: EventMotif; theme: EventTheme
   }
 }
 
-const EMBERS = Array.from({ length: 14 }, (_, i) => ({
-  left: (i * 67) % 100,
+const EMBERS = Array.from({ length: 20 }, (_, i) => ({
+  left: (i * 47) % 100,
   size: 3 + (i % 3) * 2,
-  delay: (i % 7) * 0.8,
-  duration: 6 + (i % 5),
-  drift: (i % 2 === 0 ? 1 : -1) * (6 + (i % 4) * 4),
+  delay: (i % 8) * 0.45,
+  duration: 4.5 + (i % 4),
+  drift: (i % 2 === 0 ? 1 : -1) * (8 + (i % 4) * 5),
 }));
 
 function Embers({ theme }: { theme: EventTheme }) {
@@ -270,7 +330,7 @@ function Embers({ theme }: { theme: EventTheme }) {
             boxShadow: `0 0 ${e.size * 2}px ${theme.accent}`,
           }}
           initial={{ y: 0, opacity: 0 }}
-          animate={{ y: [-0, -260], x: [0, e.drift], opacity: [0, 0.9, 0] }}
+          animate={{ y: [0, -320], x: [0, e.drift], opacity: [0, 0.95, 0] }}
           transition={{ duration: e.duration, delay: e.delay, repeat: Infinity, ease: 'easeOut' }}
         />
       ))}
@@ -321,7 +381,7 @@ function Sunrise({ theme }: { theme: EventTheme }) {
   );
 }
 
-const BOKEH = Array.from({ length: 9 }, (_, i) => ({
+const BOKEH = Array.from({ length: 12 }, (_, i) => ({
   left: (i * 53) % 100,
   top: (i * 31) % 100,
   size: 26 + (i % 4) * 16,
@@ -369,10 +429,10 @@ function Pulse({ theme }: { theme: EventTheme }) {
   );
 }
 
-const CONFETTI = Array.from({ length: 18 }, (_, i) => ({
+const CONFETTI = Array.from({ length: 26 }, (_, i) => ({
   left: (i * 41) % 100,
-  delay: (i % 9) * 0.5,
-  duration: 4 + (i % 4),
+  delay: (i % 9) * 0.4,
+  duration: 3.5 + (i % 4),
   rotate: (i % 2 === 0 ? 1 : -1) * 360,
   hue: i % 4,
 }));
