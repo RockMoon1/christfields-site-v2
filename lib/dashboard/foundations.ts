@@ -170,6 +170,47 @@ export const SECTION_FOUNDATIONS: Record<SectionKey, SectionFoundation> = {
 };
 
 /* ============================================================
+   Plain-language notes that explain parts of the dashboard people
+   kept misreading. Kept here so the voice stays consistent with the
+   rest of the content.
+   ============================================================ */
+
+/**
+ * Progress cards ship with a suggested goal (e.g. "aiming for 8"). New people
+ * read those preset numbers as real scores, or even as someone else's data.
+ * They are only examples, so we say so plainly above the cards.
+ */
+export const PROGRESS_GOALS_NOTE = {
+  title: 'About the numbers on each card',
+  body: [
+    'Each card starts with a suggested goal, like “aiming for 8.” That is only an example, a preview of what a filled-in card looks like.',
+    'It is not your score, and it does not count toward anything. Slide each card to your own honest number and press Save. That is the one that becomes yours.',
+  ],
+} as const;
+
+/**
+ * Many people assume Sabbath means one day, usually Sunday. We hold that rest
+ * in Christ is a daily gift, opened up when the veil tore, and lived together
+ * as a church. Shown on the Rhythms page so the Sabbath card makes sense.
+ */
+export const SABBATH_NOTE = {
+  eyebrow: 'About the Sabbath',
+  title: 'Why Sabbath can be every day',
+  body: [
+    'Sabbath began as one day to stop and rest in God, and a weekly day to slow down is still a gift. But there is a fuller story.',
+    'When Jesus died, the temple veil tore in two from top to bottom. The way to God was thrown wide open. We no longer wait for one day, or one place, to come and rest.',
+    'So rest is not really a day at all. Rest is a Person. “Come to me,” Jesus said, “and I will give you rest.” You can come today, and tomorrow, and the day after.',
+    'And we were never meant to carry it alone. The church is a family, meant to share life often, not gather once and then scatter. Rest together, and lean on each other.',
+    'Mark it on as many days as you turn to him. There is no failing here, only coming home.',
+  ],
+  refs: [
+    { label: 'Matthew 27:51', note: 'the veil torn in two' },
+    { label: 'Matthew 11:28', note: 'come to me and rest' },
+    { label: 'Hebrews 10:24-25', note: 'keep meeting together' },
+  ],
+} as const;
+
+/* ============================================================
    The quiet "crossing" moment, shown once when a member reaches a
    new stage. A Scripture and a whisper. The stage is never named.
    ============================================================ */

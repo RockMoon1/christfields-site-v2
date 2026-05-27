@@ -379,14 +379,22 @@ function AreaCard({ area, onLog, onRemove, featured = false, featuredLabel }: Ar
           )}
         </div>
         {!isPreset && (
-          <button
+          // Custom cards only. Always visible (so it works on touch, where there
+          // is no hover), with a small pop-in and a lift on hover/tap. Presets
+          // never get this, so the five core cards cannot be removed.
+          <motion.button
             type="button"
             onClick={() => onRemove(area.id)}
-            className="text-muted opacity-0 transition-opacity hover:text-silver group-hover:opacity-100"
-            aria-label={`Remove ${area.name}`}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 0.65, y: 0 }}
+            whileHover={{ opacity: 1, y: -2, scale: 1.15 }}
+            whileTap={{ scale: 0.85 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 18 }}
+            className="-mr-2 -mt-2 shrink-0 rounded-full p-2 text-muted transition-colors hover:bg-black-2 hover:text-silver"
+            aria-label={`Delete ${area.name}`}
           >
             <XIcon />
-          </button>
+          </motion.button>
         )}
       </div>
 
@@ -426,7 +434,10 @@ function AreaCard({ area, onLog, onRemove, featured = false, featuredLabel }: Ar
       ) : area.entries.length === 1 ? (
         <p className="mb-5 text-xs italic text-muted">Log another to start the line.</p>
       ) : (
-        <p className="mb-5 text-xs italic text-muted">Log your first score below.</p>
+        <p className="mb-5 text-xs italic text-muted">
+          Nothing logged yet. The goal above is just a target, not your score. Slide and save your
+          own below.
+        </p>
       )}
 
       {/* New score input */}

@@ -126,14 +126,22 @@ export function RhythmCard({ rhythm, onToggle, onRemove }: RhythmCardProps) {
           )}
         </div>
         {!isPreset && (
-          <button
+          // Custom rhythms only. Always visible so it works on touch (no hover),
+          // with a small pop-in and a lift on hover/tap. Core rhythms never get
+          // this, so the preset cards cannot be removed.
+          <motion.button
             type="button"
             onClick={() => onRemove(rhythm.id)}
-            className="text-muted opacity-0 transition-opacity hover:text-silver group-hover:opacity-100"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 0.65, y: 0 }}
+            whileHover={{ opacity: 1, y: -2, scale: 1.15 }}
+            whileTap={{ scale: 0.85 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 18 }}
+            className="-mr-2 -mt-2 shrink-0 rounded-full p-2 text-muted transition-colors hover:bg-black-2 hover:text-silver"
             aria-label={`Archive ${rhythm.name}`}
           >
             <XIcon />
-          </button>
+          </motion.button>
         )}
       </div>
 

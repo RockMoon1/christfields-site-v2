@@ -2,6 +2,7 @@ import { ProgressBoard } from '@/components/dashboard/ProgressBoard';
 import { SectionIntro } from '@/components/dashboard/SectionIntro';
 import { getAreas } from './actions';
 import { getJourney } from '@/lib/dashboard/journey-data';
+import { PROGRESS_GOALS_NOTE } from '@/lib/dashboard/foundations';
 
 /**
  * Progress page. Fetches the signed-in user's areas + entries server-side and
@@ -26,6 +27,20 @@ export default async function ProgressPage() {
       </header>
 
       <SectionIntro section="progress" depth={journey.sections.progress} />
+
+      {/* People read the preset goal numbers (8, 8, 7, 7) as real scores, or
+          even as someone else's data leaking in. They are just example targets,
+          so we explain it plainly right above the cards. */}
+      <section className="mb-8 rounded-sm border border-border-sub bg-black-3/60 p-5">
+        <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-gold">
+          {PROGRESS_GOALS_NOTE.title}
+        </p>
+        <div className="max-w-2xl space-y-2 text-sm leading-relaxed text-silver">
+          {PROGRESS_GOALS_NOTE.body.map((paragraph) => (
+            <p key={paragraph.slice(0, 24)}>{paragraph}</p>
+          ))}
+        </div>
+      </section>
 
       <ProgressBoard initialAreas={areas} />
     </div>

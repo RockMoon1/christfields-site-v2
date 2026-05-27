@@ -135,13 +135,13 @@ const PRESETS: PresetDef[] = [
   {
     key: 'sabbath',
     name: 'Sabbath',
-    description: 'One day to rest and receive.',
+    description: 'Rest in Jesus. Not one day only, but every day.',
     icon: 'sabbath',
     color: '#a64453',
-    cadence: 'weekly',
-    targetPerWeek: 1,
-    scripture: 'Exodus 20:8',
-    anchor: '',
+    cadence: 'daily',
+    targetPerWeek: 7,
+    scripture: 'Hebrews 4:9-10',
+    anchor: 'When today gets heavy, I will stop and come to Jesus to rest.',
     sortOrder: 6,
   },
 ];
