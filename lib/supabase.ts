@@ -243,3 +243,25 @@ export interface EventRsvpRow {
   status: EventRsvpStatus;
   updated_at: string;
 }
+
+/* ============================================================
+   Availability — usual weekly pattern + specific-date overrides.
+   Matches db/migrations/007_availability.sql.
+   ============================================================ */
+
+export interface AvailabilityWeeklyRow {
+  id: string;
+  clerk_user_id: string;
+  weekday: number; // 0=Sun..6=Sat
+  slot: 'morning' | 'afternoon' | 'evening';
+  created_at: string;
+}
+
+export interface AvailabilityOverrideRow {
+  id: string;
+  clerk_user_id: string;
+  on_date: string; // YYYY-MM-DD
+  slot: 'morning' | 'afternoon' | 'evening';
+  available: boolean;
+  created_at: string;
+}

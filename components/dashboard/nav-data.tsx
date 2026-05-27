@@ -75,6 +75,12 @@ export const NAV_ITEMS: NavItem[] = [
     section: 'community',
   },
   {
+    href: '/dashboard/availability',
+    label: 'Availability',
+    hint: 'Let your leaders know when you are usually free, so the group can gather at a time that works for everyone.',
+    icon: <CalendarIcon />,
+  },
+  {
     href: '/dashboard/settings',
     label: 'Settings',
     hint: 'Your account details and a quick guide to the dashboard.',
@@ -188,6 +194,15 @@ function PeopleIcon() {
       <circle cx="6" cy="5.5" r="2" stroke="currentColor" strokeWidth="1.2" />
       <path d="M2.5 13c0-2 1.6-3.5 3.5-3.5S9.5 11 9.5 13" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
       <path d="M10.5 4a2 2 0 010 4M11 9.6c1.6.2 2.8 1.6 2.8 3.4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
+      <rect x="2.5" y="3" width="11" height="10.5" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M2.5 6h11M5.5 1.5v3M10.5 1.5v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
     </svg>
   );
 }
