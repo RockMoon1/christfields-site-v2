@@ -86,8 +86,13 @@ export function overrideKey(iso: string, slot: Slot): string {
 }
 
 /**
- * Effective free/busy for a date + slot. A specific-date override (true=free,
- * false=busy) wins; otherwise fall back to the usual weekly pattern.
+ * Effective free/busy for a date + slot. Precedence:
+ *  1. A specific-date override (true=free, false=busy) always wins.
+ *  2. Otherwise a connected calendar's busy block makes the slot busy.
+ *  3. Otherwise fall back to the usual weekly pattern.
+ *
+ * calendarBusy holds overrideKey-style "iso-slot" entries the member's calendar
+ * marked busy. It is optional, so callers without a calendar pass nothing.
  */
 export function isFree(
   iso: string,
@@ -95,8 +100,10 @@ export function isFree(
   slot: Slot,
   weeklyFree: Set<string>,
   overrides: Map<string, boolean>,
+  calendarBusy?: Set<string>,
 ): boolean {
   const ov = overrides.get(overrideKey(iso, slot));
   if (ov !== undefined) return ov;
+  if (calendarBusy && calendarBusy.has(overrideKey(iso, slot))) return false;
   return weeklyFree.has(weeklyKey(weekday, slot));
 }

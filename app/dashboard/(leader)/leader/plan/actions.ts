@@ -59,7 +59,7 @@ export async function getGroupAvailability(): Promise<PlanResult> {
   const days = upcomingDays(DAYS_AHEAD);
 
   const sb = getSupabase();
-  const [weeklyRes, overrideRes] = await Promise.all([
+  const [weeklyRes, overrideRes, busyRes] = await Promise.all([
     sb.from('availability_weekly').select('clerk_user_id, weekday, slot').in('clerk_user_id', userIds),
     sb
       .from('availability_overrides')
@@ -67,10 +67,17 @@ export async function getGroupAvailability(): Promise<PlanResult> {
       .in('clerk_user_id', userIds)
       .gte('on_date', days[0].iso)
       .lte('on_date', days[days.length - 1].iso),
+    sb
+      .from('calendar_busy')
+      .select('clerk_user_id, on_date, slot')
+      .in('clerk_user_id', userIds)
+      .gte('on_date', days[0].iso)
+      .lte('on_date', days[days.length - 1].iso),
   ]);
 
   if (weeklyRes.error) console.error('getGroupAvailability: weekly load failed', weeklyRes.error);
   if (overrideRes.error) console.error('getGroupAvailability: override load failed', overrideRes.error);
+  if (busyRes.error) console.error('getGroupAvailability: calendar busy load failed', busyRes.error);
 
   const weeklyByUser = new Map<string, Set<string>>();
   for (const r of (weeklyRes.data as { clerk_user_id: string; weekday: number; slot: string }[] | null) ?? []) {
@@ -88,6 +95,13 @@ export async function getGroupAvailability(): Promise<PlanResult> {
     overByUser.set(r.clerk_user_id, m);
   }
 
+  const busyByUser = new Map<string, Set<string>>();
+  for (const r of (busyRes.data as { clerk_user_id: string; on_date: string; slot: string }[] | null) ?? []) {
+    const set = busyByUser.get(r.clerk_user_id) ?? new Set<string>();
+    set.add(overrideKey(r.on_date, r.slot as Slot));
+    busyByUser.set(r.clerk_user_id, set);
+  }
+
   const EMPTY_SET = new Set<string>();
   const EMPTY_MAP = new Map<string, boolean>();
 
@@ -100,7 +114,8 @@ export async function getGroupAvailability(): Promise<PlanResult> {
       for (const uid of userIds) {
         const wf = weeklyByUser.get(uid) ?? EMPTY_SET;
         const ov = overByUser.get(uid) ?? EMPTY_MAP;
-        if (isFree(d.iso, d.weekday, slot, wf, ov)) freeNames.push(nameByUser.get(uid) ?? 'Member');
+        const cb = busyByUser.get(uid) ?? EMPTY_SET;
+        if (isFree(d.iso, d.weekday, slot, wf, ov, cb)) freeNames.push(nameByUser.get(uid) ?? 'Member');
       }
       return { slot, freeCount: freeNames.length, freeNames };
     }),

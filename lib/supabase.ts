@@ -265,3 +265,28 @@ export interface AvailabilityOverrideRow {
   available: boolean;
   created_at: string;
 }
+
+/* ============================================================
+   Calendar feed connect. Matches db/migrations/008_calendar_feeds.sql.
+   ============================================================ */
+
+export type CalendarFeedStatus = 'pending' | 'ok' | 'error';
+
+export interface CalendarFeedRow {
+  clerk_user_id: string;
+  ics_url: string;
+  tz: string;
+  status: CalendarFeedStatus;
+  last_error: string | null;
+  last_synced_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CalendarBusyRow {
+  id: string;
+  clerk_user_id: string;
+  on_date: string; // YYYY-MM-DD
+  slot: 'morning' | 'afternoon' | 'evening';
+  created_at: string;
+}

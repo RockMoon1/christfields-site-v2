@@ -51,6 +51,9 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // node-ical (calendar feed parsing) is server-only; keep it out of the client
+  // bundle and let it load from node_modules at runtime.
+  serverExternalPackages: ['node-ical'],
   // Treat .mdx files as page extensions so journal posts can sit anywhere in app/.
   pageExtensions: ['ts', 'tsx', 'md', 'mdx'],
   images: {
