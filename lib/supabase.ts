@@ -216,3 +216,30 @@ export interface GroupAttendance {
   created_at: string;
   updated_at: string;
 }
+
+/* ============================================================
+   Events — the animated banner + RSVP. Matches db/migrations/005_events.sql.
+   ============================================================ */
+
+export type EventRsvpStatus = 'going' | 'not_going';
+
+export interface EventRow {
+  id: string;
+  org_id: string;
+  created_by: string;
+  title: string;
+  description: string;
+  event_type: string;
+  location: string;
+  starts_at: string;
+  ends_at: string | null;
+  created_at: string;
+}
+
+export interface EventRsvpRow {
+  id: string;
+  event_id: string;
+  clerk_user_id: string;
+  status: EventRsvpStatus;
+  updated_at: string;
+}

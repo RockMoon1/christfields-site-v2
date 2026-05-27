@@ -17,6 +17,8 @@ import { getPrayers } from './prayer/actions';
 import { getTodayReflect } from './reflect/actions';
 import { getScripture } from './scripture/actions';
 import { getMyAttendance } from './attendance/actions';
+import { getMyEvents } from './events/actions';
+import { EventBanner } from '@/components/dashboard/EventBanner';
 import { verseForToday } from '@/lib/dashboard/content';
 import { FOUNDATION, SECTION_FOUNDATIONS } from '@/lib/dashboard/foundations';
 import { getJourney } from '@/lib/dashboard/journey-data';
@@ -31,16 +33,18 @@ import { isRevealed, isFull } from '@/lib/dashboard/journey';
  * Nothing here is ever a scolding; every empty state is an invitation.
  */
 export default async function DashboardHome() {
-  const [user, view, areas, rhythms, prayers, reflect, scripture, attendance] = await Promise.all([
-    currentUser(),
-    getJourney(),
-    getAreas(),
-    getRhythms(),
-    getPrayers(),
-    getTodayReflect(),
-    getScripture(),
-    getMyAttendance(),
-  ]);
+  const [user, view, areas, rhythms, prayers, reflect, scripture, attendance, events] =
+    await Promise.all([
+      currentUser(),
+      getJourney(),
+      getAreas(),
+      getRhythms(),
+      getPrayers(),
+      getTodayReflect(),
+      getScripture(),
+      getMyAttendance(),
+      getMyEvents(),
+    ]);
 
   const firstName = user?.firstName || user?.username || 'friend';
   const verse = verseForToday();
@@ -88,6 +92,10 @@ export default async function DashboardHome() {
         <MorphBlob color="rgba(201, 165, 72, 0.04)" size={620} className="left-1/3 top-1/3" />
         <MorphBlob color="rgba(45, 106, 79, 0.05)" size={520} className="-right-32 top-3/4" />
       </div>
+
+      {/* Events banner. Renders only when the member's group has an upcoming
+          event; otherwise it returns null and the hero stays first. */}
+      <EventBanner events={events} />
 
       {/* Hero: greeting + 3D orb */}
       <HeroPanel>
