@@ -19,6 +19,7 @@ import { getScripture } from './scripture/actions';
 import { getMyAttendance } from './attendance/actions';
 import { getMyEvents } from './events/actions';
 import { EventBanner } from '@/components/dashboard/EventBanner';
+import { ScrollReveal } from '@/components/dashboard/ScrollReveal';
 import { verseForToday } from '@/lib/dashboard/content';
 import { FOUNDATION, SECTION_FOUNDATIONS } from '@/lib/dashboard/foundations';
 import { getJourney } from '@/lib/dashboard/journey-data';
@@ -177,7 +178,8 @@ export default async function DashboardHome() {
       </section>
 
       {/* Verse of the day */}
-      <section className="relative mb-12 overflow-hidden rounded-sm border border-border-sub bg-gradient-to-br from-black-3 to-black-2 p-8 md:p-10">
+      <ScrollReveal className="mb-12">
+      <section className="relative overflow-hidden rounded-sm border border-border-sub bg-gradient-to-br from-black-3 to-black-2 p-8 md:p-10">
         <div
           aria-hidden
           className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent"
@@ -204,10 +206,12 @@ export default async function DashboardHome() {
           )}
         </div>
       </section>
+      </ScrollReveal>
 
       {/* Stat cards — revealed once the member is growing. */}
       {showStats && (
-        <section className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <ScrollReveal className="mb-12">
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Rhythms today"
             value={keptToday}
@@ -237,6 +241,7 @@ export default async function DashboardHome() {
             index={3}
           />
         </section>
+        </ScrollReveal>
       )}
 
       {/* Today: rhythms (always) + reflect (once revealed) */}
@@ -271,6 +276,7 @@ export default async function DashboardHome() {
 
       {/* Snapshots — each revealed by its own section. */}
       {showSnapshots && (
+        <ScrollReveal>
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {showPrayer && (
             <SnapshotCard
@@ -312,6 +318,7 @@ export default async function DashboardHome() {
             />
           )}
         </section>
+        </ScrollReveal>
       )}
     </div>
   );
