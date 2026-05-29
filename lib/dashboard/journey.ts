@@ -185,46 +185,57 @@ const SEED_FLOOR_DAYS = 1;
    "run-ahead" so a section a member leans into reveals a little sooner.
    ============================================================ */
 
+/**
+ * The reveal matrix. Deliberately RESTRICTIVE at seed: the research is clear
+ * that fatigue and abandonment (not under-use) are what kill these apps, so a
+ * brand-new member should meet a near-empty, calm space, not a wall of tools.
+ *
+ * Authority order is built in: Scripture is the one content section open from
+ * day one (it is the anchor of everything), alongside the in-person community
+ * nudge. Everything else is earned as the walk deepens. Quantified tools
+ * (progress scores) are held back the longest, so no one is handed a number to
+ * fail at on day one.
+ */
 const DEPTH_BY_STAGE: Record<JourneyStage, Record<SectionKey, SectionDepth>> = {
   seed: {
     overview: 'gentle',
-    rhythms: 'gentle',
-    progress: 'gentle', // the heart card is the on-ramp ("fill a card")
-    community: 'gentle',
-    prayer: 'gentle',
+    scripture: 'gentle', // Scripture leads, present from the very first day
+    community: 'gentle', // the in-person / groups nudge is the heartbeat
+    rhythms: 'hidden',
+    prayer: 'hidden',
     reflect: 'hidden',
-    scripture: 'hidden',
+    progress: 'hidden',
     resources: 'hidden',
   },
   sprout: {
     overview: 'full',
-    rhythms: 'full',
-    progress: 'gentle',
+    scripture: 'full',
     community: 'full',
-    prayer: 'full',
-    reflect: 'gentle',
-    scripture: 'gentle',
+    rhythms: 'gentle', // one gentle daily practice arrives
+    prayer: 'gentle',
+    reflect: 'hidden',
+    progress: 'hidden',
     resources: 'hidden',
   },
   roots: {
     overview: 'full',
-    rhythms: 'full',
-    progress: 'full',
-    community: 'full',
-    prayer: 'full',
-    reflect: 'full',
     scripture: 'full',
-    resources: 'gentle',
+    community: 'full',
+    rhythms: 'full',
+    prayer: 'full',
+    reflect: 'gentle',
+    progress: 'gentle', // self-tracking only once there is trust and rhythm
+    resources: 'hidden',
   },
   fruit: {
     overview: 'deep',
-    rhythms: 'full',
-    progress: 'deep',
+    scripture: 'full',
     community: 'deep',
+    rhythms: 'full',
     prayer: 'full',
     reflect: 'full',
-    scripture: 'full',
-    resources: 'full',
+    progress: 'full',
+    resources: 'gentle',
   },
 };
 

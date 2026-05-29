@@ -1,6 +1,7 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { TopBar } from '@/components/dashboard/TopBar';
+import { MobileTabBar } from '@/components/dashboard/MobileTabBar';
 import { WelcomeOverlay } from '@/components/dashboard/WelcomeOverlay';
 import { StageCrossing } from '@/components/dashboard/StageCrossing';
 import { isLeaderRole } from '@/lib/faithflow/roles';
@@ -33,8 +34,11 @@ export default async function DashboardLayout({
       <Sidebar isLeader={isLeader} sections={journey.sections} revealAll={journey.revealAll} />
       <div className="lg:pl-60">
         <TopBar sections={journey.sections} revealAll={journey.revealAll} />
-        <main className="px-4 py-6 sm:px-6 md:p-10">{children}</main>
+        {/* Extra bottom padding on mobile so content clears the fixed tab bar. */}
+        <main className="px-4 py-6 pb-28 sm:px-6 md:p-10 lg:pb-10">{children}</main>
       </div>
+
+      <MobileTabBar sections={journey.sections} revealAll={journey.revealAll} />
 
       {!journey.welcomeSeen && <WelcomeOverlay firstName={firstName} />}
       {journey.welcomeSeen && <StageCrossing stage={journey.crossedInto} />}
