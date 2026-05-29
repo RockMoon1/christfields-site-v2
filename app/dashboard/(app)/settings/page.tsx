@@ -2,6 +2,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import Link from 'next/link';
 import { isLeaderRole } from '@/lib/faithflow/roles';
 import { InstallAppCard } from '@/components/dashboard/InstallAppCard';
+import { FeedbackCard } from '@/components/dashboard/FeedbackCard';
 
 export default async function SettingsPage() {
   const user = await currentUser();
@@ -76,6 +77,9 @@ export default async function SettingsPage() {
 
       {/* Install as an app (PWA) */}
       <InstallAppCard />
+
+      {/* Feedback — emails the team */}
+      <FeedbackCard />
 
       {/* Your data */}
       <section className="mb-6 rounded-sm border border-border-sub bg-black-3 p-8">

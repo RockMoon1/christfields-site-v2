@@ -164,6 +164,52 @@ export function notificationHtml(v: {
 </html>`;
 }
 
+/**
+ * Internal email for in-app member feedback (the "what should we add?" box).
+ * Sent to the Christ Fields inbox so Lisandro sees every suggestion.
+ */
+export function feedbackNotificationHtml(v: {
+  category: string;
+  message: string;
+  fromName: string;
+  fromEmail: string;
+}): string {
+  const row = (k: string, val: string) =>
+    `<tr>
+      <td style="padding:6px 0;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#8a9a92;width:120px;vertical-align:top;">${k}</td>
+      <td style="padding:6px 0;font-size:15px;color:#2b332e;">${val || '<span style="color:#aab2ac;">(none)</span>'}</td>
+    </tr>`;
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
+    <title>New feedback</title>
+  </head>
+  <body style="margin:0;padding:0;background-color:#eef0ec;color:#2b332e;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#eef0ec" style="background-color:#eef0ec;"><tr><td align="center" style="padding:32px 20px;">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="max-width:560px;width:100%;background-color:#ffffff;border:1px solid #e3e7e1;border-radius:6px;">
+        <tr><td style="height:3px;background:linear-gradient(to right, #e4c97a, #c9a548);font-size:0;line-height:0;">&nbsp;</td></tr>
+        <tr><td style="padding:24px 36px 8px 36px;">
+          <img src="https://christfields2717.com/assets/logo.png" alt="Christ Fields" width="120" style="display:block;margin:0 auto 14px auto;width:120px;max-width:50%;height:auto;border:0;" />
+          <p style="margin:0 0 4px 0;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#a8842c;font-weight:600;">Member feedback</p>
+          <h1 style="margin:0 0 18px 0;font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:26px;color:#1a221d;">${escapeHtml(v.category)}</h1>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            ${row('From', escapeHtml(v.fromName))}
+            ${row('Email', v.fromEmail ? `<a href="mailto:${escapeHtml(v.fromEmail)}" style="color:#a8842c;text-decoration:none;">${escapeHtml(v.fromEmail)}</a>` : '')}
+            ${row('Feedback', escapeHtml(v.message).replace(/\n/g, '<br>'))}
+          </table>
+          <p style="margin:22px 0 4px 0;font-size:12px;color:#8a9a92;">Reply to this email to respond to ${escapeHtml(v.fromName)} directly.</p>
+        </td></tr>
+        <tr><td style="height:24px;"></td></tr>
+      </table>
+    </td></tr></table>
+  </body>
+</html>`;
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
