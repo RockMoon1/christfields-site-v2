@@ -21,7 +21,6 @@ import { getMyEvents } from './events/actions';
 import { EventBanner } from '@/components/dashboard/EventBanner';
 import { ScrollReveal } from '@/components/dashboard/ScrollReveal';
 import { verseForToday } from '@/lib/dashboard/content';
-import { FOUNDATION } from '@/lib/dashboard/foundations';
 import { getJourney } from '@/lib/dashboard/journey-data';
 import { isRevealed, isFull } from '@/lib/dashboard/journey';
 
@@ -175,15 +174,13 @@ export default async function DashboardHome() {
             {verse.reference}
           </span>
           <span className="text-xs text-muted">{verse.translation}</span>
-          {showScripture && (
-            <Link
-              href="/dashboard/scripture"
-              prefetch
-              className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:text-gold-lt"
-            >
-              Read in context &rarr;
-            </Link>
-          )}
+          <Link
+            href="/dashboard/scripture/context"
+            prefetch
+            className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:text-gold-lt"
+          >
+            Read in context &rarr;
+          </Link>
         </div>
       </section>
 
@@ -261,8 +258,10 @@ export default async function DashboardHome() {
       )}
 
       {/* Compact tap-to-go grid: everywhere the member has unlocked, one tap
-          away, with a little live status. Replaces the long scrolling stack. */}
-      {tiles.length > 0 && (
+          away, with a little live status. Replaces the long scrolling stack.
+          Folded away at seed: a newcomer should not meet a wall of tiles, and
+          the bottom tab bar already carries Scripture and Groups. */}
+      {!seed && tiles.length > 0 && (
         <ScrollReveal className="mt-5 md:mt-8">
           <section className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
             {tiles.map((t) => (
@@ -315,18 +314,24 @@ export default async function DashboardHome() {
         </ScrollReveal>
       )}
 
-      {/* Seed only: one gentle word on what we stand for. Kept last and short. */}
+      {/* Seed only: a calm, honest note that this space is meant to be small at
+          first and unfolds as you walk. Keeps newcomers from feeling there is a
+          mountain of work, and frames the simplicity as intentional. */}
       {seed && (
         <section className="mt-5 rounded-md border border-border-sub bg-black-3/60 p-6 md:mt-8">
           <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-gold">
-            What we stand for
+            This is the whole space, for now
           </p>
-          <p className="max-w-2xl text-sm leading-relaxed text-ivory-dim">{FOUNDATION.intro}</p>
+          <p className="max-w-2xl text-sm leading-relaxed text-ivory-dim">
+            We keep it simple on purpose. Start with the verse above, and come be known by people
+            in person. As you walk, this space quietly opens up, a little more at a time. Nothing to
+            keep up with, nothing to fall behind on.
+          </p>
           <Link
             href="/dashboard/foundation"
             className="mt-4 inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:text-gold-lt"
           >
-            Read more &rarr;
+            What we stand for &rarr;
           </Link>
         </section>
       )}
