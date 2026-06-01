@@ -25,25 +25,19 @@ export function Vision() {
         </Reveal>
 
         <div className="grid gap-12 md:grid-cols-[1.3fr_1fr]">
-          <div className="flex flex-col gap-4 text-base leading-relaxed text-ivory-dim md:text-lg">
+          <div className="flex flex-col gap-5 text-base leading-relaxed text-ivory-dim md:text-lg">
             <Reveal>
               <p>
-                Christ Fields exists at the intersection of <strong className="font-medium text-ivory">faith and technology</strong>. We
-                believe the tools we build should genuinely serve people, guide them toward what is
-                good, and resist the tendency of technology to distract and diminish.
+                We build at the meeting point of{' '}
+                <strong className="font-medium text-ivory">faith and technology</strong>: tools meant
+                to genuinely serve people and point them toward what is good, not to distract and
+                diminish.
               </p>
             </Reveal>
-            <Reveal delay={0.05}>
+            <Reveal delay={0.08}>
               <p>
-                We are building for people who want more than another app or system. People who want
-                to grow in faithfulness, think with clarity, and live with genuine integrity rather
-                than the appearance of it.
-              </p>
-            </Reveal>
-            <Reveal delay={0.1}>
-              <p>
-                This is not just a technology company. It is a long-term commitment, built on the
-                conviction that{' '}
+                It is for people who want more than another app. People who want to grow in
+                faithfulness, think clearly, and live with real integrity, because{' '}
                 <em className="text-gold-lt">
                   we become wiser and more faithful when we walk alongside each other with honesty.
                 </em>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform, useMotionValueEvent } from 'motion/react';
 import { Container } from '../Container';
 import { Reveal } from '../Reveal';
@@ -130,6 +130,18 @@ export function JourneyScroll() {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
 
+  // Only mount the WebGL orb on desktop. On phones it is the heaviest thing on
+  // the page, so we render a light, GPU-cheap glow instead (no three.js chunk).
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(min-width: 768px)');
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
   const [stage, setStage] = useState<JourneyStage>('seed');
   useMotionValueEvent(scrollYProgress, 'change', (v) => {
     const t = v / 0.45; // the orb completes its growth across the intro + first panels
@@ -167,7 +179,23 @@ export function JourneyScroll() {
           style={{ scale: orbScale }}
           className="relative mx-auto mb-6 h-[clamp(220px,38vw,380px)] w-[clamp(220px,38vw,380px)]"
         >
-          <OrbLazy className="h-full w-full" areas={ORB_AREAS} vitality={6} stage={stage} />
+          {isDesktop ? (
+            <OrbLazy className="h-full w-full" areas={ORB_AREAS} vitality={6} stage={stage} />
+          ) : (
+            <div aria-hidden className="flex h-full w-full items-center justify-center">
+              <div
+                className="relative h-[72%] w-[72%] rounded-full"
+                style={{
+                  background:
+                    'radial-gradient(circle at 50% 38%, rgba(228,201,122,0.30), rgba(201,165,72,0.10) 45%, transparent 70%)',
+                  boxShadow: '0 0 60px rgba(201,165,72,0.18)',
+                }}
+              >
+                <div className="absolute inset-0 rounded-full border border-gold/25" />
+                <div className="absolute inset-[20%] rounded-full border border-gold/15" />
+              </div>
+            </div>
+          )}
         </motion.div>
 
         <div className="mb-4 flex items-center justify-center gap-2.5">
