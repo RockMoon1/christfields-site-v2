@@ -33,8 +33,8 @@ export function Hero() {
   const bottomGlowY = useTransform(scrollY, [0, 800], [0, -160]);
   const heroOpacity = useTransform(scrollY, [0, 600], [1, 0.3]);
   // The hero content recedes slightly as you scroll past, for cinematic depth.
+  // (Transform/opacity only; no scroll-driven blur, which janks on weak devices.)
   const heroScale = useTransform(scrollY, [0, 600], [1, 0.94]);
-  const heroBlur = useTransform(scrollY, [0, 600], ['blur(0px)', 'blur(3px)']);
 
   return (
     <section
@@ -91,7 +91,7 @@ export function Hero() {
       <HeroSpotlight />
 
       <motion.div
-        style={{ opacity: heroOpacity, scale: heroScale, filter: heroBlur }}
+        style={{ opacity: heroOpacity, scale: heroScale }}
         className="relative z-10 mx-auto max-w-3xl text-center"
       >
         <Reveal>
