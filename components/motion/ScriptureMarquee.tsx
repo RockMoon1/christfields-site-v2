@@ -7,12 +7,13 @@ import { motion, useReducedMotion, useScroll, useTransform, type MotionValue } f
  * A cinematic band of Scripture, two rows drifting in opposite directions.
  *
  * Two motions are layered:
- *  - a slow, continuous idle drift so it always feels alive, and
- *  - a scroll-linked slide: as you scroll the page, the rows move sideways and
- *    reveal more verses (the outer wrapper is driven by scroll progress).
+ *  - a continuous CSS slide (the .cf-marquee classes in globals.css) so the
+ *    verses are always visibly moving, and
+ *  - a scroll-linked slide on the wrapper: as you scroll the page, the rows
+ *    push further sideways and reveal more verses.
  *
- * Edge-faded so phrases emerge and dissolve. Honors reduced-motion (renders a
- * calm, still band). Pure ornament: aria-hidden, on-brand gold/ivory.
+ * Edge-faded so phrases emerge and dissolve. The CSS animation auto-stops under
+ * prefers-reduced-motion; the scroll slide is gated here too. Pure ornament.
  */
 
 const LINE_ONE = [
@@ -41,27 +42,23 @@ function Row({
   items,
   direction,
   scrollX,
-  reduced,
 }: {
   items: string[];
   direction: 'left' | 'right';
   scrollX: MotionValue<string>;
-  reduced: boolean;
 }) {
-  // Duplicate the track so the idle loop is seamless (animate by one full copy).
+  // Duplicate the track so the CSS -50% slide loops seamlessly.
   const track = [...items, ...items];
-  const from = direction === 'left' ? '0%' : '-50%';
-  const to = direction === 'left' ? '-50%' : '0%';
 
   return (
     <div className="flex overflow-hidden">
       {/* Outer wrapper: scroll-linked sideways slide. */}
       <motion.div style={{ x: scrollX }} className="flex">
-        {/* Inner track: continuous idle drift. */}
-        <motion.div
-          className="flex shrink-0 items-center gap-10 whitespace-nowrap pr-10 md:gap-16 md:pr-16"
-          animate={reduced ? {} : { x: [from, to] }}
-          transition={{ duration: 32, ease: 'linear', repeat: Infinity }}
+        {/* Inner track: continuous CSS slide (always moving). */}
+        <div
+          className={`flex shrink-0 items-center gap-10 whitespace-nowrap pr-10 md:gap-16 md:pr-16 ${
+            direction === 'left' ? 'cf-marquee' : 'cf-marquee-reverse'
+          }`}
         >
           {track.map((item, i) => {
             const isRef = /\d/.test(item);
@@ -82,7 +79,7 @@ function Row({
               </span>
             );
           })}
-        </motion.div>
+        </div>
       </motion.div>
     </div>
   );
@@ -92,17 +89,15 @@ export function ScriptureMarquee() {
   const reduced = useReducedMotion();
   const ref = useRef<HTMLElement>(null);
 
-  // Track the band as it travels through the viewport. 0 when it enters the
-  // bottom, 1 when it leaves the top.
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ['start end', 'end start'],
   });
 
-  // Opposite-direction sideways slides driven by scroll. Reduced-motion users
-  // get a fixed offset (no movement).
-  const xOne = useTransform(scrollYProgress, [0, 1], reduced ? ['0%', '0%'] : ['12%', '-12%']);
-  const xTwo = useTransform(scrollYProgress, [0, 1], reduced ? ['0%', '0%'] : ['-12%', '12%']);
+  // Opposite-direction sideways slides driven by scroll. Generous range so the
+  // scroll clearly whips the verses across. Disabled under reduced-motion.
+  const xOne = useTransform(scrollYProgress, [0, 1], reduced ? ['0%', '0%'] : ['18%', '-18%']);
+  const xTwo = useTransform(scrollYProgress, [0, 1], reduced ? ['0%', '0%'] : ['-18%', '18%']);
 
   return (
     <section
@@ -116,8 +111,8 @@ export function ScriptureMarquee() {
       }}
     >
       <div className="flex flex-col gap-5 md:gap-7">
-        <Row items={LINE_ONE} direction="left" scrollX={xOne} reduced={!!reduced} />
-        <Row items={LINE_TWO} direction="right" scrollX={xTwo} reduced={!!reduced} />
+        <Row items={LINE_ONE} direction="left" scrollX={xOne} />
+        <Row items={LINE_TWO} direction="right" scrollX={xTwo} />
       </div>
     </section>
   );

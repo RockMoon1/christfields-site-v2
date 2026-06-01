@@ -321,6 +321,24 @@ button:focus-visible {
 .ember.ember-sm { width: 2px; height: 2px; filter: blur(0.4px); }
 
 /* ============================================================
+   Scripture marquee — continuous horizontal slide. CSS-driven so it
+   always runs (a JS loop can read as static if it is too slow). The
+   track is duplicated, so translating by -50% loops seamlessly.
+   ============================================================ */
+@keyframes cfMarquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.cf-marquee {
+  animation: cfMarquee 24s linear infinite;
+  will-change: transform;
+}
+.cf-marquee-reverse {
+  animation: cfMarquee 24s linear infinite reverse;
+  will-change: transform;
+}
+
+/* ============================================================
    Clerk dark-theme backstop
    The appearance API is the first line of defense, but Clerk injects
    its own <style> tag after globals.css which can beat our rules at
@@ -387,7 +405,9 @@ button:focus-visible {
      skeleton shimmer) for users who prefer reduced motion. */
   .animate-ping,
   .animate-pulse,
-  [class*="ffPulse"] {
+  [class*="ffPulse"],
+  .cf-marquee,
+  .cf-marquee-reverse {
     animation: none !important;
   }
 }
