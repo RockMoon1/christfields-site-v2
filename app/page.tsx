@@ -8,6 +8,7 @@ import { Hero } from '@/components/sections/Hero';
 import { DashboardInvite } from '@/components/sections/DashboardInvite';
 import { JoinForm } from '@/components/sections/JoinForm';
 import { BentoGrid } from '@/components/sections/BentoGrid';
+import { DayScroll } from '@/components/sections/DayScroll';
 import { JourneyScroll } from '@/components/sections/JourneyScroll';
 import { PracticesScroll } from '@/components/sections/PracticesScroll';
 import { ScholarFlowFeature } from '@/components/sections/ScholarFlowFeature';
@@ -42,6 +43,7 @@ export default function HomePage() {
         <SectionLift>
           <PracticesScroll />
         </SectionLift>
+        <DayScroll />
         <AnimatedDivider />
         <SectionLift>
           <ScholarFlowFeature />
