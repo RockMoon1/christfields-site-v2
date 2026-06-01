@@ -5,7 +5,8 @@ import { ScriptureMarquee } from '@/components/motion/ScriptureMarquee';
 import { Hero } from '@/components/sections/Hero';
 import { DashboardInvite } from '@/components/sections/DashboardInvite';
 import { JoinForm } from '@/components/sections/JoinForm';
-import { ProjectsGrid } from '@/components/sections/ProjectsGrid';
+import { BentoGrid } from '@/components/sections/BentoGrid';
+import { JourneyScroll } from '@/components/sections/JourneyScroll';
 import { ScholarFlowFeature } from '@/components/sections/ScholarFlowFeature';
 import { StatsBand } from '@/components/sections/StatsBand';
 import { Values } from '@/components/sections/Values';
@@ -26,11 +27,12 @@ export default function HomePage() {
         <ScriptureMarquee />
         <Vision />
         <StatsBand />
+        <JourneyScroll />
         <DashboardInvite />
         <AnimatedDivider />
         <ScholarFlowFeature />
         <AnimatedDivider />
-        <ProjectsGrid />
+        <BentoGrid />
         <AnimatedDivider />
         <Values />
         <AnimatedDivider />
