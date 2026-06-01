@@ -27,22 +27,13 @@ interface Tile {
 
 const TILES: Tile[] = [
   {
-    href: '/dashboard',
-    badge: 'Live now',
-    badgeTone: 'active',
-    title: 'A place to walk with God',
-    body: 'A living member dashboard that grows with you. Scripture first, then your rhythms, prayer, reflection, and your group, all in one quiet space. It starts simple and opens up as you go.',
-    span: 'md:col-span-4 md:row-span-2',
-    big: true,
-    glow: 'rgba(201, 165, 72, 0.18)',
-  },
-  {
     href: '/faithflow',
     badge: 'First group active',
     badgeTone: 'active',
     title: 'FaithFlow',
-    body: 'Real, small, in-person groups. Iron sharpening iron, face to face.',
-    span: 'md:col-span-2',
+    body: 'Real, small, in-person groups, with a living member dashboard that grows with you. Scripture first, then your rhythms, prayer, reflection, and your people. Iron sharpening iron, face to face.',
+    span: 'md:col-span-4 md:row-span-2',
+    big: true,
     glow: 'rgba(45, 106, 79, 0.18)',
   },
   {
@@ -58,22 +49,9 @@ const TILES: Tile[] = [
     badge: 'In development',
     badgeTone: 'dev',
     title: 'OSINT & Trace',
-    body: 'Open-source intelligence and cybersecurity put to work helping find missing people. Skill in service of the lost.',
+    body: 'Open-source intelligence software to help find missing people. Technical skill in service of the lost.',
     span: 'md:col-span-2',
     glow: 'rgba(196, 123, 60, 0.16)',
-  },
-  {
-    href: '/journal',
-    title: 'The Journal',
-    body: 'How the work is going, week by week. Honest notes from the build.',
-    span: 'md:col-span-2',
-    glow: 'rgba(91, 141, 184, 0.16)',
-  },
-  {
-    title: 'Iron sharpens iron',
-    body: 'As iron sharpens iron, so one person sharpens another. — Proverbs 27:17',
-    span: 'md:col-span-2',
-    glow: 'rgba(201, 165, 72, 0.14)',
   },
 ];
 
