@@ -2,11 +2,13 @@ import { Footer } from '@/components/Footer';
 import { Nav } from '@/components/Nav';
 import { AnimatedDivider } from '@/components/motion/AnimatedDivider';
 import { ScriptureMarquee } from '@/components/motion/ScriptureMarquee';
+import { SectionLift } from '@/components/motion/SectionLift';
 import { Hero } from '@/components/sections/Hero';
 import { DashboardInvite } from '@/components/sections/DashboardInvite';
 import { JoinForm } from '@/components/sections/JoinForm';
 import { BentoGrid } from '@/components/sections/BentoGrid';
 import { JourneyScroll } from '@/components/sections/JourneyScroll';
+import { PracticesScroll } from '@/components/sections/PracticesScroll';
 import { ScholarFlowFeature } from '@/components/sections/ScholarFlowFeature';
 import { StatsBand } from '@/components/sections/StatsBand';
 import { Values } from '@/components/sections/Values';
@@ -25,18 +27,35 @@ export default function HomePage() {
       <main id="main">
         <Hero />
         <ScriptureMarquee />
-        <Vision />
-        <StatsBand />
+        <SectionLift>
+          <Vision />
+        </SectionLift>
+        <SectionLift>
+          <StatsBand />
+        </SectionLift>
         <JourneyScroll />
-        <DashboardInvite />
+        <SectionLift>
+          <DashboardInvite />
+        </SectionLift>
+        <SectionLift>
+          <PracticesScroll />
+        </SectionLift>
         <AnimatedDivider />
-        <ScholarFlowFeature />
+        <SectionLift>
+          <ScholarFlowFeature />
+        </SectionLift>
         <AnimatedDivider />
-        <BentoGrid />
+        <SectionLift>
+          <BentoGrid />
+        </SectionLift>
         <AnimatedDivider />
-        <Values />
+        <SectionLift>
+          <Values />
+        </SectionLift>
         <AnimatedDivider />
-        <JoinForm />
+        <SectionLift>
+          <JoinForm />
+        </SectionLift>
       </main>
       <Footer />
     </>
