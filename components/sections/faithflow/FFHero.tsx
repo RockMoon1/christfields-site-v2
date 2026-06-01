@@ -15,7 +15,10 @@ export function FFHero() {
   const contentOpacity = useTransform(scrollY, [0, 600], [1, 0.3]);
 
   return (
-    <section className="relative z-[2] flex min-h-[92vh] items-center justify-center overflow-hidden px-7 pt-[var(--nav-h)]">
+    <section
+      id="top"
+      className="relative z-[2] flex min-h-[92vh] items-center justify-center overflow-hidden px-7 pt-[var(--nav-h)]"
+    >
       <motion.div
         aria-hidden
         style={{
@@ -28,6 +31,35 @@ export function FFHero() {
         }}
         className="absolute inset-0 -z-10"
       />
+
+      {/* Breathing aura behind the headline. */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[34rem] w-[34rem] -translate-x-1/2 -translate-y-1/2 rounded-full"
+        style={{
+          background:
+            'radial-gradient(circle, rgba(45,106,79,0.14) 0%, rgba(201,165,72,0.05) 40%, transparent 70%)',
+        }}
+        animate={{ scale: [1, 1.12, 1], opacity: [0.7, 1, 0.7] }}
+        transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+      />
+
+      {/* One-time light sweep on load, for a theatrical entrance. */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 1, 0] }}
+        transition={{ duration: 1.7, delay: 0.3, times: [0, 0.45, 1], ease: 'easeInOut' }}
+      >
+        <motion.div
+          className="absolute -inset-y-16 w-1/3 blur-2xl"
+          style={{ background: 'linear-gradient(100deg, transparent, rgba(228,201,122,0.20), transparent)' }}
+          initial={{ x: '-140%' }}
+          animate={{ x: '160%' }}
+          transition={{ duration: 1.5, delay: 0.35, ease: [0.5, 0, 0.2, 1] }}
+        />
+      </motion.div>
 
       {/* Cursor-following gold spotlight */}
       <HeroSpotlight />

@@ -13,7 +13,12 @@ import { cn } from '@/lib/utils';
  * persistently available without cluttering the content. Hidden on touch.
  */
 
-const SECTIONS = [
+export interface RailSection {
+  id: string;
+  label: string;
+}
+
+const HOME_SECTIONS: RailSection[] = [
   { id: 'home', label: 'Home' },
   { id: 'vision', label: 'Mission' },
   { id: 'walk', label: 'The Walk' },
@@ -25,12 +30,18 @@ const SECTIONS = [
   { id: 'join', label: 'Join' },
 ];
 
-export function SectionRail() {
-  const [active, setActive] = useState('home');
+export function SectionRail({
+  sections = HOME_SECTIONS,
+  cta = { href: '#join', label: 'Join' },
+}: {
+  sections?: RailSection[];
+  cta?: { href: string; label: string };
+}) {
+  const [active, setActive] = useState(sections[0]?.id ?? '');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const els = SECTIONS.map((s) => document.getElementById(s.id)).filter(
+    const els = sections.map((s) => document.getElementById(s.id)).filter(
       (el): el is HTMLElement => !!el,
     );
     if (els.length === 0) return;
@@ -55,7 +66,7 @@ export function SectionRail() {
       className="fixed right-5 top-1/2 z-40 hidden -translate-y-1/2 lg:flex lg:flex-col lg:items-end"
     >
       <ul className="flex flex-col items-end gap-3.5">
-        {SECTIONS.map((s) => {
+        {sections.map((s) => {
           const on = active === s.id;
           return (
             <li key={s.id}>
@@ -90,10 +101,10 @@ export function SectionRail() {
       </ul>
 
       <a
-        href="#join"
+        href={cta.href}
         className="mt-5 rounded-full border border-border-gold bg-gold/[0.06] px-3 py-2 text-[9px] font-medium uppercase tracking-[0.16em] text-gold-lt transition-colors hover:bg-gold hover:text-black"
       >
-        Join
+        {cta.label}
       </a>
     </nav>
   );

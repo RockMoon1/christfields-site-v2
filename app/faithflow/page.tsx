@@ -2,6 +2,9 @@ import type { Metadata } from 'next';
 import { Footer } from '@/components/Footer';
 import { Nav } from '@/components/Nav';
 import { AnimatedDivider } from '@/components/motion/AnimatedDivider';
+import { ScriptureMarquee } from '@/components/motion/ScriptureMarquee';
+import { SectionLift } from '@/components/motion/SectionLift';
+import { SectionRail } from '@/components/motion/SectionRail';
 import { ActiveGroups } from '@/components/sections/faithflow/ActiveGroups';
 import { BiblicalFoundation } from '@/components/sections/faithflow/BiblicalFoundation';
 import { EmberField } from '@/components/sections/faithflow/EmberField';
@@ -34,6 +37,16 @@ const navLinks = [
   { href: '#get-involved', label: 'Get Involved', cta: true },
 ];
 
+const railSections = [
+  { id: 'top', label: 'Top' },
+  { id: 'what', label: 'What' },
+  { id: 'groups', label: 'Groups' },
+  { id: 'how', label: 'How' },
+  { id: 'scripture', label: 'Scripture' },
+  { id: 'leaders', label: 'Leaders' },
+  { id: 'get-involved', label: 'Join' },
+];
+
 const footerColumns = [
   {
     heading: 'FaithFlow',
@@ -61,20 +74,33 @@ export default function FaithFlowPage() {
     <>
       <EmberField />
       <Nav links={navLinks} alwaysScrolled />
+      <SectionRail sections={railSections} cta={{ href: '#get-involved', label: 'Join' }} />
       <main id="main" className="relative">
         <FFHero />
+        <ScriptureMarquee />
+        <SectionLift>
+          <WhatIsFaithFlow />
+        </SectionLift>
         <AnimatedDivider />
-        <WhatIsFaithFlow />
+        <SectionLift>
+          <ActiveGroups />
+        </SectionLift>
         <AnimatedDivider />
-        <ActiveGroups />
+        <SectionLift>
+          <HowGroupsWork />
+        </SectionLift>
         <AnimatedDivider />
-        <HowGroupsWork />
+        <SectionLift>
+          <BiblicalFoundation />
+        </SectionLift>
         <AnimatedDivider />
-        <BiblicalFoundation />
+        <SectionLift>
+          <FutureLeaders />
+        </SectionLift>
         <AnimatedDivider />
-        <FutureLeaders />
-        <AnimatedDivider />
-        <GetInvolved />
+        <SectionLift>
+          <GetInvolved />
+        </SectionLift>
       </main>
       <Footer columns={footerColumns} />
     </>
