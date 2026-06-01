@@ -1,11 +1,13 @@
 import { Footer } from '@/components/Footer';
 import { Nav } from '@/components/Nav';
 import { AnimatedDivider } from '@/components/motion/AnimatedDivider';
+import { ScriptureMarquee } from '@/components/motion/ScriptureMarquee';
 import { Hero } from '@/components/sections/Hero';
 import { DashboardInvite } from '@/components/sections/DashboardInvite';
 import { JoinForm } from '@/components/sections/JoinForm';
 import { ProjectsGrid } from '@/components/sections/ProjectsGrid';
 import { ScholarFlowFeature } from '@/components/sections/ScholarFlowFeature';
+import { StatsBand } from '@/components/sections/StatsBand';
 import { Values } from '@/components/sections/Values';
 import { Vision } from '@/components/sections/Vision';
 
@@ -21,9 +23,9 @@ export default function HomePage() {
       <Nav />
       <main id="main">
         <Hero />
-        <AnimatedDivider />
+        <ScriptureMarquee />
         <Vision />
-        <AnimatedDivider />
+        <StatsBand />
         <DashboardInvite />
         <AnimatedDivider />
         <ScholarFlowFeature />

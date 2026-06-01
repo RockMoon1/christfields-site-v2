@@ -32,6 +32,9 @@ export function Hero() {
   const topGlowY = useTransform(scrollY, [0, 800], [0, -340]);
   const bottomGlowY = useTransform(scrollY, [0, 800], [0, -160]);
   const heroOpacity = useTransform(scrollY, [0, 600], [1, 0.3]);
+  // The hero content recedes slightly as you scroll past, for cinematic depth.
+  const heroScale = useTransform(scrollY, [0, 600], [1, 0.94]);
+  const heroBlur = useTransform(scrollY, [0, 600], ['blur(0px)', 'blur(3px)']);
 
   return (
     <section
@@ -62,10 +65,35 @@ export function Hero() {
         className="pointer-events-none absolute -bottom-20 left-1/2 -z-10 h-96 w-[120%] -translate-x-1/2 bg-emerald/[0.06] blur-3xl"
       />
 
+      {/* Breathing aura behind the headline, for depth and life. */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[36rem] w-[36rem] -translate-x-1/2 -translate-y-1/2 rounded-full"
+        style={{
+          background:
+            'radial-gradient(circle, rgba(201,165,72,0.10) 0%, rgba(201,165,72,0.04) 35%, transparent 70%)',
+        }}
+        animate={{ scale: [1, 1.12, 1], opacity: [0.7, 1, 0.7] }}
+        transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+      />
+
+      {/* Film grain for a premium, textured finish. Very subtle. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.06] mix-blend-soft-light"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+        }}
+      />
+
       {/* Cursor-following gold spotlight */}
       <HeroSpotlight />
 
-      <motion.div style={{ opacity: heroOpacity }} className="relative z-10 mx-auto max-w-3xl text-center">
+      <motion.div
+        style={{ opacity: heroOpacity, scale: heroScale, filter: heroBlur }}
+        className="relative z-10 mx-auto max-w-3xl text-center"
+      >
         <Reveal>
           <p className="mb-6 font-display text-xs font-medium uppercase tracking-[0.22em] text-gold">
             Proverbs 27:17
