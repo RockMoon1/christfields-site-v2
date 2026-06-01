@@ -57,7 +57,7 @@ const PRACTICES: Practice[] = [
 
 export function PracticesScroll() {
   return (
-    <section className="relative overflow-hidden py-[110px]">
+    <section id="practices" className="relative overflow-hidden py-[110px]">
       <SectionSpotlight color="rgba(201, 165, 72, 0.08)" size={520} />
 
       <Container>

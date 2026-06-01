@@ -142,8 +142,8 @@ export function Hero() {
 
         <Reveal delay={0.5}>
           <p className="mx-auto mb-6 max-w-2xl text-lg leading-relaxed text-ivory-dim md:text-xl">
-            Christ Fields is a technology company rooted in Christian faith, building tools and
-            communities for people who want to live and work with wisdom, integrity, and faithfulness.
+            A Christian community, and the tools to actually walk it out together. Grow with people
+            who know your name, stay close to God, and sharpen each other along the way.
           </p>
         </Reveal>
 

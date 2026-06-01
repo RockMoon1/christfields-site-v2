@@ -14,12 +14,16 @@ import type { ReactNode } from 'react';
 export function SectionLift({
   children,
   className = '',
+  id,
 }: {
   children: ReactNode;
   className?: string;
+  /** Optional anchor id, so the section rail can scroll here. */
+  id?: string;
 }) {
   return (
     <motion.div
+      id={id}
       className={className}
       initial={{ opacity: 0, y: 36 }}
       whileInView={{ opacity: 1, y: 0 }}

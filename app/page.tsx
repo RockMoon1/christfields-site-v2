@@ -3,6 +3,7 @@ import { Nav } from '@/components/Nav';
 import { AnimatedDivider } from '@/components/motion/AnimatedDivider';
 import { ScriptureMarquee } from '@/components/motion/ScriptureMarquee';
 import { SectionLift } from '@/components/motion/SectionLift';
+import { SectionRail } from '@/components/motion/SectionRail';
 import { Hero } from '@/components/sections/Hero';
 import { DashboardInvite } from '@/components/sections/DashboardInvite';
 import { JoinForm } from '@/components/sections/JoinForm';
@@ -24,6 +25,7 @@ export default function HomePage() {
   return (
     <>
       <Nav />
+      <SectionRail />
       <main id="main">
         <Hero />
         <ScriptureMarquee />
@@ -34,7 +36,7 @@ export default function HomePage() {
           <StatsBand />
         </SectionLift>
         <JourneyScroll />
-        <SectionLift>
+        <SectionLift id="dashboard">
           <DashboardInvite />
         </SectionLift>
         <SectionLift>
@@ -53,7 +55,7 @@ export default function HomePage() {
           <Values />
         </SectionLift>
         <AnimatedDivider />
-        <SectionLift>
+        <SectionLift id="join">
           <JoinForm />
         </SectionLift>
       </main>

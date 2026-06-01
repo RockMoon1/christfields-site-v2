@@ -141,7 +141,7 @@ export function JourneyScroll() {
   const activeIndex = SCENES.findIndex((s) => s.stage === stage);
 
   return (
-    <section ref={ref} className="relative overflow-hidden py-[110px]">
+    <section ref={ref} id="walk" className="relative overflow-hidden py-[110px]">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10"
