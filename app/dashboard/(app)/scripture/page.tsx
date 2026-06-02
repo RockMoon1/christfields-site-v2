@@ -1,5 +1,6 @@
 import { VerseOfDayCard } from '@/components/dashboard/VerseOfDayCard';
 import { MemoryVerses } from '@/components/dashboard/MemoryVerses';
+import { VerseForYou } from '@/components/dashboard/VerseForYou';
 import { SectionIntro } from '@/components/dashboard/SectionIntro';
 import { getScripture } from './actions';
 import { getJourney } from '@/lib/dashboard/journey-data';
@@ -26,6 +27,8 @@ export default async function ScripturePage() {
       </header>
 
       <SectionIntro section="scripture" depth={journey.sections.scripture} />
+
+      <VerseForYou />
 
       <div className="space-y-10">
         <VerseOfDayCard verse={data.verseOfDay} />
