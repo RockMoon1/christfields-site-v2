@@ -62,12 +62,46 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+/**
+ * Organization + WebSite structured data (JSON-LD). Helps search engines
+ * understand who Christ Fields is and surface richer results. Rendered once,
+ * site-wide, from the root layout.
+ */
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': 'https://christfields2717.com/#organization',
+      name: 'Christ Fields',
+      url: 'https://christfields2717.com',
+      logo: 'https://christfields2717.com/assets/logo.png',
+      email: 'proverbs@christfields2717.com',
+      description:
+        'A Christian technology company and community, building tools and groups for people who want to live and work with wisdom, integrity, and faithfulness.',
+      slogan: 'Iron sharpens iron.',
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://christfields2717.com/#website',
+      name: 'Christ Fields',
+      url: 'https://christfields2717.com',
+      inLanguage: 'en-US',
+      publisher: { '@id': 'https://christfields2717.com/#organization' },
+    },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${inter.variable} ${cormorant.variable}`}>
       <body className="bg-black text-ivory antialiased">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
         <MotionProvider>
           <SmoothScroll>
             {/* Skip link. Visible only when focused via keyboard tab. */}
