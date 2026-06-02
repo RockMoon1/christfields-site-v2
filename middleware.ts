@@ -24,11 +24,15 @@ export default clerkMiddleware(async (auth, req) => {
 });
 
 /**
- * Scope middleware to /dashboard/* only. This keeps the public marketing site
- * (home, journal, faithflow) completely independent of Clerk. Without this
- * narrow matcher, every public request would invoke Clerk, which would fail
- * if Clerk env vars are not configured in the environment.
+ * Scope middleware to /dashboard/* (the authenticated app) and the member-only
+ * API routes that need Clerk. The public marketing site (home, journal,
+ * faithflow) stays independent of Clerk.
+ *
+ * /api/verse must be matched so clerkMiddleware runs for it: its handler calls
+ * auth() to identify the member, and auth() throws if the request never passed
+ * through clerkMiddleware. It is NOT in isProtectedRoute, so it is not
+ * force-redirected; the handler returns a clean 401 JSON when signed out.
  */
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: ['/dashboard/:path*', '/api/verse'],
 };
