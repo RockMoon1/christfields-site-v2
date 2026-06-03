@@ -28,8 +28,7 @@ function recentWeekAnchors(count = 6): string[] {
  * Server actions for the FaithFlow leader dashboard. Authorization lives in
  * leader-access (the requester must be the admin of the active org, and a
  * target member must belong to it). The actual analytics live in the shared
- * engine in lib/faithflow/analytics.ts, so the leader and master views always
- * agree.
+ * engine in lib/faithflow/analytics.ts.
  */
 
 export async function getGroupData(): Promise<GroupDataResult> {

@@ -3,18 +3,16 @@
 import { revalidatePath } from 'next/cache';
 import { getSupabase } from '@/lib/supabase';
 import { canViewMember } from './leader-access';
-import { isMaster } from './master-access';
 
 /**
- * Shepherding actions: a leader (of the member's active group) or a master may
- * act on a member's Scripture memory, for accountability. They can clear a
- * verse a member is not ready on, or send it back to learning so the member
- * can pick it up again. Authorization is always checked first, and the verse
- * must belong to the named member.
+ * Shepherding actions: a leader (of the member's active group) may act on a
+ * member's Scripture memory, for accountability. They can clear a verse a member
+ * is not ready on, or send it back to learning so the member can pick it up
+ * again. Authorization is always checked first, and the verse must belong to the
+ * named member.
  */
 
 async function canShepherd(memberId: string): Promise<boolean> {
-  if (await isMaster()) return true;
   return canViewMember(memberId);
 }
 
@@ -33,7 +31,6 @@ export async function removeMemberVerse(
   if (error) return { ok: false };
 
   revalidatePath('/dashboard/leader/members');
-  revalidatePath('/dashboard/master');
   return { ok: true };
 }
 
@@ -52,6 +49,5 @@ export async function resetMemberVerse(
   if (error) return { ok: false };
 
   revalidatePath('/dashboard/leader/members');
-  revalidatePath('/dashboard/master');
   return { ok: true };
 }

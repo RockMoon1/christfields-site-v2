@@ -21,9 +21,8 @@ const titleMap: Record<string, string> = {
  * Top bar for the dashboard. Hamburger on the left for mobile, the section
  * title in the middle, Clerk UserButton on the right.
  *
- * Leader access lives on the Settings page (and the desktop sidebar), and
- * master access lives inside the leader area, so the UserButton here is the
- * plain Clerk one with no extra menu links.
+ * Leader access lives on the Settings page (and the desktop sidebar), so the
+ * UserButton here is the plain Clerk one with no extra menu links.
  *
  * IMPORTANT: do NOT add backdrop-filter / backdrop-blur to the header below.
  * backdrop-filter on a sticky element traps fixed descendants (the MobileNav

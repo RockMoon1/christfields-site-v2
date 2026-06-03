@@ -4,7 +4,7 @@ import { isLeaderRole } from './roles';
 
 /**
  * Clerk Organizations power FaithFlow groups: an organization is a group, a
- * leader holds org:leader (or org:master, the full role), members are students.
+ * leader holds org:leader, members are students.
  * This module is the single place that decides who is a leader and which
  * members a leader may view.
  *

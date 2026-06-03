@@ -5,7 +5,7 @@ import { getSupabase } from '@/lib/supabase';
 import { SLOTS, upcomingDays, weeklyKey, overrideKey, isFree, type Slot } from '@/lib/dashboard/availability';
 
 /**
- * Leader/master planning view. Aggregates the group's availability into a
+ * Leader planning view. Aggregates the group's availability into a
  * free/busy heatmap so a leader can pick the best time to gather. Privacy: we
  * only ever expose who is free, never event details (there are none here, just
  * the free/busy each member set).

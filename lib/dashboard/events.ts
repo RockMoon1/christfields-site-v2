@@ -2,7 +2,7 @@
  * Event types and their visual themes.
  *
  * The "motif" drives the animated banner on the member dashboard, so every kind
- * of gathering has its own lighting and movement. Leaders and masters pick the
+ * of gathering has its own lighting and movement. Leaders pick the
  * type when they create an event; the banner reads the theme from here.
  *
  * Pure data + helpers only. Safe to import on the server or the client.

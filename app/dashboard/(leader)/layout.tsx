@@ -3,7 +3,6 @@ import { OrganizationSwitcher, UserButton } from '@clerk/nextjs';
 import { MorphBlob } from '@/components/motion/MorphBlob';
 import { LeaderNav } from '@/components/leader/LeaderNav';
 import { isLeaderAnywhere, getLeaderContext } from '@/lib/faithflow/leader-access';
-import { isMaster } from '@/lib/faithflow/master-access';
 
 /**
  * Immersive shell for the FaithFlow leader dashboard. Gated to org admins
@@ -17,7 +16,7 @@ export default async function LeaderLayout({ children }: { children: React.React
   const leader = await isLeaderAnywhere();
   if (!leader) redirect('/dashboard');
 
-  const [ctx, master] = await Promise.all([getLeaderContext(), isMaster()]);
+  const ctx = await getLeaderContext();
 
   return (
     <div className="relative min-h-screen bg-black text-ivory">
@@ -37,7 +36,7 @@ export default async function LeaderLayout({ children }: { children: React.React
         </div>
       </div>
 
-      <LeaderNav isMaster={master} />
+      <LeaderNav />
 
       <div className="lg:pl-64">
         {/* Solid background, never backdrop-blur: a blurred sticky bar would trap

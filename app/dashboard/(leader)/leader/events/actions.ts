@@ -7,10 +7,10 @@ import { getSupabase, type EventRow } from '@/lib/supabase';
 import { isEventType } from '@/lib/dashboard/events';
 
 /**
- * Leader/master event actions. Authorization runs through getLeaderContext: the
- * requester must hold a leader role (org:leader, org:master, org:admin) in the
+ * Leader event actions. Authorization runs through getLeaderContext: the
+ * requester must hold a leader role (org:leader or org:admin) in the
  * organization currently active in their session, and every write is scoped to
- * that org. Masters qualify as leaders, so the same path covers both.
+ * that org.
  */
 
 export interface LeaderEvent {

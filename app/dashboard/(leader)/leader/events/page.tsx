@@ -2,7 +2,7 @@ import { getLeaderEvents } from './actions';
 import { EventManager } from '@/components/leader/EventManager';
 
 /**
- * Leader/master events page. Create events that appear as an animated banner on
+ * Leader events page. Create events that appear as an animated banner on
  * every member's dashboard, and see who is going. Authorization lives in the
  * action layer (getLeaderEvents requires a leader role in the active org).
  */

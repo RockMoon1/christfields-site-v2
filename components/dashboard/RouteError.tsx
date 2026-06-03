@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
  * "Application error" white screen. The actual message + digest are available
  * behind a toggle so we can debug from a phone without dev tools.
  *
- * Used by the per-segment error.tsx files (member, leader, master, root).
+ * Used by the per-segment error.tsx files (member, leader, root).
  */
 export default function RouteError({
   error,

@@ -262,106 +262,10 @@ export function guidanceForGroup(g: GroupGuidanceInput): GuidanceCard[] {
 }
 
 /* ============================================================
-   Open any reference in a Bible app so leaders and masters can
-   research freely. We guide with Scripture, we do not replace it.
+   Open any reference in a Bible app so leaders can research
+   freely. We guide with Scripture, we do not replace it.
    ============================================================ */
 
 export function bibleUrl(ref: string, translation = 'ESV'): string {
   return `https://www.biblegateway.com/passage/?search=${encodeURIComponent(ref)}&version=${translation}`;
-}
-
-/* ============================================================
-   Master guidance: leading the leaders. Same warm pattern, one
-   tier up. It points to when a master should reach out or gather
-   the leaders, with Scripture for shepherding shepherds.
-   ============================================================ */
-
-const LEADING_LEADERS = {
-  shepherd: [
-    { ref: '1 Peter 5:2-3', why: 'Shepherd the flock, not lording it over them.' },
-    { ref: 'Hebrews 13:17', why: 'Leaders keep watch and will give an account.' },
-  ],
-  shareLoad: [
-    { ref: 'Exodus 18:17-23', why: 'Jethro: do not carry it alone, share the load.' },
-    { ref: '2 Timothy 2:2', why: 'Entrust it to faithful people who can teach others.' },
-  ],
-  theOne: [
-    { ref: 'Luke 15:4-7', why: 'Go after the one who has wandered.' },
-    { ref: 'Matthew 18:12-14', why: 'Not one of these little ones should be lost.' },
-  ],
-  rejoice: [
-    { ref: '3 John 1:4', why: 'No greater joy than to see them walking in truth.' },
-    { ref: '1 Thessalonians 5:11', why: 'Encourage one another and build each other up.' },
-  ],
-};
-
-export interface MasterGuidanceInput {
-  quietLeaders: { name: string; group: string; days: number | null }[];
-  driftingGroups: { name: string; leaderNames: string[]; participation: number }[];
-  unreachedTotal: number;
-  groupCount: number;
-}
-
-export function guidanceForMaster(input: MasterGuidanceInput): GuidanceCard[] {
-  const cards: GuidanceCard[] = [];
-
-  for (const ql of input.quietLeaders.slice(0, 3)) {
-    const first = ql.name.split(' ')[0];
-    cards.push({
-      signal:
-        ql.days === null
-          ? `${ql.name} (${ql.group}) has not signed in yet.`
-          : `${ql.name} (${ql.group}) has not been active here in ${ql.days} days.`,
-      scriptures: LEADING_LEADERS.shepherd,
-      studyIdeas: ['What it means to shepherd the shepherds', 'Tending to the ones who tend others'],
-      leaderActions: [
-        `Reach out to ${first} personally, to care, not to correct.`,
-        'Ask how they are doing before you ask how the group is doing.',
-        'Pray for them by name this week.',
-      ],
-    });
-  }
-
-  for (const dg of input.driftingGroups.slice(0, 2)) {
-    const first = dg.leaderNames[0] ? dg.leaderNames[0].split(' ')[0] : 'the leader';
-    cards.push({
-      signal: `${dg.name} has low participation this week (${dg.participation}% active).`,
-      scriptures: LEADING_LEADERS.shareLoad,
-      studyIdeas: ['Sharing the load (Exodus 18)', 'Raising and entrusting faithful people'],
-      leaderActions: [
-        'Consider a leaders gathering about staying close to people.',
-        `Offer ${first} practical help, or a co-leader.`,
-        'Pray over this group before you meet.',
-      ],
-    });
-  }
-
-  if (input.unreachedTotal >= 3) {
-    cards.push({
-      signal: `Across the groups, ${input.unreachedTotal} people have gone a bit quiet.`,
-      scriptures: LEADING_LEADERS.theOne,
-      studyIdeas: ['The heart of God for the one who drifts'],
-      leaderActions: [
-        'Equip the leaders to gently reach the ones who are drifting.',
-        'Make a simple plan together for who reaches whom.',
-      ],
-    });
-  }
-
-  if (cards.length === 0) {
-    cards.push({
-      signal:
-        input.groupCount > 0
-          ? 'Your leaders are showing up and the groups are steady right now.'
-          : 'No groups yet. Your first leaders will appear here.',
-      scriptures: LEADING_LEADERS.rejoice,
-      studyIdeas: ['Celebrate what God is doing through your leaders'],
-      leaderActions: [
-        'Tell each leader specifically what you see God doing through them.',
-        'Give thanks together.',
-      ],
-    });
-  }
-
-  return cards.slice(0, 4);
 }

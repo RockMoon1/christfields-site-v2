@@ -12,7 +12,7 @@ import {
 } from '@/app/dashboard/(leader)/leader/events/actions';
 
 /**
- * Leader/master tool to create events and see who is coming. The type picker
+ * Leader tool to create events and see who is coming. The type picker
  * sets the banner's animated theme on every member's dashboard. The list reads
  * from the server (refreshed after each change) so RSVP counts stay accurate.
  */

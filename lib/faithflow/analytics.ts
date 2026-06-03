@@ -18,9 +18,8 @@ import type {
 } from '@/lib/faithflow/types';
 
 /**
- * Shared analytics engine for FaithFlow. Both the leader dashboard (one group)
- * and the master dashboard (every group) compute member and group status here,
- * so the two never drift apart.
+ * Shared analytics engine for FaithFlow. The leader dashboard computes member
+ * and group status from this one shared place.
  *
  * Privacy: only scores, dates, mood values, and counts are read. No journal,
  * examen, gratitude, mood-note, or unshared prayer text is ever selected.

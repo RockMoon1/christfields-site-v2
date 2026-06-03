@@ -129,9 +129,7 @@ export default async function SettingsPage() {
 
       {/* Leader access. Shown only to FaithFlow leaders. This is the reliable
           way into the leader dashboard from a phone, so it does not depend on
-          the avatar menu or the nav drawer. Master oversight is intentionally
-          NOT placed here: masters reach it from inside the leader area, so
-          regular members and non-master leaders never see it. */}
+          the avatar menu or the nav drawer. */}
       {isLeader && (
         <section className="mt-6 rounded-sm border border-border-gold bg-gradient-to-br from-black-3 to-black-2 p-8">
           <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.22em] text-gold">

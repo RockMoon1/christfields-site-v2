@@ -2,7 +2,7 @@ import { getGroupAvailability } from './actions';
 import { PlanBoard } from '@/components/leader/PlanBoard';
 
 /**
- * Leader/master planning page. A free/busy heatmap of the group's availability
+ * Leader planning page. A free/busy heatmap of the group's availability
  * so a leader can pick the best time to gather. Authorization lives in the
  * action (getGroupAvailability requires a leader role in the active org).
  */
