@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import type { NextFetchEvent, NextRequest } from 'next/server';
 
 /**
  * Clerk middleware. Anything matched by isProtectedRoute requires a signed-in
@@ -17,11 +18,28 @@ const isPublicAuthRoute = createRouteMatcher([
   '/dashboard/sign-up(.*)',
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
+const withClerk = clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req) && !isPublicAuthRoute(req)) {
     await auth.protect();
   }
 });
+
+/**
+ * Wrap Clerk's middleware to strip any CORS "allow" headers from responses we
+ * emit. This site has no cross-origin API consumers, so a response should never
+ * tell a browser to trust an arbitrary origin with credentials. Removing these
+ * neutralizes the "Arbitrary Origin Trusted" class of finding for anything that
+ * passes through our edge. (The authoritative fix for the auth handshake is a
+ * Clerk production instance, which uses your own domain with strict CORS.)
+ */
+export default async function middleware(req: NextRequest, event: NextFetchEvent) {
+  const res = await withClerk(req, event);
+  if (res) {
+    res.headers.delete('access-control-allow-origin');
+    res.headers.delete('access-control-allow-credentials');
+  }
+  return res;
+}
 
 /**
  * Scope middleware to /dashboard/* (the authenticated app) and the member-only
