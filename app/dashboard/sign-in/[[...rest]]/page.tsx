@@ -50,11 +50,15 @@ export default function SignInPage() {
           Sign in to your dashboard.
         </p>
 
+        {/* FaithFlow is invite-only: no public "Sign up" link. People join only
+            through a Clerk invitation (enforced by Restricted sign-up mode in the
+            Clerk dashboard). The sign-up route still exists so invitation links
+            have somewhere to land. */}
         <SignIn
           path="/dashboard/sign-in"
           routing="path"
-          signUpUrl="/dashboard/sign-up"
           fallbackRedirectUrl="/dashboard"
+          appearance={{ elements: { footerAction: 'hidden' } }}
         />
       </div>
     </main>
