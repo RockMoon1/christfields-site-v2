@@ -1,15 +1,40 @@
+import { redirect } from 'next/navigation';
 import { SignUp } from '@clerk/nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MorphBlob } from '@/components/motion/MorphBlob';
 
 /**
- * Sign-up page for the member dashboard. Invite-only is enforced in Clerk's
- * dashboard settings ("Restrictions" → "Sign-up modes" → "Restricted"), which
- * means this page will show "Sign-up requires an invitation" unless the user
- * arrives via an invitation link from Clerk.
+ * Invite-only sign-up. FaithFlow has NO public self-registration.
+ *
+ * This route only renders Clerk's <SignUp> when the visitor either:
+ *   - arrives on an invitation link (Clerk adds a __clerk_ticket query param), or
+ *   - is already mid-way through a sign-up flow (a sub-path under /sign-up that
+ *     Clerk's multi-step UI navigates to, which never carries the ticket).
+ *
+ * Everyone else is redirected straight to sign-in, so there is no public
+ * "create your account" screen at all. This is a second lock on top of Clerk's
+ * Restricted sign-up mode: even if that dashboard setting were ever off, nobody
+ * can reach the account-creation form without an invitation.
  */
-export default function SignUpPage() {
+export default async function SignUpPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ rest?: string[] }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [{ rest }, sp] = await Promise.all([params, searchParams]);
+  const midFlow = Array.isArray(rest) && rest.length > 0;
+  const ticket = sp['__clerk_ticket'];
+  const hasTicket = typeof ticket === 'string' && ticket.length > 0;
+
+  // No invitation ticket and not already in a flow -> there is no public way to
+  // create an account. Send them to sign-in.
+  if (!midFlow && !hasTicket) {
+    redirect('/dashboard/sign-in');
+  }
+
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-12">
       <div
@@ -42,10 +67,10 @@ export default function SignUpPage() {
         </Link>
 
         <h1 className="mb-2 text-center font-display text-3xl font-light text-ivory md:text-4xl">
-          Create your account.
+          Accept your invitation.
         </h1>
         <p className="mb-10 text-center text-sm text-silver">
-          By invitation only.
+          Finish setting up the account you were invited to.
         </p>
 
         <SignUp

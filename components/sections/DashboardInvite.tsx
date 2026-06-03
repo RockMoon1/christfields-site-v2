@@ -84,18 +84,12 @@ export function DashboardInvite() {
               <div className="flex flex-wrap items-center gap-x-3 gap-y-4">
                 <MagneticButton>
                   <Link
-                    href="/dashboard/sign-up"
+                    href="/dashboard/sign-in"
                     className="inline-flex items-center gap-2 rounded-sm bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt"
                   >
-                    Create your account &rarr;
+                    Sign in &rarr;
                   </Link>
                 </MagneticButton>
-                <Link
-                  href="/dashboard/sign-in"
-                  className="inline-flex items-center gap-2 rounded-sm border border-gold/45 px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black"
-                >
-                  Sign in
-                </Link>
                 <Link
                   href="/faithflow"
                   className="text-xs font-medium uppercase tracking-[0.16em] text-silver underline-offset-4 transition-colors hover:text-gold-lt hover:underline"
