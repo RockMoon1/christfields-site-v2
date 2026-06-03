@@ -25,7 +25,7 @@ const csp = [
   "img-src 'self' data: blob: https://img.clerk.com https://*.clerk.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "frame-src 'self' https://challenges.cloudflare.com https://*.clerk.accounts.dev",
+  "frame-src 'self' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://*.clerk.com https://*.christfields2717.com",
   "form-action 'self'",
   "frame-ancestors 'none'",
   "base-uri 'self'",
