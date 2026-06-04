@@ -77,7 +77,7 @@ export default async function SignUpPage({
           path="/dashboard/sign-up"
           routing="path"
           signInUrl="/dashboard/sign-in"
-          fallbackRedirectUrl="/dashboard"
+          fallbackRedirectUrl="/dashboard/today"
         />
       </div>
     </main>

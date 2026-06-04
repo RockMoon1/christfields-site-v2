@@ -20,7 +20,7 @@ import { isRevealed, type SectionDepth, type SectionKey } from '@/lib/dashboard/
 // Short, warm labels for the bar (community reads as "Groups" here, since the
 // in-person gathering is the heartbeat we point new members toward first).
 const TAB_LABEL: Partial<Record<string, string>> = {
-  '/dashboard': 'Home',
+  '/dashboard/today': 'Today',
   '/dashboard/community': 'Groups',
 };
 
@@ -33,11 +33,12 @@ export function MobileTabBar({
 }) {
   const pathname = usePathname();
 
-  // Overview is always first; then the revealed sections in nav order. Settings
-  // is intentionally left to the hamburger menu. Cap at five so the bar stays
-  // thumb-friendly and uncluttered.
+  // Today is always first (the home); then the revealed sections in nav order.
+  // Settings and the full Overview live in the menu / behind Today. Cap at five
+  // so the bar stays thumb-friendly and uncluttered.
   const revealedItems = NAV_ITEMS.filter((it) => {
-    if (it.href === '/dashboard') return true; // Home, always
+    if (it.href === '/dashboard/today') return true; // Today is the home, always
+    if (it.href === '/dashboard') return false; // the full Overview lives behind Today + the menu
     if (it.href === '/dashboard/settings') return false; // lives in the menu
     if (!it.section) return false;
     return revealAll || !sections || isRevealed(sections[it.section]);

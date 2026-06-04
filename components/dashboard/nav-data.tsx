@@ -20,9 +20,15 @@ export interface NavItem {
  */
 export const NAV_ITEMS: NavItem[] = [
   {
+    href: '/dashboard/today',
+    label: 'Today',
+    hint: 'Your calm daily front door. Today’s verse and the one next thing, with everything else a tap away.',
+    icon: <SunIcon />,
+  },
+  {
     href: '/dashboard',
     label: 'Overview',
-    hint: 'Your home base. Today’s verse, your rhythms, and where things stand at a glance.',
+    hint: 'The full picture. Today’s verse, your rhythms, prayers, and where things stand at a glance.',
     icon: <DotIcon />,
   },
   {
@@ -91,6 +97,20 @@ export const NAV_ITEMS: NavItem[] = [
 /* ============================================================
    Inline icons. Minimal 16x16 line icons, currentColor.
    ============================================================ */
+
+function SunIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
+      <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.2" />
+      <path
+        d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
 
 function DotIcon() {
   return (
