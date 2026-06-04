@@ -87,7 +87,7 @@ export function DashboardInvite() {
                     href="/dashboard/sign-in"
                     className="inline-flex items-center gap-2 rounded-sm bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt"
                   >
-                    Sign in &rarr;
+                    Member sign in &rarr;
                   </Link>
                 </MagneticButton>
                 <Link
@@ -97,6 +97,13 @@ export function DashboardInvite() {
                   Explore FaithFlow
                 </Link>
               </div>
+            </Reveal>
+
+            <Reveal delay={0.24}>
+              <p className="mt-4 text-xs leading-relaxed text-muted">
+                Signing in is for members of an active group. FaithFlow is in person and
+                invite-only, so if you are new, say hello below rather than here.
+              </p>
             </Reveal>
           </div>
 
