@@ -105,21 +105,22 @@ export function JoinForm() {
       <Container className="text-center">
         <Reveal>
           <p className="mb-4 text-xs font-medium uppercase tracking-[0.22em] text-gold">
-            Early Access
+            Join the journey
           </p>
         </Reveal>
 
         <Reveal delay={0.05}>
           <h2 className="mb-6 font-display text-[clamp(2.4rem,4.5vw,3.75rem)] font-light leading-[1.1] text-ivory">
-            Get Early Access to<br />
-            <em className="not-italic text-gold-lt">ScholarFlow.</em>
+            Walk with<br />
+            <em className="not-italic text-gold-lt">us.</em>
           </h2>
         </Reveal>
 
         <Reveal delay={0.1}>
           <p className="mx-auto mb-12 max-w-2xl text-base leading-relaxed text-silver md:text-lg">
-            ScholarFlow is coming. Sign up now to be first in line. Get notified at launch, help shape
-            what we build, and join a community of students serious about building real discipline.
+            GraceFlow and LearnFlow are live now, with more tools on the way, alongside our in-person
+            community. Leave your email and we will keep you close: new tools as they open, FaithFlow
+            news, and the occasional note worth reading.
           </p>
         </Reveal>
 
@@ -157,7 +158,7 @@ export function JoinForm() {
               <div className="mt-4">
                 <Select name="interest" defaultValue="" aria-label="What are you most interested in?">
                   <option value="" disabled>What are you most interested in?</option>
-                  <option value="scholarflow">ScholarFlow, Productivity and Discipline App</option>
+                  <option value="scholarflow">ScholarFlow, our faith and study apps</option>
                   <option value="faithflow">FaithFlow, Weekly Small Groups and Community</option>
                   <option value="osint">OSINT and Trace, Cybersecurity for Good</option>
                   <option value="all">Everything. I want to follow the whole journey</option>
