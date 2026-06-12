@@ -3,7 +3,6 @@ import { Footer } from '@/components/Footer';
 import { Nav } from '@/components/Nav';
 import { AnimatedDivider } from '@/components/motion/AnimatedDivider';
 import { ScriptureMarquee } from '@/components/motion/ScriptureMarquee';
-import { SectionLift } from '@/components/motion/SectionLift';
 import { SectionRail } from '@/components/motion/SectionRail';
 import { ActiveGroups } from '@/components/sections/faithflow/ActiveGroups';
 import { BiblicalFoundation } from '@/components/sections/faithflow/BiblicalFoundation';
@@ -69,38 +68,54 @@ const footerColumns = [
   },
 ];
 
+/* FaithFlow's scripture band speaks community: walking together, carrying
+   each other, gathering. Phrase fragments are faithful to each verse (WEB
+   wording where it differs from common memory: "exhort" in 1 Thess 5:11). */
+const marqueeOne = [
+  'Iron sharpens iron',
+  'Proverbs 27:17',
+  'Two are better than one',
+  'Ecclesiastes 4:9',
+  'Exhort one another, build each other up',
+  '1 Thessalonians 5:11',
+  'Where two or three are gathered',
+  'Matthew 18:20',
+];
+
+const marqueeTwo = [
+  'Confess, and pray for one another',
+  'James 5:16',
+  'Steadfast in teaching and fellowship',
+  'Acts 2:42',
+  'A threefold cord is not quickly broken',
+  'Ecclesiastes 4:12',
+  'Love one another, as I have loved you',
+  'John 13:34',
+];
+
 export default function FaithFlowPage() {
   return (
     <>
       <EmberField />
       <Nav links={navLinks} alwaysScrolled />
       <SectionRail sections={railSections} cta={{ href: '#get-involved', label: 'Join' }} />
+      {/* Sections own their entrances now (SectionHeader, clip reveals,
+          per-word scripture), so the old SectionLift wrapper is gone — it
+          double-faded every section and flattened the rhythm. Background
+          bands (black-2 on Groups and Scripture) provide most seams; the
+          drawn gold hairline is reserved for the two moments of arrival:
+          entering the manifesto and approaching the call to join. */}
       <main id="main" className="relative">
         <FFHero />
-        <ScriptureMarquee />
-        <SectionLift>
-          <WhatIsFaithFlow />
-        </SectionLift>
+        <ScriptureMarquee lineOne={marqueeOne} lineTwo={marqueeTwo} />
         <AnimatedDivider />
-        <SectionLift>
-          <ActiveGroups />
-        </SectionLift>
+        <WhatIsFaithFlow />
+        <ActiveGroups />
+        <HowGroupsWork />
+        <BiblicalFoundation />
+        <FutureLeaders />
         <AnimatedDivider />
-        <SectionLift>
-          <HowGroupsWork />
-        </SectionLift>
-        <AnimatedDivider />
-        <SectionLift>
-          <BiblicalFoundation />
-        </SectionLift>
-        <AnimatedDivider />
-        <SectionLift>
-          <FutureLeaders />
-        </SectionLift>
-        <AnimatedDivider />
-        <SectionLift>
-          <GetInvolved />
-        </SectionLift>
+        <GetInvolved />
       </main>
       <Footer columns={footerColumns} />
     </>

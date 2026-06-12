@@ -1,8 +1,8 @@
-import Link from 'next/link';
 import { Container } from '../Container';
 import { Reveal } from '../Reveal';
+import { SectionHeader } from '../SectionHeader';
+import { Button } from '../Button';
 import { CardSpotlight } from '../motion/CardSpotlight';
-import { MagneticButton } from '../motion/MagneticButton';
 import { ScholarFlowPreview } from '../motion/ScholarFlowPreview';
 import { TiltCard } from '../motion/TiltCard';
 
@@ -11,6 +11,10 @@ import { TiltCard } from '../motion/TiltCard';
  * study tools), not a single product, so this section invites people to explore
  * the shelf rather than sign up for one app. The full storefront is at
  * /scholarflow.
+ *
+ * The copy column opens with the shared SectionHeader entrance; the preview
+ * composite (TiltCard + CardSpotlight + ScholarFlowPreview) stays as-is and is
+ * unveiled with the clip-path card grammar.
  */
 export function ScholarFlowFeature() {
   return (
@@ -24,27 +28,20 @@ export function ScholarFlowFeature() {
       />
 
       <Container>
-        <Reveal>
-          <p className="mb-4 text-xs font-medium uppercase tracking-[0.22em] text-gold">
-            The ScholarFlow shelf
-          </p>
-        </Reveal>
-
         <div className="grid items-center gap-12 md:grid-cols-[1.05fr_1fr]">
           <div>
-            <Reveal>
-              <h2 className="mb-6 font-display text-[clamp(2.4rem,4.5vw,3.75rem)] font-light leading-[1.1] text-ivory">
-                Scholar<em className="not-italic text-gold-lt">Flow.</em>
-              </h2>
-            </Reveal>
-
-            <Reveal delay={0.05}>
-              <p className="mb-6 max-w-xl text-base leading-relaxed text-ivory-dim md:text-lg">
-                ScholarFlow is not one app. It is the shelf where our faith and study tools live.
-                Browse the collection and pick the one that fits. GraceFlow and LearnFlow are open
-                right now, with more on the way.
-              </p>
-            </Reveal>
+            <SectionHeader
+              align="left"
+              eyebrow="The ScholarFlow shelf"
+              title={
+                <>
+                  Scholar<em className="not-italic text-gold-lt">Flow.</em>
+                </>
+              }
+              lede="ScholarFlow is not one app. It is the shelf where our faith and study tools live. Browse the collection and pick the one that fits. GraceFlow and LearnFlow are open right now, with more on the way."
+              className="mb-6"
+              ledeClassName="max-w-xl"
+            />
 
             <Reveal delay={0.1}>
               <div className="mb-8 flex flex-wrap gap-2">
@@ -61,22 +58,10 @@ export function ScholarFlowFeature() {
 
             <Reveal delay={0.15}>
               <div className="mb-6 flex flex-wrap gap-3">
-                <MagneticButton>
-                  <Link
-                    href="/scholarflow"
-                    className="inline-flex items-center gap-2 rounded-sm bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt"
-                  >
-                    Explore ScholarFlow &rarr;
-                  </Link>
-                </MagneticButton>
-                <MagneticButton>
-                  <Link
-                    href="/scholarflow-resources"
-                    className="inline-flex items-center gap-2 rounded-sm border border-gold/45 bg-transparent px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black"
-                  >
-                    Trusted Resources &rarr;
-                  </Link>
-                </MagneticButton>
+                <Button href="/scholarflow">Explore ScholarFlow &rarr;</Button>
+                <Button href="/scholarflow-resources" variant="ghost">
+                  Trusted Resources &rarr;
+                </Button>
               </div>
             </Reveal>
 
@@ -88,7 +73,7 @@ export function ScholarFlowFeature() {
             </Reveal>
           </div>
 
-          <Reveal delay={0.15} scale={0.98}>
+          <Reveal variant="clip" delay={0.15}>
             <TiltCard max={4}>
               <CardSpotlight className="rounded-sm" size={460} intensity={0.16}>
                 <ScholarFlowPreview />

@@ -3,7 +3,6 @@ import { Footer } from '@/components/Footer';
 import { Nav } from '@/components/Nav';
 import { AnimatedDivider } from '@/components/motion/AnimatedDivider';
 import { ScriptureMarquee } from '@/components/motion/ScriptureMarquee';
-import { SectionLift } from '@/components/motion/SectionLift';
 import { SectionRail } from '@/components/motion/SectionRail';
 import { SFHero } from '@/components/sections/scholarflow/SFHero';
 import { WhatIsScholarFlow } from '@/components/sections/scholarflow/WhatIsScholarFlow';
@@ -35,9 +34,9 @@ const navLinks = [
 
 const railSections = [
   { id: 'top', label: 'Top' },
-  { id: 'what', label: 'What' },
-  { id: 'products', label: 'Tools' },
-  { id: 'invite', label: 'More' },
+  { id: 'what', label: 'The Shelf' },
+  { id: 'products', label: 'The Tools' },
+  { id: 'invite', label: "What's Next" },
 ];
 
 const footerColumns = [
@@ -61,25 +60,47 @@ const footerColumns = [
   },
 ];
 
+/* ScholarFlow's scripture band speaks wisdom and skill: seeking understanding,
+   handling the Word rightly, and using good tools well — Scripture itself
+   commends the sharpened ax (Ecclesiastes 10:10, WEB: "skill brings success"). */
+const marqueeOne = [
+  'Wisdom is supreme. Get wisdom',
+  'Proverbs 4:7',
+  'If any of you lacks wisdom, ask',
+  'James 1:5',
+  'Properly handling the Word of Truth',
+  '2 Timothy 2:15',
+  'Skill brings success',
+  'Ecclesiastes 10:10',
+];
+
+const marqueeTwo = [
+  'In a multitude of counselors',
+  'Proverbs 15:22',
+  'The wise hear, and increase in learning',
+  'Proverbs 1:5',
+  'Better to get wisdom than gold',
+  'Proverbs 16:16',
+  'Instruct the wise, and they will be wiser',
+  'Proverbs 9:9',
+];
+
 export default function ScholarFlowPage() {
   return (
     <>
       <Nav links={navLinks} alwaysScrolled />
       <SectionRail sections={railSections} cta={{ href: '#products', label: 'Tools' }} />
+      {/* SectionLift wrappers removed: each section now owns its entrance
+          (SectionHeader mask rise + inner reveals), so the old whole-section
+          lift was double-fading everything on the page. */}
       <main id="main" className="relative">
         <SFHero />
-        <ScriptureMarquee />
-        <SectionLift>
-          <WhatIsScholarFlow />
-        </SectionLift>
+        <ScriptureMarquee lineOne={marqueeOne} lineTwo={marqueeTwo} />
+        <WhatIsScholarFlow />
         <AnimatedDivider />
-        <SectionLift>
-          <ProductShelf />
-        </SectionLift>
+        <ProductShelf />
         <AnimatedDivider />
-        <SectionLift>
-          <SFInvite />
-        </SectionLift>
+        <SFInvite />
       </main>
       <Footer columns={footerColumns} />
     </>

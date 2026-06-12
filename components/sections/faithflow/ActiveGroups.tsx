@@ -1,8 +1,16 @@
 import { Container } from '../../Container';
 import { Reveal } from '../../Reveal';
+import { SectionHeader } from '@/components/SectionHeader';
 import { CardSpotlight } from '../../motion/CardSpotlight';
 import { MorphBlob } from '../../motion/MorphBlob';
 
+/**
+ * Active Groups: the proof-of-life section. The Iron and Ember card is the
+ * only group, so it gets the family's card treatment in full — glass surface
+ * with a gold hairline, a clip-path unveil entrance (the card is revealed,
+ * not faded), and a cursor spotlight. All group copy, the embedded
+ * Proverbs 27:17 quote, and the enrollment disclaimer are verbatim.
+ */
 export function ActiveGroups() {
   return (
     <section id="groups" className="relative z-[2] overflow-hidden bg-black-2 py-[110px]">
@@ -10,28 +18,23 @@ export function ActiveGroups() {
       <MorphBlob color="rgba(201, 165, 72, 0.04)" size={520} className="-right-32 top-16" />
       <MorphBlob color="rgba(45, 106, 79, 0.06)" size={460} className="-bottom-24 -left-24" />
       <Container>
-        <Reveal>
-          <p className="mb-4 text-xs font-medium uppercase tracking-[0.22em] text-gold">
-            Active Groups
-          </p>
-        </Reveal>
+        <SectionHeader
+          align="left"
+          eyebrow="Active Groups"
+          title={
+            <>
+              Walking <em className="not-italic text-gold-lt">Together.</em>
+            </>
+          }
+          titleClassName="text-[clamp(2.4rem,4.5vw,3.75rem)] leading-[1.1]"
+          lede="FaithFlow is alive in real people meeting in real places. Each group has its own name and character, all rooted in the same principles."
+          ledeClassName="text-silver"
+          className="mb-14"
+        />
 
-        <Reveal delay={0.05}>
-          <h2 className="mb-6 font-display text-[clamp(2.4rem,4.5vw,3.75rem)] font-light leading-[1.1] text-ivory">
-            Walking <em className="not-italic text-gold-lt">Together.</em>
-          </h2>
-        </Reveal>
-
-        <Reveal delay={0.1}>
-          <p className="mb-14 max-w-2xl text-base leading-relaxed text-silver md:text-lg">
-            FaithFlow is alive in real people meeting in real places. Each group has its own name
-            and character, all rooted in the same principles.
-          </p>
-        </Reveal>
-
-        <Reveal delay={0.15}>
+        <Reveal variant="clip">
           <CardSpotlight className="max-w-3xl rounded-sm" size={420} intensity={0.14}>
-          <article className="relative overflow-hidden rounded-sm border border-border-gold bg-gradient-to-br from-black-3 to-black-2 p-10">
+          <article className="cf-glass group relative overflow-hidden rounded-sm p-10 transition-transform duration-300 hover:-translate-y-1">
             <div
               aria-hidden
               className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold to-transparent opacity-60"

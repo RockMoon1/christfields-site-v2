@@ -15,10 +15,13 @@ interface JournalCardProps {
 }
 
 /**
- * One journal post in the index grid. Tilt on hover plus a gold spotlight.
- * Cover area uses a soft colored gradient driven by the post frontmatter so
- * we do not yet need real images. When real cover images are added later,
- * swap the gradient for an <Image>.
+ * One journal post in the index grid. Magazine treatment: the card is
+ * unveiled with a staggered clip-path entrance (media grammar, not the
+ * body-copy fade), the cover band carries the post's coverColor plus a
+ * giant outlined category watermark, and hover answers with a cover glow
+ * and a small title shift — transforms only, so the layout never moves.
+ * Tilt on hover plus a gold spotlight. When real cover images are added
+ * later, swap the gradient for an <Image>.
  */
 export function JournalCard({ post, featured = false, index = 0 }: JournalCardProps) {
   const fm = post.frontmatter;
@@ -26,11 +29,11 @@ export function JournalCard({ post, featured = false, index = 0 }: JournalCardPr
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, clipPath: 'inset(8% 6% 8% 6% round 8px)', scale: 0.985 }}
+      whileInView={{ opacity: 1, clipPath: 'inset(0% 0% 0% 0% round 0px)', scale: 1 }}
       viewport={{ once: true, margin: '0px 0px -40px 0px' }}
       transition={{
-        duration: 0.65,
+        duration: 0.85,
         ease: [0.22, 1, 0.36, 1],
         delay: 0.06 * index,
       }}
@@ -46,9 +49,30 @@ export function JournalCard({ post, featured = false, index = 0 }: JournalCardPr
             <div
               className="relative aspect-[16/9] w-full overflow-hidden"
               style={{
-                background: `radial-gradient(ellipse at 30% 30%, ${coverColor}55 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, ${coverColor}22 0%, transparent 60%), #0c110e`,
+                background: `radial-gradient(ellipse at 30% 30%, ${coverColor}55 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, ${coverColor}22 0%, transparent 60%), var(--color-black-2)`,
               }}
             >
+              {/* Outlined category watermark — magazine masthead texture for
+                  the otherwise-empty cover band. Decorative only. */}
+              <span
+                aria-hidden
+                className={
+                  featured
+                    ? 'cf-outline-text pointer-events-none absolute -bottom-2 left-4 select-none whitespace-nowrap font-display text-6xl font-light uppercase tracking-[0.06em] md:text-8xl'
+                    : 'cf-outline-text pointer-events-none absolute -bottom-1 left-4 select-none whitespace-nowrap font-display text-5xl font-light uppercase tracking-[0.06em]'
+                }
+              >
+                {fm.category}
+              </span>
+              {/* Cover glow keyed to the post color. Softly present at rest on
+                  touch screens; answers the cursor on pointer devices. */}
+              <div
+                aria-hidden
+                className="absolute inset-0 opacity-50 transition-opacity duration-500 md:opacity-0 md:group-hover:opacity-100"
+                style={{
+                  background: `radial-gradient(ellipse at 50% 100%, ${coverColor}40 0%, transparent 65%)`,
+                }}
+              />
               {/* Subtle gold scanline that animates on hover. Pure CSS, no JS. */}
               <div
                 aria-hidden
@@ -78,8 +102,8 @@ export function JournalCard({ post, featured = false, index = 0 }: JournalCardPr
               <h3
                 className={
                   featured
-                    ? 'mb-3 font-display text-3xl font-light leading-tight text-ivory transition-colors duration-300 group-hover:text-gold-lt md:text-4xl'
-                    : 'mb-3 font-display text-2xl font-light leading-tight text-ivory transition-colors duration-300 group-hover:text-gold-lt'
+                    ? 'mb-3 font-display text-3xl font-light leading-tight text-ivory transition-[color,transform] duration-300 group-hover:translate-x-1 group-hover:text-gold-lt md:text-4xl'
+                    : 'mb-3 font-display text-2xl font-light leading-tight text-ivory transition-[color,transform] duration-300 group-hover:translate-x-1 group-hover:text-gold-lt'
                 }
               >
                 {fm.title}

@@ -388,10 +388,87 @@ button:focus-visible {
   color: #f0f2ee !important;
 }
 
+/* ============================================================
+   Reconstruction additions — shared motion materials
+   ============================================================ */
+
+/* The family's typographic signature: a gold-italic <em> inside a serif
+   heading catches a single light sweep after the heading settles. */
+.cf-heading-shimmer em,
+.cf-em-shimmer {
+  /* font-style stays whatever the markup says — em is italic by default,
+     and not-italic accents (like the hero's "Iron.") keep their stance. */
+  background: linear-gradient(
+    100deg,
+    var(--color-gold-lt) 0%,
+    var(--color-gold-lt) 42%,
+    #fff6dc 50%,
+    var(--color-gold-lt) 58%,
+    var(--color-gold-lt) 100%
+  );
+  background-size: 250% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: cfEmShimmer 2.2s cubic-bezier(0.22, 1, 0.36, 1) 0.9s 1 both;
+}
+
+@keyframes cfEmShimmer {
+  from { background-position: 100% 0; }
+  to   { background-position: 0% 0; }
+}
+
+/* Ember burst host — spawned by Button on commit clicks. */
+.cf-burst {
+  position: fixed;
+  z-index: 180;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+.cf-burst span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  filter: blur(0.4px);
+  mix-blend-mode: plus-lighter;
+  animation: cfBurst var(--bd, 0.7s) cubic-bezier(0.16, 0.84, 0.44, 1) forwards;
+}
+@keyframes cfBurst {
+  0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--bx, 20px), var(--by, -30px)) scale(0.25); }
+}
+
+/* Glass surface — the family's card material. Gold hairline, soft depth. */
+.cf-glass {
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
+  border: 1px solid var(--color-border-gold);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Giant outlined watermark type (footer wordmark, ghost numbers). */
+.cf-outline-text {
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(201, 165, 72, 0.16);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     opacity: 1;
     transform: none;
+  }
+  .cf-heading-shimmer em,
+  .cf-em-shimmer {
+    animation: none;
+    background-position: 50% 0;
+  }
+  .cf-burst {
+    display: none;
   }
   .logo-fire-img,
   .logo-fire-glow,

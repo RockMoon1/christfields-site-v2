@@ -1,32 +1,50 @@
 'use client';
 
-import Link from 'next/link';
 import { motion, useScroll, useTransform, type Variants } from 'motion/react';
-import { useRef } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { Reveal } from '../Reveal';
+import { Button } from '../Button';
+import { TextSplit } from '../motion/TextSplit';
 import { HeroSpotlight } from '../motion/HeroSpotlight';
-import { MagneticButton } from '../motion/MagneticButton';
 
 // Stagger config for the hero heading. The container delays children one by
-// one; each child rises and fades in.
+// one; each word rises out of its own overflow-hidden mask — a letterpress
+// wipe rather than a blur-fade, so the type arrives with weight.
 const parent: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.09, delayChildren: 0.15 } },
 };
 
 const word: Variants = {
-  hidden: { opacity: 0, y: 44, filter: 'blur(14px)' },
+  hidden: { y: '120%' },
   visible: {
-    opacity: 1,
-    y: 0,
-    filter: 'blur(0px)',
+    y: '0%',
     transition: { duration: 0.95, ease: [0.22, 1, 0.36, 1] },
   },
 };
 
 /**
+ * One masked word of the H1: an overflow-hidden clip the word rises out of.
+ * Bottom padding (with a compensating negative margin) keeps descenders
+ * unclipped at the tight display leading. Inherits the parent's variant
+ * timeline, so the stagger choreography lives in one place.
+ */
+function MaskedWord({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return (
+    <span className="inline-block overflow-hidden pb-[0.12em] -mb-[0.12em] align-bottom">
+      <motion.span variants={word} className={`inline-block will-change-transform ${className}`}>
+        {children}
+      </motion.span>
+    </span>
+  );
+}
+
+/**
  * Home page hero. Ports the v1 hero copy and structure exactly.
- * The "Iron." in the heading is italic gold as before.
+ * The "Iron." in the heading is upright gold as before, and catches a
+ * one-shot shimmer (.cf-em-shimmer) after the heading settles. Heading is
+ * pushed to full editorial scale; the Proverbs 27:17 verse line arrives
+ * word by word after the heading lands.
  */
 export function Hero() {
   const ref = useRef<HTMLElement>(null);
@@ -117,7 +135,7 @@ export function Hero() {
 
       <motion.div
         style={{ opacity: heroOpacity, scale: heroScale }}
-        className="relative z-10 mx-auto max-w-3xl text-center"
+        className="relative z-10 mx-auto max-w-5xl text-center"
       >
         <Reveal>
           <p className="mb-6 font-display text-xs font-medium uppercase tracking-[0.22em] text-gold">
@@ -125,52 +143,49 @@ export function Hero() {
           </p>
         </Reveal>
 
-        {/* Word-by-word stagger reveal */}
+        {/* Word-by-word masked rise at full editorial scale */}
         <motion.h1
           initial="hidden"
           animate="visible"
           variants={parent}
-          className="mb-6 font-display text-[clamp(3.2rem,7vw,5.75rem)] font-light leading-[1.05] text-ivory"
+          className="mb-6 font-display text-[clamp(3.4rem,9vw,7.5rem)] font-light leading-[0.98] tracking-[-0.01em] text-ivory"
         >
-          <motion.span variants={word} className="inline-block">Iron</motion.span>{' '}
-          <motion.span variants={word} className="inline-block">Sharpens</motion.span>
+          <MaskedWord>Iron</MaskedWord> <MaskedWord>Sharpens</MaskedWord>
           <br />
-          <motion.span variants={word} className="inline-block not-italic text-gold-lt">
-            Iron.
-          </motion.span>
+          <MaskedWord className="cf-em-shimmer not-italic text-gold-lt">Iron.</MaskedWord>
         </motion.h1>
 
-        <Reveal delay={0.5}>
+        <Reveal delay={0.55}>
           <p className="mx-auto mb-6 max-w-2xl text-lg leading-relaxed text-ivory-dim md:text-xl">
             A Christian community, and the tools to actually walk it out together. Grow with people
             who know your name, stay close to God, and sharpen each other along the way.
           </p>
         </Reveal>
 
-        <Reveal delay={0.6}>
-          <p className="mb-10 font-display text-base italic text-silver md:text-lg">
-            &ldquo;As iron sharpens iron, so one person sharpens another.&rdquo;
-          </p>
-        </Reveal>
+        {/* The verse arrives word by word, at reading pace, after the heading. */}
+        <p className="mb-10 font-display text-base italic text-silver md:text-lg">
+          <TextSplit
+            text={'“As iron sharpens iron, so one person sharpens another.”'}
+            by="word"
+            blur={false}
+            delay={0.9}
+          />
+        </p>
 
-        <Reveal delay={0.7}>
+        <Reveal delay={1.2}>
           <div className="flex flex-wrap justify-center gap-3">
-            <MagneticButton>
-              <Link
-                href="#scholarflow"
-                className="inline-flex items-center gap-2 rounded-sm bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt"
+            <Button href="#scholarflow" variant="primary">
+              Discover ScholarFlow{' '}
+              <span
+                aria-hidden
+                className="transition-transform duration-200 group-hover:translate-x-0.5"
               >
-                Discover ScholarFlow &rarr;
-              </Link>
-            </MagneticButton>
-            <MagneticButton>
-              <Link
-                href="#vision"
-                className="inline-flex items-center gap-2 rounded-sm border border-gold/45 bg-transparent px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black"
-              >
-                Our Vision
-              </Link>
-            </MagneticButton>
+                &rarr;
+              </span>
+            </Button>
+            <Button href="#vision" variant="ghost">
+              Our Vision
+            </Button>
           </div>
         </Reveal>
       </motion.div>

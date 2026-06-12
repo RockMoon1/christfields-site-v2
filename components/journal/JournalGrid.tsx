@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { JournalCard } from './JournalCard';
 import { JournalFilters } from './JournalFilters';
+import { ScriptureSymbol } from '@/components/motion/ScriptureSymbol';
 import type { JournalCategory, JournalPost } from '@/lib/journal';
 
 interface JournalGridProps {
@@ -28,9 +29,17 @@ export function JournalGrid({ posts, categories }: JournalGridProps) {
       <JournalFilters categories={categories} active={active} onSelect={setActive} />
 
       {filtered.length === 0 ? (
-        <p className="py-16 text-center text-silver">
-          No posts in this category yet. Check back soon.
-        </p>
+        <div className="py-16 text-center">
+          <ScriptureSymbol className="mb-4 inline-block text-2xl text-gold" />
+          <p className="text-silver">No posts in this category yet. Check back soon.</p>
+          <button
+            type="button"
+            onClick={() => setActive('All')}
+            className="mt-6 rounded-full border border-border-sub px-4 py-2 text-xs font-medium uppercase tracking-[0.16em] text-silver transition-colors hover:border-gold/40 hover:text-ivory"
+          >
+            Show all posts
+          </button>
+        </div>
       ) : (
         <motion.div
           layout

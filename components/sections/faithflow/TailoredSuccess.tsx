@@ -109,9 +109,9 @@ function ResourceList({ section }: { section: ResourceSection }) {
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex items-center gap-3 py-4 transition-[background,padding] duration-200 hover:bg-gold/[0.05] hover:pl-3"
+              className="group flex items-center gap-3 py-4 transition-colors duration-200 hover:bg-gold/[0.05]"
             >
-              <div className="flex-1">
+              <div className="flex-1 transition-transform duration-300 ease-out group-hover:translate-x-1.5">
                 <span className="block text-sm font-medium text-ivory transition-colors group-hover:text-gold-lt">
                   {item.name}
                 </span>

@@ -1,8 +1,11 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { Button } from '@/components/Button';
 import { Container } from '@/components/Container';
 import { Footer } from '@/components/Footer';
 import { Nav } from '@/components/Nav';
+import { Reveal } from '@/components/Reveal';
+import { HeroSpotlight } from '@/components/motion/HeroSpotlight';
+import { TextSplit } from '@/components/motion/TextSplit';
 
 export const metadata: Metadata = {
   title: 'Page Not Found',
@@ -11,8 +14,10 @@ export const metadata: Metadata = {
 
 /**
  * Custom 404 page. Renders in Christ Fields style instead of the default
- * Next.js black-and-white not-found page. Points the visitor to the home
- * page and a few useful entry points.
+ * Next.js black-and-white not-found page. A free brand moment: the display
+ * type rises word by word out of a mask (the hero's entrance language),
+ * the ambient treatment matches the hero (radial glow, film grain, cursor
+ * spotlight), and the verse arrives last — slow and reverent, word for word.
  */
 export default function NotFound() {
   return (
@@ -32,44 +37,64 @@ export default function NotFound() {
             }}
           />
 
+          {/* Film grain, matching the hero's textured finish. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-10 opacity-[0.06] mix-blend-soft-light"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+            }}
+          />
+
+          {/* Cursor-following gold spotlight, same as the hero. */}
+          <HeroSpotlight />
+
           <Container>
             <div className="mx-auto max-w-2xl text-center">
-              <p className="mb-6 font-display text-xs font-medium uppercase tracking-[0.22em] text-gold">
-                404
-              </p>
+              <Reveal>
+                <p className="mb-6 font-display text-xs font-medium uppercase tracking-[0.22em] text-gold">
+                  404
+                </p>
+              </Reveal>
 
               <h1 className="mb-6 font-display text-[clamp(2.8rem,6vw,4.5rem)] font-light leading-[1.05] text-ivory">
-                Not <em className="not-italic text-gold-lt">Found.</em>
+                <TextSplit text="Not" by="word" mask />{' '}
+                <em className="not-italic text-gold-lt">
+                  <TextSplit text="Found." by="word" mask delay={0.12} />
+                </em>
               </h1>
 
-              <p className="mx-auto mb-10 max-w-xl text-base leading-relaxed text-ivory-dim md:text-lg">
-                The page you were looking for is not here. It may have moved, or it may never have
-                existed. Either way, here are a few places that might be what you wanted.
-              </p>
+              <Reveal delay={0.35}>
+                <p className="mx-auto mb-10 max-w-xl text-base leading-relaxed text-ivory-dim md:text-lg">
+                  The page you were looking for is not here. It may have moved, or it may never
+                  have existed. Either way, here are a few places that might be what you wanted.
+                </p>
+              </Reveal>
 
-              <div className="flex flex-wrap justify-center gap-3">
-                <Link
-                  href="/"
-                  className="inline-flex items-center gap-2 rounded-sm bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt"
-                >
-                  Home &rarr;
-                </Link>
-                <Link
-                  href="/faithflow"
-                  className="inline-flex items-center gap-2 rounded-sm border border-gold/45 bg-transparent px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black"
-                >
-                  FaithFlow
-                </Link>
-                <Link
-                  href="/#projects"
-                  className="inline-flex items-center gap-2 rounded-sm border border-gold/45 bg-transparent px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black"
-                >
-                  All Projects
-                </Link>
-              </div>
+              <Reveal delay={0.5}>
+                <div className="flex flex-wrap justify-center gap-3">
+                  <Button href="/">Home &rarr;</Button>
+                  <Button href="/faithflow" variant="ghost">
+                    FaithFlow
+                  </Button>
+                  <Button href="/#projects" variant="ghost">
+                    All Projects
+                  </Button>
+                </div>
+              </Reveal>
 
+              {/* The verse arrives last, word by word, at reading pace. */}
               <p className="mt-12 font-display text-base italic text-silver">
-                &ldquo;As iron sharpens iron, so one person sharpens another.&rdquo;
+                &ldquo;
+                <TextSplit
+                  text="As iron sharpens iron, so one person sharpens another."
+                  by="word"
+                  mask
+                  delay={0.9}
+                  stagger={0.07}
+                />
+                &rdquo;
               </p>
             </div>
           </Container>

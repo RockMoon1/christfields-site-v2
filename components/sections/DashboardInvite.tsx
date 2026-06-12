@@ -3,14 +3,19 @@
 import Link from 'next/link';
 import { Container } from '../Container';
 import { Reveal } from '../Reveal';
+import { SectionHeader } from '../SectionHeader';
+import { Button } from '../Button';
 import { TiltCard } from '../motion/TiltCard';
-import { MagneticButton } from '../motion/MagneticButton';
 
 /**
  * Homepage section that invites visitors into the member dashboard and the
  * FaithFlow community. The preview card uses TiltCard (pure CSS 3D transforms,
  * reduced-motion aware, no WebGL) with depth-layered children via translateZ,
- * so it reads as a bold 3D moment while costing the page almost nothing.
+ * so it reads as a bold 3D moment while costing the page almost nothing. It is
+ * unveiled with the clip-path card grammar rather than the generic fade.
+ *
+ * The #dashboard anchor lives on the wrapper div in app/page.tsx, so this
+ * section deliberately carries no id of its own.
  */
 
 const FEATURES = [
@@ -29,7 +34,7 @@ const PREVIEW_ROWS = [
 
 export function DashboardInvite() {
   return (
-    <section id="dashboard" className="relative overflow-hidden bg-black py-[110px]">
+    <section className="relative overflow-hidden bg-black py-[110px]">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10"
@@ -45,26 +50,18 @@ export function DashboardInvite() {
         <div className="grid items-center gap-12 lg:grid-cols-2">
           {/* Copy */}
           <div>
-            <Reveal>
-              <p className="mb-4 text-xs font-medium uppercase tracking-[0.22em] text-gold">
-                Your space
-              </p>
-            </Reveal>
-
-            <Reveal delay={0.05}>
-              <h2 className="mb-6 font-display text-[clamp(2.4rem,4.5vw,3.75rem)] font-light leading-[1.1] text-ivory">
-                A daily place to{' '}
-                <em className="not-italic text-gold-lt">walk with God.</em>
-              </h2>
-            </Reveal>
-
-            <Reveal delay={0.1}>
-              <p className="mb-8 max-w-xl text-lg leading-relaxed text-ivory-dim">
-                Your dashboard holds the real, ordinary practices of faith. Keep your rhythms,
-                take what is on your heart straight to him, be honest about where you are, and walk alongside others.
-                Built on grace, not pressure.
-              </p>
-            </Reveal>
+            <SectionHeader
+              align="left"
+              eyebrow="Your space"
+              title={
+                <>
+                  A daily place to <em className="not-italic text-gold-lt">walk with God.</em>
+                </>
+              }
+              lede="Your dashboard holds the real, ordinary practices of faith. Keep your rhythms, take what is on your heart straight to him, be honest about where you are, and walk alongside others. Built on grace, not pressure."
+              className="mb-8"
+              ledeClassName="max-w-xl text-lg"
+            />
 
             <Reveal delay={0.15}>
               <ul className="mb-10 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
@@ -82,14 +79,7 @@ export function DashboardInvite() {
 
             <Reveal delay={0.2}>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-4">
-                <MagneticButton>
-                  <Link
-                    href="/dashboard/sign-in"
-                    className="inline-flex items-center gap-2 rounded-sm bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt"
-                  >
-                    Member sign in &rarr;
-                  </Link>
-                </MagneticButton>
+                <Button href="/dashboard/sign-in">Member sign in &rarr;</Button>
                 <Link
                   href="/faithflow"
                   className="text-xs font-medium uppercase tracking-[0.16em] text-silver underline-offset-4 transition-colors hover:text-gold-lt hover:underline"
@@ -107,8 +97,8 @@ export function DashboardInvite() {
             </Reveal>
           </div>
 
-          {/* 3D preview card */}
-          <Reveal delay={0.1}>
+          {/* 3D preview card — unveiled, not faded. */}
+          <Reveal variant="clip" delay={0.1}>
             <div className="[perspective:1200px]">
               <TiltCard max={9} className="relative">
                 <div

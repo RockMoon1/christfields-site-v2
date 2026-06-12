@@ -14,11 +14,18 @@ const tasks = [
   { title: 'Focused writing', time: '2:15 PM', state: 'Next' },
 ];
 
+/**
+ * Mock ScholarFlow dashboard shown on the homepage feature section. Keeps its
+ * signature idle beats (the sweeping light bar, progress fills, staggered task
+ * rows) but the old 18s rotating AI coin is retired for a soft radar pulse:
+ * a halo that breathes outward, presence instead of spectacle. The container
+ * is the family's glass material. All product labels stay verbatim.
+ */
 export function ScholarFlowPreview() {
   const reduceMotion = useReducedMotion();
 
   return (
-    <div className="relative overflow-hidden rounded-sm border border-border-gold bg-gradient-to-br from-black-3 via-black-2 to-black p-5 shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
+    <div className="cf-glass relative overflow-hidden rounded-md p-5 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(201,165,72,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(201,165,72,0.04)_1px,transparent_1px)] bg-[size:38px_38px] opacity-60"
@@ -45,13 +52,23 @@ export function ScholarFlowPreview() {
               Focus Command
             </h3>
           </div>
-          <motion.div
-            className="flex h-12 w-12 items-center justify-center rounded-full border border-gold/35 bg-gold/10 text-xs font-semibold text-gold-lt"
-            animate={reduceMotion ? undefined : { rotate: 360 }}
-            transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
-          >
-            AI
-          </motion.div>
+          <div className="relative h-12 w-12">
+            <motion.span
+              aria-hidden
+              className="absolute inset-0 rounded-full border border-gold/40"
+              animate={
+                reduceMotion ? { opacity: 0.25 } : { scale: [1, 1.45], opacity: [0.4, 0] }
+              }
+              transition={{ duration: 3.6, repeat: Infinity, ease: 'easeOut' }}
+            />
+            <motion.div
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-gold/35 bg-gold/10 text-xs font-semibold text-gold-lt"
+              animate={reduceMotion ? undefined : { scale: [1, 1.04, 1] }}
+              transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              AI
+            </motion.div>
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-[0.95fr_1.05fr]">

@@ -1,42 +1,60 @@
 'use client';
 
+import { Button } from '@/components/Button';
+import { SectionHeader } from '@/components/SectionHeader';
+import { SCHOLARFLOW_PRODUCTS, type SFProduct } from '@/lib/content/scholarflow';
 import { Container } from '../../Container';
 import { Reveal } from '../../Reveal';
 import { GlowCard } from '../../motion/GlowCard';
 import { TiltCard } from '../../motion/TiltCard';
-import { SCHOLARFLOW_PRODUCTS, type SFProduct } from '@/lib/content/scholarflow';
 
 /**
  * The storefront shelf: one animated card per product (GraceFlow, LearnFlow).
- * Each card tilts in 3D toward the cursor (TiltCard) and carries a warm cursor
- * glow (GlowCard), so the shelf reads as a premium, living showcase. The card's
- * action is an external link into the live app.
+ * Cards are the family's glass material (.cf-glass) unveiled with a clip-path
+ * reveal, tilting in 3D toward the cursor (TiltCard) under a warm cursor glow
+ * (GlowCard). Feature bullets stagger in one by one, the "Live now" dot
+ * breathes gently, and the price gets large serif numerals. Every claim,
+ * price, and tagline renders verbatim from lib/content/scholarflow. A giant
+ * outlined watermark sits behind the shelf for depth without noise.
  */
 export function ProductShelf() {
   return (
-    <section id="products" className="relative z-[2] py-[110px]">
+    <section id="products" className="relative z-[2] overflow-hidden py-[110px]">
+      {/* Ghost wordmark behind the shelf — outline only, never competing. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-6 -z-10 select-none overflow-hidden"
+      >
+        <span className="cf-outline-text block whitespace-nowrap text-center font-display text-[clamp(6rem,17vw,15rem)] font-light leading-none opacity-60">
+          ScholarFlow
+        </span>
+      </div>
+
       <Container>
-        <Reveal>
-          <p className="mb-4 text-xs font-medium uppercase tracking-[0.22em] text-gold">
-            The shelf
-          </p>
-        </Reveal>
-        <Reveal delay={0.05}>
-          <h2 className="mb-6 font-display text-[clamp(2.4rem,4.5vw,3.75rem)] font-light leading-[1.1] text-ivory">
-            The <em className="not-italic text-gold-lt">tools.</em>
-          </h2>
-        </Reveal>
-        <Reveal delay={0.1}>
-          <p className="mb-14 max-w-2xl text-base leading-relaxed text-silver md:text-lg">
-            Two apps are live today. Tap in and use them now, free to start. More are on the way.
-          </p>
-        </Reveal>
+        <SectionHeader
+          align="left"
+          eyebrow="The shelf"
+          title={
+            <>
+              The <em className="not-italic text-gold-lt">tools.</em>
+            </>
+          }
+          titleClassName="text-[clamp(2.4rem,4.5vw,3.75rem)] leading-[1.1]"
+          lede="Two apps are live today. Tap in and use them now, free to start. More are on the way."
+          ledeClassName="text-silver"
+          className="mb-14"
+        />
 
         <div className="grid gap-6 md:grid-cols-2">
           {SCHOLARFLOW_PRODUCTS.map((p, i) => (
-            <Reveal key={p.key} delay={Math.min(i * 0.08, 0.3)}>
+            <Reveal
+              key={p.key}
+              variant="clip"
+              delay={Math.min(i * 0.12, 0.3)}
+              className="h-full"
+            >
               <div className="h-full [perspective:1200px]">
-                <TiltCard max={6} className="h-full">
+                <TiltCard max={5} className="h-full">
                   <ProductCard product={p} />
                 </TiltCard>
               </div>
@@ -50,11 +68,7 @@ export function ProductShelf() {
 
 function ProductCard({ product: p }: { product: SFProduct }) {
   return (
-    <GlowCard
-      glowColor={p.glow}
-      glowSize={340}
-      className="h-full rounded-md border border-border-sub bg-black-2 transition-colors duration-300 hover:border-border-gold"
-    >
+    <GlowCard glowColor={p.glow} glowSize={340} className="cf-glass h-full rounded-md">
       <div className="flex h-full flex-col p-8 md:p-10">
         {/* Mark + live status */}
         <div className="mb-6 flex items-center justify-between">
@@ -62,7 +76,10 @@ function ProductCard({ product: p }: { product: SFProduct }) {
             {p.mark}
           </span>
           <span className="inline-flex items-center gap-2 rounded-full border border-emerald-lt/40 bg-emerald-lt/15 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.15em] text-emerald-bright">
-            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-bright" />
+            <span
+              aria-hidden
+              className="h-1.5 w-1.5 animate-[ffPulse_2.4s_ease-in-out_infinite] rounded-full bg-emerald-bright"
+            />
             {p.statusLabel}
           </span>
         </div>
@@ -73,30 +90,39 @@ function ProductCard({ product: p }: { product: SFProduct }) {
         <p className="mt-4 leading-relaxed text-ivory-dim">{p.description}</p>
         <p className="mt-3 text-sm text-silver">{p.forWho}</p>
 
-        <ul className="mt-6 space-y-2">
-          {p.features.map((f) => (
-            <li key={f} className="flex items-start gap-2.5 text-sm text-ivory-dim">
+        <ul className="mt-6 space-y-2.5">
+          {p.features.map((f, i) => (
+            <Reveal
+              key={f}
+              as="li"
+              delay={0.15 + i * 0.07}
+              y={10}
+              className="flex items-start gap-2.5 text-sm text-ivory-dim"
+            >
               <span aria-hidden className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gold" />
               {f}
-            </li>
+            </Reveal>
           ))}
         </ul>
 
         {p.note && <p className="mt-5 text-xs text-muted">{p.note}</p>}
 
         <div className="mt-auto pt-8">
-          <div className="mb-4 flex items-baseline gap-2">
-            <span className="font-display text-2xl text-ivory">{p.price}</span>
+          <div className="mb-5 flex items-baseline gap-2.5">
+            <span className="font-display text-3xl font-light leading-none text-ivory md:text-4xl">
+              {p.price}
+            </span>
             {p.priceNote && <span className="text-xs text-muted">{p.priceNote}</span>}
           </div>
-          <a
-            href={p.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-sm bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt"
-          >
-            {p.cta} &rarr;
-          </a>
+          <Button href={p.href}>
+            {p.cta}
+            <span
+              aria-hidden
+              className="transition-transform duration-200 group-hover:translate-x-0.5"
+            >
+              &rarr;
+            </span>
+          </Button>
         </div>
       </div>
     </GlowCard>

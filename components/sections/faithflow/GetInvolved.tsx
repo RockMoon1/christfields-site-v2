@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { Button } from '../../Button';
 import { Container } from '../../Container';
 import { Reveal } from '../../Reveal';
+import { SectionHeader } from '@/components/SectionHeader';
 import { cn } from '@/lib/utils';
 import { FAITHFLOW_CONTENT, type InterestKey } from '@/lib/content/faithflow';
 import { FloatingInput } from '../../motion/FloatingInput';
 import { FloatingTextarea } from '../../motion/FloatingTextarea';
-import { MagneticButton } from '../../motion/MagneticButton';
 import { ScriptureSymbol } from '../../motion/ScriptureSymbol';
 import { TailoredSuccess } from './TailoredSuccess';
 
@@ -23,6 +24,14 @@ const INTEREST_OPTIONS: { value: InterestKey; label: string }[] = [
   { value: 'learn-more', label: 'I just want to learn more' },
 ];
 
+/**
+ * The Get Involved form. The old native select (default OS chrome between
+ * premium floating-label fields) is now an accessible radio chip group —
+ * native radio inputs kept for keyboard arrow-key navigation and screen
+ * readers, styled as selectable gold chips with 44px touch targets. The
+ * submit is the shared Button with an ember burst on commit. All form
+ * handling (validation, honeypot, rate limit, /api/submit) is unchanged.
+ */
 export function GetInvolved() {
   const [message, setMessage] = useState('');
   const [interest, setInterest] = useState<InterestKey | ''>('');
@@ -61,7 +70,7 @@ export function GetInvolved() {
       return;
     }
     if (!interest) {
-      setErrorMsg('Please select an option from the dropdown.');
+      setErrorMsg('Please select what brings you here.');
       setState('error');
       return;
     }
@@ -113,28 +122,22 @@ export function GetInvolved() {
       />
 
       <Container className="text-center">
-        <Reveal>
-          <p className="mb-4 text-xs font-medium uppercase tracking-[0.22em] text-gold">
-            Get Involved
-          </p>
-        </Reveal>
-
-        <Reveal delay={0.05}>
-          <h2 className="mb-6 font-display text-[clamp(2.4rem,4.5vw,3.75rem)] font-light leading-[1.1] text-ivory">
-            Ready to Walk <em className="not-italic text-gold-lt">Together?</em>
-          </h2>
-        </Reveal>
-
-        <Reveal delay={0.1}>
-          <p className="mx-auto mb-12 max-w-2xl text-base leading-relaxed text-silver md:text-lg">
-            Whether you are interested in FaithFlow community, future groups, helping start a
-            group, or simply learning more, we would love to hear from you.
-          </p>
-        </Reveal>
+        <SectionHeader
+          eyebrow="Get Involved"
+          title={
+            <>
+              Ready to Walk <em className="not-italic text-gold-lt">Together?</em>
+            </>
+          }
+          titleClassName="text-[clamp(2.4rem,4.5vw,3.75rem)] leading-[1.1]"
+          lede="Whether you are interested in FaithFlow community, future groups, helping start a group, or simply learning more, we would love to hear from you."
+          ledeClassName="text-silver"
+          className="mb-12"
+        />
 
         {state === 'success' ? (
-          <Reveal>
-            <div className="mx-auto max-w-2xl rounded-sm border border-border-gold bg-gradient-to-br from-black-3 to-black-2 p-10 text-center">
+          <Reveal variant="clip">
+            <div className="cf-glass mx-auto max-w-2xl rounded-sm p-10 text-center">
               <ScriptureSymbol className="mb-4 block text-3xl text-gold" />
               <h3 className="mb-4 font-display text-4xl font-light text-ivory">Thank You.</h3>
               <p className="mb-6 leading-relaxed text-ivory-dim">
@@ -144,12 +147,11 @@ export function GetInvolved() {
 
               <TailoredSuccess content={FAITHFLOW_CONTENT[chosenInterest]} />
 
-              <a
-                href="#what"
-                className="mt-8 inline-flex items-center gap-2 rounded-sm border border-gold/45 bg-transparent px-5 py-3 text-xs font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black"
-              >
-                &larr; Back to FaithFlow
-              </a>
+              <div className="mt-8 flex justify-center">
+                <Button href="#what" variant="ghost">
+                  &larr; Back to FaithFlow
+                </Button>
+              </div>
             </div>
           </Reveal>
         ) : (
@@ -169,25 +171,28 @@ export function GetInvolved() {
                 <FloatingInput name="email" label="Your email address" type="email" required autoComplete="email" maxLength={254} />
               </div>
 
-              <div className="mt-4">
-                <select
-                  name="interest"
-                  required
-                  aria-label="What brings you here?"
-                  value={interest}
-                  onChange={(e) => setInterest(e.target.value as InterestKey)}
-                  className="w-full rounded-sm border border-border-sub bg-black-3 px-4 py-3 text-sm text-ivory focus:border-gold focus:outline-none"
-                >
-                  <option value="" disabled>
-                    What brings you here?
-                  </option>
+              <fieldset className="mt-6">
+                <legend className="mb-3 text-xs font-medium uppercase tracking-[0.16em] text-silver">
+                  What brings you here?
+                </legend>
+                <div className="grid gap-2 sm:grid-cols-2">
                   {INTEREST_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
+                    <label key={opt.value} className="cursor-pointer">
+                      <input
+                        type="radio"
+                        name="interest"
+                        value={opt.value}
+                        checked={interest === opt.value}
+                        onChange={() => setInterest(opt.value)}
+                        className="peer sr-only"
+                      />
+                      <span className="flex min-h-[44px] items-center rounded-sm border border-border-sub bg-black-3 px-4 py-3 text-sm leading-snug text-ivory-dim transition-colors duration-200 hover:border-gold/40 hover:text-ivory peer-checked:border-gold peer-checked:bg-gold/10 peer-checked:text-gold-lt peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-gold">
+                        {opt.label}
+                      </span>
+                    </label>
                   ))}
-                </select>
-              </div>
+                </div>
+              </fieldset>
 
               <div className="mt-4">
                 <FloatingTextarea
@@ -209,17 +214,16 @@ export function GetInvolved() {
                 )}
               </div>
 
-              <button
-                type="submit"
-                disabled={state === 'sending'}
-                className={cn(
-                  'mt-6 inline-flex w-full items-center justify-center gap-2 rounded-sm bg-gold px-6 py-4 text-xs font-medium uppercase tracking-[0.07em] text-black transition-colors',
-                  state !== 'sending' && 'hover:bg-gold-lt',
-                  state === 'sending' && 'cursor-not-allowed opacity-70',
-                )}
-              >
-                {state === 'sending' ? 'Sending...' : <>Get In Touch &rarr;</>}
-              </button>
+              <div className="mt-6 flex justify-center">
+                <Button
+                  type="submit"
+                  emberBurst
+                  disabled={state === 'sending'}
+                  className="min-w-[260px] py-4"
+                >
+                  {state === 'sending' ? 'Sending...' : <>Get In Touch &rarr;</>}
+                </Button>
+              </div>
 
               {state === 'error' && (
                 <p className="mt-3 text-center text-sm text-red-400" role="alert">

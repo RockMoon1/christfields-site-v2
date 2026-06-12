@@ -39,8 +39,10 @@ export function SectionRail({
 }) {
   const [active, setActive] = useState(sections[0]?.id ?? '');
 
+  // Re-created whenever the sections prop changes, so the observer never
+  // closes over a stale list (the old empty dependency array meant a page
+  // that swapped its sections kept observing the originals forever).
   useEffect(() => {
-    if (typeof window === 'undefined') return;
     const els = sections.map((s) => document.getElementById(s.id)).filter(
       (el): el is HTMLElement => !!el,
     );
@@ -58,7 +60,7 @@ export function SectionRail({
     );
     els.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, []);
+  }, [sections]);
 
   return (
     <nav

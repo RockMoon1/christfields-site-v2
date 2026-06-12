@@ -1,18 +1,27 @@
 'use client';
 
-import Link from 'next/link';
 import { motion, useScroll, useTransform } from 'motion/react';
+import { Button } from '../../Button';
 import { Reveal } from '../../Reveal';
 import { HeroSpotlight } from '../../motion/HeroSpotlight';
-import { MagneticButton } from '../../motion/MagneticButton';
 import { TextSplit } from '../../motion/TextSplit';
 
+/**
+ * FaithFlow hero. Display type is scaled to match the home hero's presence,
+ * and the headline rises out of a per-character mask (letterpress wipe)
+ * instead of blur-fading, so the page opens with the family's editorial
+ * entrance grammar. The tagline and the Proverbs 27:17 line arrive word by
+ * word at reading pace — the verse string itself is untouched.
+ */
 export function FFHero() {
   const { scrollY } = useScroll();
   // Parallax tuned so the background visibly drifts as you scroll past
   // the hero. Combined with the content fade, this creates real depth.
   const bgY = useTransform(scrollY, [0, 800], [0, -260]);
   const contentOpacity = useTransform(scrollY, [0, 600], [1, 0.3]);
+  // The content recedes slightly on exit, mirroring the home hero's
+  // cinematic dissolve (transform/opacity only — no scroll-driven blur).
+  const contentScale = useTransform(scrollY, [0, 600], [1, 0.95]);
 
   return (
     <section
@@ -64,7 +73,10 @@ export function FFHero() {
       {/* Cursor-following gold spotlight */}
       <HeroSpotlight />
 
-      <motion.div style={{ opacity: contentOpacity }} className="relative z-10 mx-auto max-w-3xl text-center">
+      <motion.div
+        style={{ opacity: contentOpacity, scale: contentScale }}
+        className="relative z-10 mx-auto max-w-4xl text-center"
+      >
         <Reveal>
           <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-lt/35 bg-emerald-lt/15 px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.16em] text-emerald-bright">
             <span className="inline-block h-1.5 w-1.5 animate-[ffPulse_2s_ease-in-out_infinite] rounded-full bg-emerald-lt shadow-[0_0_8px_var(--color-emerald-lt)]" />
@@ -72,55 +84,52 @@ export function FFHero() {
           </span>
         </Reveal>
 
-        {/* Per-character blur-in reveal. "Faith" in ivory, "Flow." in gold. */}
-        <h1 className="mb-6 font-display text-[clamp(3.4rem,7vw,5.5rem)] font-light leading-[1.05] tracking-[-0.01em] text-ivory">
-          <TextSplit text="Faith" delay={0.2} />
+        {/* Per-character masked wipe. "Faith" in ivory, "Flow." in gold. */}
+        <h1 className="mb-6 font-display text-[clamp(3.6rem,8vw,6.5rem)] font-light leading-[1.04] tracking-[-0.01em] text-ivory">
+          <TextSplit text="Faith" mask delay={0.2} />
           <span className="text-gold-lt">
-            <TextSplit text="Flow." delay={0.45} />
+            <TextSplit text="Flow." mask delay={0.42} />
           </span>
         </h1>
 
-        <Reveal delay={0.7}>
-          <p className="mx-auto mb-6 max-w-xl text-lg leading-relaxed text-ivory-dim md:text-xl">
-            Real community. Scripture-rooted accountability. Faith lived together.
-          </p>
-        </Reveal>
+        <p className="mx-auto mb-6 max-w-xl text-lg leading-relaxed text-ivory-dim md:text-xl">
+          <TextSplit
+            text="Real community. Scripture-rooted accountability. Faith lived together."
+            by="word"
+            mask
+            delay={0.75}
+          />
+        </p>
 
-        <Reveal delay={0.8}>
-          <p className="mb-10 font-display text-base italic text-silver md:text-lg">
-            &ldquo;As iron sharpens iron, so one person sharpens another.&rdquo;
-          </p>
-        </Reveal>
+        <p className="mb-10 font-display text-base italic text-silver md:text-lg">
+          <TextSplit
+            text={'“As iron sharpens iron, so one person sharpens another.”'}
+            by="word"
+            mask
+            delay={1.0}
+          />
+        </p>
 
-        <Reveal delay={0.9}>
+        <Reveal delay={1.2}>
           <div className="flex flex-wrap justify-center gap-3">
-            <MagneticButton>
-              <Link
-                href="#get-involved"
-                className="inline-flex items-center gap-2 rounded-sm bg-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-black transition-colors hover:bg-gold-lt"
-              >
-                Join or Learn More &rarr;
-              </Link>
-            </MagneticButton>
-            <MagneticButton>
-              <Link
-                href="#groups"
-                className="inline-flex items-center gap-2 rounded-sm border border-gold/45 bg-transparent px-6 py-3 text-xs font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black"
-              >
-                View Active Groups
-              </Link>
-            </MagneticButton>
+            <Button href="#get-involved">Join or Learn More &rarr;</Button>
+            <Button href="#groups" variant="ghost">
+              View Active Groups
+            </Button>
           </div>
         </Reveal>
       </motion.div>
 
-      <div
+      <motion.div
         aria-hidden
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8, delay: 1.6, ease: [0.22, 1, 0.36, 1] }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center text-[10px] uppercase tracking-[0.3em] text-muted"
       >
         <p className="mb-2">Scroll</p>
         <div className="scroll-line mx-auto h-10 w-px bg-gradient-to-b from-gold to-transparent" />
-      </div>
+      </motion.div>
     </section>
   );
 }

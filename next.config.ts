@@ -17,9 +17,15 @@ import createMDX from '@next/mdx';
  * 'unsafe-inline' stays in script-src because Next emits inline hydration
  * scripts without nonces; moving to nonces is a later hardening pass.
  */
+/* Next's dev runtime (react-refresh / HMR) evaluates code with eval(), so a
+   script-src without 'unsafe-eval' crashes the client bundle on localhost —
+   the page renders but never hydrates (no interactivity, no animations).
+   Production builds need no eval, so the shipped CSP stays strict. */
+const devEval = process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : '';
+
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://*.clerk.accounts.dev https://*.clerk.com https://*.christfields2717.com https://challenges.cloudflare.com",
+  `script-src 'self' 'unsafe-inline'${devEval} https://*.clerk.accounts.dev https://*.clerk.com https://*.christfields2717.com https://challenges.cloudflare.com`,
   "worker-src 'self' blob:",
   "connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.com https://*.christfields2717.com https://clerk-telemetry.com https://*.supabase.co wss://*.supabase.co",
   "img-src 'self' data: blob: https://img.clerk.com https://*.clerk.com",

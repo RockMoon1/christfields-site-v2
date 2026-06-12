@@ -14,6 +14,10 @@ import { motion, useReducedMotion, useScroll, useTransform, type MotionValue } f
  *
  * Edge-faded so phrases emerge and dissolve. The CSS animation auto-stops under
  * prefers-reduced-motion; the scroll slide is gated here too. Pure ornament.
+ *
+ * The verse set is themeable per page: the home band speaks broadly, while
+ * FaithFlow gets community scriptures and ScholarFlow gets wisdom/skill ones,
+ * so each page's band carries that page's heart. Defaults stay the home set.
  */
 
 const LINE_ONE = [
@@ -85,7 +89,15 @@ function Row({
   );
 }
 
-export function ScriptureMarquee() {
+export function ScriptureMarquee({
+  lineOne = LINE_ONE,
+  lineTwo = LINE_TWO,
+}: {
+  /** Alternating phrase/reference pairs for the top row. */
+  lineOne?: string[];
+  /** Alternating phrase/reference pairs for the bottom row. */
+  lineTwo?: string[];
+}) {
   const reduced = useReducedMotion();
   const ref = useRef<HTMLElement>(null);
 
@@ -111,8 +123,8 @@ export function ScriptureMarquee() {
       }}
     >
       <div className="flex flex-col gap-5 md:gap-7">
-        <Row items={LINE_ONE} direction="left" scrollX={xOne} />
-        <Row items={LINE_TWO} direction="right" scrollX={xTwo} />
+        <Row items={lineOne} direction="left" scrollX={xOne} />
+        <Row items={lineTwo} direction="right" scrollX={xTwo} />
       </div>
     </section>
   );

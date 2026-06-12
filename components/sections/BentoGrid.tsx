@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { Container } from '../Container';
 import { Reveal } from '../Reveal';
+import { SectionHeader } from '../SectionHeader';
 import { GlowCard } from '../motion/GlowCard';
 
 /**
@@ -14,6 +15,13 @@ import { GlowCard } from '../motion/GlowCard';
  * the only genuinely open door (ScholarFlow early access) was buried. So every
  * tile now answers "is this for me, and how do I get in?" in plain words, instead
  * of selling a funnel that does not exist yet.
+ *
+ * Motion: the header uses the shared SectionHeader entrance; tiles are unveiled
+ * with the clip-path grammar (Reveal variant="clip") on a light stagger, and the
+ * per-tile cursor glow stays. The "Open" affordance is visible at rest on touch
+ * and only becomes hover-revealed on pointer devices.
+ *
+ * This section owns the #projects anchor (nav and footer link to it).
  */
 
 interface Tile {
@@ -141,7 +149,8 @@ function TileInner({ tile }: { tile: Tile }) {
             </p>
           )}
           {tile.href && (
-            <span className="mt-4 inline-block text-[11px] font-medium uppercase tracking-[0.12em] text-gold opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            // Visible at rest on touch; hover-revealed only where hover exists.
+            <span className="mt-4 inline-block text-[11px] font-medium uppercase tracking-[0.12em] text-gold transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100">
               Open &rarr;
             </span>
           )}
@@ -168,30 +177,28 @@ export function BentoGrid() {
   return (
     <section id="projects" className="py-[110px]">
       <Container>
-        <Reveal>
-          <p className="mb-4 text-xs font-medium uppercase tracking-[0.22em] text-gold">
-            One company, many fields
-          </p>
-        </Reveal>
-        <Reveal delay={0.05}>
-          <h2 className="mb-6 font-display text-[clamp(2.4rem,4.5vw,3.75rem)] font-light leading-[1.1] text-ivory">
-            The <em className="not-italic text-gold-lt">whole field.</em>
-          </h2>
-        </Reveal>
-        <Reveal delay={0.1}>
-          <p className="mb-3 max-w-2xl text-base leading-relaxed text-silver md:text-lg">
-            Christ Fields is an invite-only Christian community, with the faith and study tools to
-            walk it out together. One door is open right now: early access to ScholarFlow. The
-            others open as we grow.
-          </p>
-        </Reveal>
-        <Reveal delay={0.14}>
-          <p className="mb-14 text-sm text-muted">Started and built by Lisandro Pellow.</p>
+        <SectionHeader
+          align="left"
+          eyebrow="One company, many fields"
+          title={
+            <>
+              The <em className="not-italic text-gold-lt">whole field.</em>
+            </>
+          }
+          lede="Christ Fields is an invite-only Christian community, with the faith and study tools to walk it out together. One door is open right now: early access to ScholarFlow. The others open as we grow."
+        />
+        <Reveal delay={0.4}>
+          <p className="mt-3 text-sm text-muted">Started and built by Lisandro Pellow.</p>
         </Reveal>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-6 md:auto-rows-[minmax(190px,1fr)]">
+        <div className="mt-14 grid grid-cols-1 gap-4 md:grid-cols-6 md:auto-rows-[minmax(190px,1fr)]">
           {TILES.map((tile, i) => (
-            <Reveal key={tile.title} delay={Math.min(i * 0.06, 0.3)} className={tile.span}>
+            <Reveal
+              key={tile.title}
+              variant="clip"
+              delay={Math.min(i * 0.09, 0.36)}
+              className={tile.span}
+            >
               <TileShell tile={tile}>
                 <TileInner tile={tile} />
               </TileShell>

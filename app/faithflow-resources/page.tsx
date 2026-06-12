@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Footer } from '@/components/Footer';
 import { Nav } from '@/components/Nav';
+import { EmberField } from '@/components/sections/faithflow/EmberField';
 import { ResourcePage, type Resource } from '@/components/sections/resources/ResourcePage';
 
 export const metadata: Metadata = {
@@ -79,6 +80,9 @@ const footerColumns = [
 export default function FaithFlowResourcesPage() {
   return (
     <>
+      {/* Same ambient ember layer as /faithflow, so the resources page
+          belongs to the same world instead of feeling like a plain index. */}
+      <EmberField />
       <Nav alwaysScrolled />
       <ResourcePage
         eyebrow="FaithFlow · For Now"
