@@ -28,6 +28,8 @@ alter table rate_limit_counters enable row level security;
 create or replace function rate_limit_take(p_bucket text, p_window_seconds int)
 returns int
 language plpgsql
+security invoker
+set search_path = ''
 as $$
 declare
   v_window timestamptz;
@@ -36,20 +38,27 @@ begin
   v_window := to_timestamp(
     floor(extract(epoch from now()) / p_window_seconds) * p_window_seconds
   );
-  insert into rate_limit_counters (bucket, window_start, count)
+  insert into public.rate_limit_counters (bucket, window_start, count)
     values (p_bucket, v_window, 1)
   on conflict (bucket, window_start)
-    do update set count = rate_limit_counters.count + 1
+    do update set count = public.rate_limit_counters.count + 1
   returning count into v_count;
   return v_count;
 end;
 $$;
+
+-- Only the server (service role) calls this; keep it off the public API surface
+-- so anon/authenticated cannot poke the counter via /rest/v1/rpc.
+revoke all on function rate_limit_take(text, int) from public, anon, authenticated;
+grant execute on function rate_limit_take(text, int) to service_role;
 
 -- Optional housekeeping: drop windows older than a day. Run from a scheduled
 -- job if you like, or ignore (the table stays tiny at this scale).
 create or replace function rate_limit_gc()
 returns void
 language sql
+security invoker
+set search_path = ''
 as $$
-  delete from rate_limit_counters where window_start < now() - interval '1 day';
+  delete from public.rate_limit_counters where window_start < now() - interval '1 day';
 $$;
