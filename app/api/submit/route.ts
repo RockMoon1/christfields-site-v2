@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { autoReplyHtml, autoReplyText, notificationHtml } from '@/lib/emails';
+import { isBodyTooLarge, isCrossSite } from '@/lib/security/origin';
+import { takeRateLimit } from '@/lib/rate-limit';
 
 /**
  * Form submission handler for the public site (waitlist + faithflow forms).
@@ -66,6 +68,15 @@ function rateLimited(ip: string): boolean {
 }
 
 export async function POST(req: Request) {
+  // CSRF defense-in-depth: reject forged cross-site POSTs from other origins.
+  if (isCrossSite(req)) {
+    return NextResponse.json({ ok: false, error: 'Cross-site requests are not allowed.' }, { status: 403 });
+  }
+  // Coarse body-size guard before parsing (fields are length-capped below).
+  if (isBodyTooLarge(req, 16_000)) {
+    return NextResponse.json({ ok: false, error: 'Request too large.' }, { status: 413 });
+  }
+
   let data: Record<string, unknown>;
   try {
     data = await req.json();
@@ -79,7 +90,10 @@ export async function POST(req: Request) {
   }
 
   // Server-side rate limit (every POST counts, regardless of the honeypot).
-  if (rateLimited(clientIp(req))) {
+  // Durable (Supabase) once migration 011 is applied, else the in-memory fallback.
+  const ip = clientIp(req);
+  const rl = await takeRateLimit(`submit:${ip}`, RATE_LIMIT, Math.floor(RATE_WINDOW_MS / 1000));
+  if (rl.durable ? !rl.allowed : rateLimited(ip)) {
     return NextResponse.json(
       { ok: false, error: 'Please wait a moment before sending another message.' },
       { status: 429 },
@@ -105,11 +119,8 @@ export async function POST(req: Request) {
   }
 
   if (!process.env.RESEND_API_KEY) {
-    console.warn('RESEND_API_KEY not set. Submission received, no email sent.', {
-      formName,
-      name,
-      email,
-    });
+    // Note: do NOT log name/email here (PII in function logs). formName is enough.
+    console.warn('RESEND_API_KEY not set. Submission received, no email sent.', { formName });
     // Do not lose the user: report success so they are not stuck, and the
     // warning above shows in the function logs so we know to set the key.
     return NextResponse.json({ ok: true });

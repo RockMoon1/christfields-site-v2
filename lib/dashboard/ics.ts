@@ -1,3 +1,5 @@
+import dns from 'node:dns/promises';
+import net from 'node:net';
 import ical from 'node-ical';
 import { SLOTS, type Slot } from '@/lib/dashboard/availability';
 
@@ -60,18 +62,70 @@ export function validateIcsUrl(raw: string): ValidatedUrl | InvalidUrl {
   return { ok: true, url: parsed.toString() };
 }
 
-async function fetchIcsText(url: string): Promise<string> {
+/** Reject IPs in private, loopback, link-local, or other reserved ranges (SSRF guard). */
+function isPrivateAddress(ip: string): boolean {
+  if (net.isIPv4(ip)) {
+    const [a, b] = ip.split('.').map(Number);
+    if (a === 0 || a === 10 || a === 127) return true;
+    if (a === 169 && b === 254) return true; // link-local + cloud metadata (169.254.169.254)
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
+    return false;
+  }
+  const ip6 = ip.toLowerCase();
+  if (ip6 === '::1' || ip6 === '::') return true;
+  if (ip6.startsWith('fe80')) return true; // link-local
+  if (ip6.startsWith('fc') || ip6.startsWith('fd')) return true; // unique-local fc00::/7
+  if (ip6.startsWith('::ffff:')) return isPrivateAddress(ip6.slice('::ffff:'.length)); // IPv4-mapped
+  return false;
+}
+
+/** True only if every DNS answer for the host resolves to a public address. */
+async function hostIsPublic(hostname: string): Promise<boolean> {
+  try {
+    const records = await dns.lookup(hostname, { all: true });
+    return records.length > 0 && records.every((r) => !isPrivateAddress(r.address));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fetch the feed, following redirects OURSELVES so the allowlist + IP guard are
+ * re-checked on every hop. This closes the SSRF where an allowlisted host could
+ * 302 to an internal / cloud-metadata target. We also resolve the host and
+ * refuse any private/reserved IP, which defends DNS-rebinding and inward-pointing
+ * names. Caps redirect hops, total time (8s), and body size (2MB).
+ */
+async function fetchIcsText(initialUrl: string): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);
   try {
-    const res = await fetch(url, {
-      signal: controller.signal,
-      redirect: 'follow',
-      headers: { 'User-Agent': 'ChristFields-Availability/1.0', Accept: 'text/calendar, text/plain' },
-    });
-    if (!res.ok) throw new Error(`Calendar feed returned ${res.status}`);
-    const text = await res.text();
-    return text.length > 2_000_000 ? text.slice(0, 2_000_000) : text;
+    let url = initialUrl;
+    for (let hop = 0; hop < 4; hop += 1) {
+      const checked = validateIcsUrl(url);
+      if (!checked.ok) throw new Error('Calendar link points to a disallowed location.');
+      const target = new URL(checked.url);
+      if (!(await hostIsPublic(target.hostname))) {
+        throw new Error('Calendar host resolved to a non-public address.');
+      }
+      const res = await fetch(checked.url, {
+        signal: controller.signal,
+        redirect: 'manual',
+        headers: { 'User-Agent': 'ChristFields-Availability/1.0', Accept: 'text/calendar, text/plain' },
+      });
+      if (res.status >= 300 && res.status < 400) {
+        const loc = res.headers.get('location');
+        if (!loc) throw new Error(`Calendar feed returned ${res.status} with no location`);
+        url = new URL(loc, checked.url).toString(); // re-validated at the top of the next hop
+        continue;
+      }
+      if (!res.ok) throw new Error(`Calendar feed returned ${res.status}`);
+      const text = await res.text();
+      return text.length > 2_000_000 ? text.slice(0, 2_000_000) : text;
+    }
+    throw new Error('Calendar link redirected too many times.');
   } finally {
     clearTimeout(timer);
   }

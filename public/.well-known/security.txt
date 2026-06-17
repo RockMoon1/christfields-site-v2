@@ -1,0 +1,12 @@
+# Christ Fields - how to report a security issue.
+# https://www.rfc-editor.org/rfc/rfc9116
+
+Contact: mailto:proverbs@christfields2717.com
+Preferred-Languages: en
+Canonical: https://christfields2717.com/.well-known/security.txt
+Expires: 2027-06-05T00:00:00.000Z
+
+# If you have found a vulnerability, email us privately at the address above.
+# We read every message and respond personally. Please give us a reasonable
+# chance to fix it before any public disclosure. Thank you for helping keep a
+# small, private community safe.

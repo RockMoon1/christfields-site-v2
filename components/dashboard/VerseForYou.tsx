@@ -98,6 +98,11 @@ export function VerseForYou() {
         className="w-full rounded-sm border border-border-sub bg-black-2 px-3 py-2 text-sm text-ivory placeholder:text-muted focus:border-gold focus:outline-none"
       />
 
+      <p className="mt-2 text-[11px] leading-relaxed text-muted">
+        A model helps match your words to a verse from a set list. It runs privately, your words are
+        not saved, and nothing here is shared with your group.
+      </p>
+
       {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">

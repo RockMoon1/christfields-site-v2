@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'motion/react';
+import { type ReactNode } from 'react';
 import type {
   ContentSection,
   ResourceSection,
@@ -48,7 +49,9 @@ function SectionBlock({ section, index }: { section: ContentSection; index: numb
       {section.type === 'prose' && (
         <div className="space-y-3 text-[15px] leading-relaxed text-ivory-dim">
           {section.paragraphs.map((p, i) => (
-            <p key={i} dangerouslySetInnerHTML={{ __html: p }} />
+            <p key={i}>
+              <RichText text={p} />
+            </p>
           ))}
         </div>
       )}
@@ -60,7 +63,9 @@ function SectionBlock({ section, index }: { section: ContentSection; index: numb
               <span aria-hidden className="mt-1 text-xs text-gold">
                 {'\u2726'}
               </span>
-              <span dangerouslySetInnerHTML={{ __html: item }} />
+              <span>
+                <RichText text={item} />
+              </span>
             </li>
           ))}
         </ul>
@@ -71,6 +76,30 @@ function SectionBlock({ section, index }: { section: ContentSection; index: numb
       {section.type === 'resources' && <ResourceList section={section} />}
     </motion.section>
   );
+}
+
+/**
+ * Render author content that may contain <em>/<strong> emphasis WITHOUT using
+ * dangerouslySetInnerHTML. Only those two tags become elements; everything else
+ * (including any stray markup) renders as an escaped text node, so this cannot
+ * inject HTML even if the content source ever changes from the static file.
+ */
+function RichText({ text }: { text: string }): ReactNode {
+  const nodes: ReactNode[] = [];
+  const re = /<(em|strong)>([\s\S]*?)<\/\1>/gi;
+  let last = 0;
+  let key = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) nodes.push(text.slice(last, m.index));
+    const inner = m[2];
+    nodes.push(
+      m[1].toLowerCase() === 'strong' ? <strong key={key++}>{inner}</strong> : <em key={key++}>{inner}</em>,
+    );
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return <>{nodes}</>;
 }
 
 function ScripturesGrid({ section }: { section: ScriptureSection }) {

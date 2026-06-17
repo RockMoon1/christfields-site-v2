@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { VERSES_OF_DAY, verseForToday } from '@/lib/dashboard/content';
 import { verseContextFor } from '@/lib/dashboard/scripture-context';
 import { getSupabase } from '@/lib/supabase';
+import { isBodyTooLarge, isCrossSite } from '@/lib/security/origin';
+import { takeRateLimit } from '@/lib/rate-limit';
 
 /**
  * "A verse for what you are carrying."
@@ -131,12 +133,38 @@ function extractJson(content: string): { index?: number; reflection?: string } |
   }
 }
 
+/**
+ * Light PII reduction before any text leaves us for the third-party model.
+ * The situation is never stored or echoed back; this just avoids handing an
+ * email address, link, or phone number to NVIDIA. Placeholders keep the
+ * sentence readable so the verse match is unaffected.
+ */
+function scrubForModel(s: string): string {
+  return s
+    .replace(/\b[\w.+-]+@[\w-]+\.[\w.-]+\b/gi, '[email]')
+    .replace(/https?:\/\/\S+/gi, '[link]')
+    .replace(/\b\+?\d[\d\s().-]{8,}\d\b/g, '[number]');
+}
+
 export async function POST(req: Request) {
+  // CSRF defense-in-depth: reject forged cross-site POSTs (Sec-Fetch-Site is
+  // browser-set and cannot be spoofed from JS). Layered on Clerk SameSite cookies.
+  if (isCrossSite(req)) {
+    return NextResponse.json({ error: 'Cross-site requests are not allowed.' }, { status: 403 });
+  }
+  // Coarse body-size guard before parsing (the situation is capped at 500 chars).
+  if (isBodyTooLarge(req, 10_000)) {
+    return NextResponse.json({ error: 'Request too large.' }, { status: 413 });
+  }
+
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: 'Please sign in first.' }, { status: 401 });
   }
-  if (tooFast(userId)) {
+  // Burst guard: durable (Supabase) once migration 011 is applied, else the
+  // in-memory fallback. At most one request every 5 seconds per member.
+  const burst = await takeRateLimit(`verse:${userId}`, 1, 5);
+  if (burst.durable ? !burst.allowed : tooFast(userId)) {
     return NextResponse.json({ error: 'One moment, then try again.' }, { status: 429 });
   }
 
@@ -146,9 +174,9 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
   }
-  const situation = String((body as { situation?: unknown })?.situation ?? '')
-    .trim()
-    .slice(0, 500);
+  const situation = scrubForModel(
+    String((body as { situation?: unknown })?.situation ?? '').trim().slice(0, 500),
+  );
   if (situation.length < 2) {
     return NextResponse.json({ error: 'Tell me a little about what you are carrying.' }, { status: 400 });
   }
