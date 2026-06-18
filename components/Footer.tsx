@@ -96,7 +96,12 @@ export function Footer({ columns = defaultColumns }: FooterProps) {
 
       <Container className="relative z-10">
         <div className="flex flex-col items-start justify-between gap-2 border-t border-border-sub pb-8 pt-6 text-xs text-muted md:flex-row md:items-center">
-          <p>&copy; {new Date().getFullYear()} Christ Fields. All rights reserved.</p>
+          <p>
+            &copy; {new Date().getFullYear()} Christ Fields. All rights reserved.{' '}
+            <Link href="/privacy" className="ml-1 underline transition-colors hover:text-ivory">
+              Privacy Policy
+            </Link>
+          </p>
           <p className="font-display italic">As iron sharpens iron. Proverbs 27:17</p>
         </div>
       </Container>
