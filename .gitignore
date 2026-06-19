@@ -43,5 +43,8 @@ next-env.d.ts.bak
 .vscode/
 .idea/
 
+# Claude Code (local settings + agent scratch)
+.claude/
+
 # Leftover .tmp files from agent edits on locked drives
 *.tmp.*

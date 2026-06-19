@@ -49,9 +49,13 @@ create index if not exists member_notes_user_idx
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Row Level Security
 --
--- We do NOT enable RLS here because all reads/writes go through Next.js
--- server actions that already authenticate via Clerk and scope every query
--- to the signed-in user. The Supabase service-role key is used server-side
--- only and never reaches the browser. If we ever add direct client-side
--- Supabase access, we will enable RLS at that point.
+-- RLS is ENABLED on every member-data table as a deny-by-default backstop —
+-- see db/migrations/010_rls.sql (and 011_rate_limits.sql for rate_limit_counters).
+-- With no policies, the anon/authenticated (public) roles can read nothing.
+--
+-- NOTE: the app reaches Supabase only with the service-role key, which has the
+-- BYPASSRLS attribute — so RLS does not yet ENFORCE per-user isolation on the
+-- app's own queries; the Clerk-scoped server actions do. Moving reads to a
+-- Clerk-JWT client + per-row policies (so the database enforces tenant isolation
+-- too) is "Phase B", to be done as a deliberate, tested migration. See 010_rls.sql.
 -- ─────────────────────────────────────────────────────────────────────────────
