@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 import { getSupabase, type MemoryVerse, type MemoryStatus } from '@/lib/supabase';
 import { verseForToday, type VerseOfDay } from '@/lib/dashboard/content';
+import { lookupVerse } from '@/lib/bible';
 
 async function requireUser(): Promise<string> {
   const { userId } = await auth();
@@ -50,6 +51,31 @@ export async function getScripture(): Promise<{
     console.error('getScripture: unexpected failure', err);
     return safe;
   }
+}
+
+/**
+ * Look up the verified text for a reference (e.g. "John 3:16") from the Bible
+ * source layer. Read-only; member-gated. Used by the add-verse form so a member
+ * gets accurate, properly-licensed text instead of typing it from memory.
+ */
+export async function lookupVerseText(reference: string): Promise<{
+  ok: boolean;
+  reference?: string;
+  text?: string;
+  translation?: string;
+  error?: string;
+}> {
+  const { userId } = await auth();
+  if (!userId) return { ok: false, error: 'Please sign in first.' };
+
+  const ref = (reference ?? '').trim().slice(0, 100);
+  if (ref.length < 2) return { ok: false, error: 'Enter a reference, like John 3:16.' };
+
+  const verse = await lookupVerse(ref);
+  if (!verse) {
+    return { ok: false, error: 'Could not find that one. Check the spelling, like "Romans 8:1".' };
+  }
+  return { ok: true, reference: verse.reference, text: verse.text, translation: verse.translation };
 }
 
 export async function addVerse(input: {

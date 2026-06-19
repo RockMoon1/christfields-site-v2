@@ -9,6 +9,7 @@ import {
   reviewVerse,
   setVerseStatus,
   deleteVerse,
+  lookupVerseText,
 } from '@/app/dashboard/(app)/scripture/actions';
 
 interface MemoryVersesProps {
@@ -268,6 +269,32 @@ function AddVerseForm({ onCancel, onSubmit, isPending }: AddVerseFormProps) {
   const [reference, setReference] = useState('');
   const [verseText, setVerseText] = useState('');
   const [translation, setTranslation] = useState('ESV');
+  const [looking, setLooking] = useState(false);
+  const [lookupError, setLookupError] = useState('');
+
+  async function lookUp() {
+    const ref = reference.trim();
+    if (ref.length < 2) {
+      setLookupError('Type a reference first, like John 3:16.');
+      return;
+    }
+    setLookupError('');
+    setLooking(true);
+    try {
+      const result = await lookupVerseText(ref);
+      if (result.ok && result.text) {
+        setVerseText(result.text);
+        if (result.translation) setTranslation(result.translation);
+        if (result.reference) setReference(result.reference);
+      } else {
+        setLookupError(result.error ?? 'Could not find that reference.');
+      }
+    } catch {
+      setLookupError('Could not look that up right now. You can paste the text instead.');
+    } finally {
+      setLooking(false);
+    }
+  }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -276,6 +303,7 @@ function AddVerseForm({ onCancel, onSubmit, isPending }: AddVerseFormProps) {
     setReference('');
     setVerseText('');
     setTranslation('ESV');
+    setLookupError('');
   }
 
   return (
@@ -287,20 +315,38 @@ function AddVerseForm({ onCancel, onSubmit, isPending }: AddVerseFormProps) {
         Add a verse to memorize
       </p>
 
-      <input
-        type="text"
-        value={reference}
-        onChange={(e) => setReference(e.target.value)}
-        placeholder="Reference (e.g. Romans 8:1)"
-        autoFocus
-        maxLength={100}
-        className="w-full rounded-sm border border-border-sub bg-black-2 px-3 py-2 text-sm text-ivory placeholder:text-muted focus:border-gold focus:outline-none"
-      />
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={reference}
+          onChange={(e) => {
+            setReference(e.target.value);
+            setLookupError('');
+          }}
+          placeholder="Reference (e.g. Romans 8:1)"
+          autoFocus
+          maxLength={100}
+          className="min-w-0 flex-1 rounded-sm border border-border-sub bg-black-2 px-3 py-2 text-sm text-ivory placeholder:text-muted focus:border-gold focus:outline-none"
+        />
+        <button
+          type="button"
+          onClick={lookUp}
+          disabled={looking || reference.trim().length < 2}
+          className="flex-none rounded-sm border border-gold/45 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black disabled:opacity-50"
+        >
+          {looking ? 'Looking…' : 'Look up'}
+        </button>
+      </div>
+      <p className="-mt-2 text-[11px] leading-relaxed text-muted">
+        Type the reference and tap Look up for the verified text (World English Bible, public
+        domain), or paste your own below.
+      </p>
+      {lookupError && <p className="-mt-1 text-xs text-red-400">{lookupError}</p>}
 
       <textarea
         value={verseText}
         onChange={(e) => setVerseText(e.target.value)}
-        placeholder="Paste or type the verse text here."
+        placeholder="Paste or type the verse text here, or use Look up above."
         rows={3}
         maxLength={1000}
         className="w-full rounded-sm border border-border-sub bg-black-2 px-3 py-2 text-sm text-ivory placeholder:text-muted focus:border-gold focus:outline-none resize-none"
