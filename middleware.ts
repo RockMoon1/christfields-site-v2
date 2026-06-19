@@ -42,15 +42,9 @@ export default async function middleware(req: NextRequest, event: NextFetchEvent
 }
 
 /**
- * Scope middleware to /dashboard/* (the authenticated app) and the member-only
- * API routes that need Clerk. The public marketing site (home, journal,
- * faithflow) stays independent of Clerk.
- *
- * /api/verse must be matched so clerkMiddleware runs for it: its handler calls
- * auth() to identify the member, and auth() throws if the request never passed
- * through clerkMiddleware. It is NOT in isProtectedRoute, so it is not
- * force-redirected; the handler returns a clean 401 JSON when signed out.
+ * Scope middleware to /dashboard/* (the authenticated app). The public marketing
+ * site (home, journal, faithflow) stays independent of Clerk.
  */
 export const config = {
-  matcher: ['/dashboard/:path*', '/api/verse'],
+  matcher: ['/dashboard/:path*'],
 };
