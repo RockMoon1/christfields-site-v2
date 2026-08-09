@@ -24,7 +24,7 @@ export function autoReplyText({ firstName, formName }: AutoReplyVars): string {
       '',
       'We read every message that comes through this form. Someone from Christ Fields will respond personally, usually within a few days.',
       '',
-      'FaithFlow groups are intentionally small and slow to form. If we are not currently opening new groups in your area, we will tell you that honestly, and we will keep you in mind for when we are.',
+      'FaithFlow is one community, Iron and Ember, and it grows slowly on purpose. If joining is not the right fit right now, including by distance, we will tell you that honestly, and we will keep you in mind.',
       '',
       '"Let us consider how we may spur one another on toward love and good deeds, not giving up meeting together." Hebrews 10:24-25',
       '',
@@ -61,7 +61,7 @@ export function autoReplyHtml({ firstName, formName }: AutoReplyVars): string {
     ? 'Thank you for reaching out about FaithFlow. We read every message that comes through this form. Someone from Christ Fields will respond personally, usually within a few days.'
     : 'Thank you for joining the journey. Christ Fields is built slowly, on purpose. We will reach out when there is something real to share.';
   const body = isFaithFlow
-    ? 'FaithFlow groups are intentionally small and slow to form. If we are not currently opening new groups in your area, we will tell you that honestly, and we will keep you in mind for when we are.'
+    ? 'FaithFlow is one community, Iron and Ember, and it grows slowly on purpose. If joining is not the right fit right now, including by distance, we will tell you that honestly, and we will keep you in mind.'
     : 'ScholarFlow at launch. FaithFlow as new groups form. Build progress as it happens. If you want to follow the work week by week, the Journal is the place.';
   const verse = isFaithFlow
     ? '“Let us consider how we may spur one another on toward love and good deeds, not giving up meeting together.”'

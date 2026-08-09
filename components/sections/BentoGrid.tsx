@@ -46,12 +46,12 @@ interface Tile {
 const TILES: Tile[] = [
   {
     href: '/faithflow',
-    badge: 'First group active',
+    badge: 'Community active',
     badgeTone: 'active',
     title: 'FaithFlow',
-    body: 'Real, small, in-person groups, with a living member dashboard that grows with you. Scripture first, then your rhythms, prayer, reflection, and your people. Iron sharpening iron, face to face.',
+    body: 'One real, in-person community, Iron and Ember, with small groups within it and a living member dashboard that grows with you. Scripture first, then your rhythms, prayer, reflection, and your people. Iron sharpening iron, face to face.',
     forWho: 'For people who want a real, in-person church family.',
-    access: 'In person and invite-only. Not enrolling right now, but you can ask to be considered below.',
+    access: 'In person and invite-only. Joining begins with a real conversation. Ask to be considered below.',
     accessTone: 'invite',
     span: 'md:col-span-4 md:row-span-2',
     big: true,

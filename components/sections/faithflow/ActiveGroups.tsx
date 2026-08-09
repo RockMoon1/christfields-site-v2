@@ -5,11 +5,11 @@ import { CardSpotlight } from '../../motion/CardSpotlight';
 import { MorphBlob } from '../../motion/MorphBlob';
 
 /**
- * Active Groups: the proof-of-life section. The Iron and Ember card is the
- * only group, so it gets the family's card treatment in full — glass surface
- * with a gold hairline, a clip-path unveil entrance (the card is revealed,
- * not faded), and a cursor spotlight. All group copy, the embedded
- * Proverbs 27:17 quote, and the enrollment disclaimer are verbatim.
+ * The Community: Iron and Ember is the main FaithFlow community everyone
+ * joins; leader-led small groups form within it (restructure, 2026-08-09).
+ * The card keeps the family's full treatment — glass surface with a gold
+ * hairline, a clip-path unveil entrance (the card is revealed, not faded),
+ * and a cursor spotlight.
  */
 export function ActiveGroups() {
   return (
@@ -20,14 +20,14 @@ export function ActiveGroups() {
       <Container>
         <SectionHeader
           align="left"
-          eyebrow="Active Groups"
+          eyebrow="The Community"
           title={
             <>
               Walking <em className="not-italic text-gold-lt">Together.</em>
             </>
           }
           titleClassName="text-[clamp(2.4rem,4.5vw,3.75rem)] leading-[1.1]"
-          lede="FaithFlow is alive in real people meeting in real places. Each group has its own name and character, all rooted in the same principles."
+          lede="FaithFlow is alive in real people meeting in real places. One community, Iron and Ember, with small groups forming within it, all rooted in the same principles."
           ledeClassName="text-silver"
           className="mb-14"
         />
@@ -46,7 +46,7 @@ export function ActiveGroups() {
                   Iron and Ember
                 </h3>
                 <p className="text-xs uppercase tracking-[0.16em] text-silver">
-                  Colorado · Local Community
+                  Colorado · The FaithFlow Community
                 </p>
               </div>
               <span className="inline-flex items-center gap-2 rounded-full border border-emerald-lt/40 bg-emerald-lt/15 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-emerald-bright">
@@ -56,12 +56,14 @@ export function ActiveGroups() {
             </header>
 
             <p className="mb-6 text-base leading-relaxed text-ivory-dim">
-              Iron and Ember is the first active FaithFlow group and serves as an early model for
-              what future groups may become. A small group of friends meeting in person, walking
-              through faith, discipline, and community together, rooted in Proverbs 27:17,{' '}
+              Iron and Ember is the FaithFlow community. Everyone who joins FaithFlow becomes part
+              of it: real people meeting in person in Colorado, walking through faith, discipline,
+              and community together, rooted in Proverbs 27:17,{' '}
               <em className="text-gold-lt">
                 &ldquo;As iron sharpens iron, so one person sharpens another.&rdquo;
-              </em>
+              </em>{' '}
+              Together we gather for the big things, shared events, trips, and life side by side.
+              Within the community, small groups meet under leaders who know their people.
             </p>
 
             <div className="mb-6 flex flex-wrap gap-2">
@@ -81,8 +83,8 @@ export function ActiveGroups() {
             </div>
 
             <p className="text-sm italic text-muted">
-              Iron and Ember is not currently open for public enrollment. If you would like to be
-              considered for a future group, reach out below.
+              Joining FaithFlow means joining Iron and Ember. Membership is in person and begins
+              with a real conversation. If that is what you are looking for, reach out below.
             </p>
           </article>
           </CardSpotlight>

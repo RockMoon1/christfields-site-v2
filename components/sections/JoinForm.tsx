@@ -185,7 +185,7 @@ export function JoinForm() {
                     <Select name="interest" defaultValue="" aria-label="What are you most interested in?">
                       <option value="" disabled>What are you most interested in?</option>
                       <option value="scholarflow">ScholarFlow, our faith and study apps</option>
-                      <option value="faithflow">FaithFlow, Weekly Small Groups and Community</option>
+                      <option value="faithflow">FaithFlow, the Iron and Ember Community</option>
                       <option value="osint">OSINT and Trace, Cybersecurity for Good</option>
                       <option value="all">Everything. I want to follow the whole journey</option>
                     </Select>

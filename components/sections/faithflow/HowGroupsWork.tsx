@@ -11,15 +11,15 @@ interface Step {
 const steps: Step[] = [
   {
     title: 'Small and Personal',
-    body: 'Groups stay intentionally small. As interest grows, new groups may be formed with prayerful leadership and clear structure.',
+    body: 'Small groups stay intentionally small. As Iron and Ember grows, new small groups form within it, each with prayerful leadership and clear structure.',
   },
   {
-    title: 'Named and Organized',
-    body: 'Each group has its own name, identity, and character, while staying rooted in the same FaithFlow principles.',
+    title: 'One Shared Identity',
+    body: 'Iron and Ember is the one name everyone shares. The small groups within it carry the same character, rooted in the same FaithFlow principles.',
   },
   {
     title: 'Led with Humility',
-    body: 'Each group has leaders who serve humbly. Leaders guide and equip. They do not dominate or perform.',
+    body: 'Each small group has a leader who serves humbly. Leaders guide and equip. They do not dominate or perform.',
   },
   {
     title: 'Scripture-Rooted',
@@ -36,8 +36,9 @@ const steps: Step[] = [
  * reading order, each numbered with an oversized editorial numeral instead
  * of the old circled badge. The grid is intentionally 3 + 2: the last two
  * principles widen to fill the row, so the layout reads as a deliberate
- * cadence rather than an orphaned wrap. Principle titles and bodies are
- * values statements and stay verbatim.
+ * cadence rather than an orphaned wrap. Principle bodies reflect the
+ * 2026-08-09 restructure: Iron and Ember is the one community, small
+ * groups form within it.
  */
 export function HowGroupsWork() {
   return (
@@ -52,7 +53,7 @@ export function HowGroupsWork() {
             </>
           }
           titleClassName="text-[clamp(2.4rem,4.5vw,3.75rem)] leading-[1.1]"
-          lede="Groups stay small and intentional. Every detail serves the same goal. Faithful community, not performance."
+          lede="One community, Iron and Ember. Within it, small groups stay small and intentional. Every detail serves the same goal. Faithful community, not performance."
           ledeClassName="text-silver"
           className="mb-14"
         />

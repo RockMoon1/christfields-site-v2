@@ -19,8 +19,8 @@ const RATE_LIMIT_MS = 10_000;
 
 const INTEREST_OPTIONS: { value: InterestKey; label: string }[] = [
   { value: 'community', label: "I'm interested in FaithFlow community" },
-  { value: 'future-group', label: "I'd like to be considered for a future group" },
-  { value: 'help-start', label: "I'm interested in helping start a group" },
+  { value: 'future-group', label: "I'd like to be considered for Iron and Ember" },
+  { value: 'help-start', label: "I'm interested in leading a small group" },
   { value: 'learn-more', label: 'I just want to learn more' },
 ];
 
@@ -130,7 +130,7 @@ export function GetInvolved() {
             </>
           }
           titleClassName="text-[clamp(2.4rem,4.5vw,3.75rem)] leading-[1.1]"
-          lede="Whether you are interested in FaithFlow community, future groups, helping start a group, or simply learning more, we would love to hear from you."
+          lede="Whether you are interested in joining Iron and Ember, leading a small group within it, or simply learning more, we would love to hear from you."
           ledeClassName="text-silver"
           className="mb-12"
         />

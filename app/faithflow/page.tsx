@@ -32,14 +32,14 @@ export const metadata: Metadata = {
 const navLinks = [
   { href: '/#vision', label: 'Vision' },
   { href: '/#projects', label: 'Projects' },
-  { href: '#groups', label: 'Active Groups' },
+  { href: '#groups', label: 'The Community' },
   { href: '#get-involved', label: 'Get Involved', cta: true },
 ];
 
 const railSections = [
   { id: 'top', label: 'Top' },
   { id: 'what', label: 'What' },
-  { id: 'groups', label: 'Groups' },
+  { id: 'groups', label: 'Community' },
   { id: 'how', label: 'How' },
   { id: 'scripture', label: 'Scripture' },
   { id: 'leaders', label: 'Leaders' },
@@ -51,7 +51,7 @@ const footerColumns = [
     heading: 'FaithFlow',
     links: [
       { href: '#what', label: 'What It Is' },
-      { href: '#groups', label: 'Active Groups' },
+      { href: '#groups', label: 'The Community' },
       { href: '#how', label: 'How It Works' },
       { href: '#scripture', label: 'Scripture' },
       { href: '#get-involved', label: 'Get Involved' },

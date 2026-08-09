@@ -80,7 +80,7 @@ export function FFHero() {
         <Reveal>
           <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-lt/35 bg-emerald-lt/15 px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.16em] text-emerald-bright">
             <span className="inline-block h-1.5 w-1.5 animate-[ffPulse_2s_ease-in-out_infinite] rounded-full bg-emerald-lt shadow-[0_0_8px_var(--color-emerald-lt)]" />
-            First Group Active
+            Iron and Ember · Active
           </span>
         </Reveal>
 
@@ -114,7 +114,7 @@ export function FFHero() {
           <div className="flex flex-wrap justify-center gap-3">
             <Button href="#get-involved">Join or Learn More &rarr;</Button>
             <Button href="#groups" variant="ghost">
-              View Active Groups
+              Meet the Community
             </Button>
           </div>
         </Reveal>

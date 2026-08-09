@@ -71,19 +71,19 @@ export const FAITHFLOW_CONTENT: Record<InterestKey, TailoredContent> = {
       },
       {
         type: 'prose',
-        heading: 'Iron and Ember, Our First Group',
+        heading: 'Iron and Ember, Our Community',
         paragraphs: [
-          'Iron and Ember is the first active FaithFlow group and serves as an early model for what future groups may become. A small group of friends meeting in person in Colorado, walking through faith and life together, rooted in Proverbs 27:17.',
-          'Iron and Ember is not currently open for public enrollment. As interest grows, new groups may form prayerfully, with clear leadership and structure.',
+          'Iron and Ember is the FaithFlow community, meeting in person in Colorado. Everyone who joins FaithFlow becomes part of it: walking through faith and life together, rooted in Proverbs 27:17. Together the community gathers for the big things, shared events, trips, and life side by side.',
+          'Joining FaithFlow means joining Iron and Ember. Membership is in person and begins with a real conversation. Within the community, small groups form prayerfully, each with clear leadership and structure.',
         ],
       },
       {
         type: 'list',
         heading: 'How FaithFlow Groups Work',
         items: [
-          '<strong>Small and personal.</strong> Groups stay intentionally small. New groups may form prayerfully as interest grows.',
-          '<strong>Named and organized.</strong> Each group has its own name, identity, and character, rooted in the same FaithFlow principles.',
-          '<strong>Led with humility.</strong> Leaders serve, guide, and equip. They do not dominate or perform.',
+          '<strong>Small and personal.</strong> Small groups stay intentionally small. As Iron and Ember grows, new small groups form prayerfully within it.',
+          '<strong>One shared identity.</strong> Iron and Ember is the one name everyone shares. The small groups within it carry the same character, rooted in the same FaithFlow principles.',
+          '<strong>Led with humility.</strong> Each small group has a leader who serves, guides, and equips. They do not dominate or perform.',
           '<strong>Scripture-rooted.</strong> The Bible is the foundation, not an afterthought.',
           '<strong>Faithful community.</strong> The goal is faithfulness, not metrics or hype.',
         ],
@@ -135,14 +135,14 @@ export const FAITHFLOW_CONTENT: Record<InterestKey, TailoredContent> = {
 
   'future-group': {
     eyebrow: 'You Asked About',
-    title: 'A Future FaithFlow Group',
+    title: 'Joining Iron and Ember',
     sections: [
       {
         type: 'prose',
-        heading: 'While You Wait',
+        heading: 'Before You Join',
         paragraphs: [
-          'Faithful community begins long before a group forms. The strongest groups are made of people who already know how to seek Christ on their own.',
-          'Use this season to build a foundation. Daily Scripture, honest prayer, and personal discipline. When a group does form, you will bring real depth to it.',
+          'Faithful community begins long before you walk in the door. The strongest communities are made of people who already know how to seek Christ on their own.',
+          'Use this season to build a foundation. Daily Scripture, honest prayer, and personal discipline. When you step into Iron and Ember, and into a small group within it, you will bring real depth with you.',
         ],
       },
       {
@@ -206,14 +206,14 @@ export const FAITHFLOW_CONTENT: Record<InterestKey, TailoredContent> = {
 
   'help-start': {
     eyebrow: 'You Asked About',
-    title: 'Helping Start a Group',
+    title: 'Leading a Small Group',
     sections: [
       {
         type: 'prose',
         heading: 'What This Means',
         paragraphs: [
           'Thank you for being willing. We do not take this lightly, and neither should you.',
-          'FaithFlow groups are led by people who are first being led themselves. Led by Christ, by Scripture, and by other faithful believers. Leadership in FaithFlow is service, not status.',
+          'The small groups within Iron and Ember are led by people who are first being led themselves. Led by Christ, by Scripture, and by other faithful believers. Leadership in FaithFlow is service, not status.',
         ],
       },
       {
@@ -230,7 +230,7 @@ export const FAITHFLOW_CONTENT: Record<InterestKey, TailoredContent> = {
       },
       {
         type: 'list',
-        heading: 'What a FaithFlow Group Asks of a Leader',
+        heading: 'What a Small Group Asks of a Leader',
         items: [
           'Show up consistently, not just when it is convenient.',
           'Open Scripture honestly, including the parts that confront you.',
@@ -313,7 +313,7 @@ export const FAITHFLOW_CONTENT: Record<InterestKey, TailoredContent> = {
         type: 'prose',
         heading: 'Where It Stands Right Now',
         paragraphs: [
-          'Iron and Ember is the first active FaithFlow group, meeting in Colorado. As interest grows, new groups may form prayerfully, with clear leadership and structure.',
+          'Iron and Ember is the FaithFlow community, meeting in Colorado. Everyone who joins FaithFlow becomes part of it. As the community grows, small groups form within it, prayerfully, each with clear leadership and structure.',
           'We are not in a hurry to grow. We are building this carefully.',
         ],
       },

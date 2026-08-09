@@ -88,7 +88,7 @@ export default function FaithFlowResourcesPage() {
         eyebrow="FaithFlow · For Now"
         titleLine1="Trusted Resources"
         titleLine2="While We Build."
-        description="FaithFlow is growing. Until you find your way into a local group, these are the communities, reading plans, and study tools we trust for genuine spiritual growth. Not a curated list for appearance. Resources that actually require something of you."
+        description="FaithFlow is growing. Until you find your way into the community, these are the communities, reading plans, and study tools we trust for genuine spiritual growth. Not a curated list for appearance. Resources that actually require something of you."
         resources={resources}
       />
       <Footer columns={footerColumns} />
