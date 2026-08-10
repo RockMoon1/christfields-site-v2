@@ -27,6 +27,8 @@ export interface JournalFrontmatter {
   cover?: {
     alt?: string;
     color?: string;
+    /** Real cover image under public/, e.g. /assets/journal/covers/slug.webp. */
+    src?: string;
   };
   readingTime?: number;
 }

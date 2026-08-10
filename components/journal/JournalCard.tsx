@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { CardSpotlight } from '../motion/CardSpotlight';
@@ -20,8 +21,9 @@ interface JournalCardProps {
  * body-copy fade), the cover band carries the post's coverColor plus a
  * giant outlined category watermark, and hover answers with a cover glow
  * and a small title shift — transforms only, so the layout never moves.
- * Tilt on hover plus a gold spotlight. When real cover images are added
- * later, swap the gradient for an <Image>.
+ * Tilt on hover plus a gold spotlight. Covers with a real image
+ * (cover.src) render it with a slow hover zoom and a legibility scrim;
+ * posts without one keep the tinted-gradient band.
  */
 export function JournalCard({ post, featured = false, index = 0 }: JournalCardProps) {
   const fm = post.frontmatter;
@@ -45,13 +47,30 @@ export function JournalCard({ post, featured = false, index = 0 }: JournalCardPr
             href={`/journal/${post.slug}`}
             className="group flex h-full flex-col overflow-hidden rounded-sm border border-border-sub bg-black-2 transition-[border-color] duration-300 hover:border-border-gold"
           >
-            {/* Cover panel. Colored gradient driven by frontmatter cover.color. */}
+            {/* Cover panel. Real image when the post has one, else the tinted
+                gradient driven by frontmatter cover.color. */}
             <div
               className="relative aspect-[16/9] w-full overflow-hidden"
               style={{
                 background: `radial-gradient(ellipse at 30% 30%, ${coverColor}55 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, ${coverColor}22 0%, transparent 60%), var(--color-black-2)`,
               }}
             >
+              {fm.cover?.src && (
+                <>
+                  <Image
+                    src={fm.cover.src}
+                    alt=""
+                    fill
+                    sizes={featured ? '(min-width: 768px) 66vw, 100vw' : '(min-width: 768px) 33vw, 100vw'}
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                  />
+                  {/* Legibility scrim so the watermark and hairlines still read. */}
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/25"
+                  />
+                </>
+              )}
               {/* Outlined category watermark — magazine masthead texture for
                   the otherwise-empty cover band. Decorative only. */}
               <span

@@ -23,15 +23,6 @@ export default async function AvailabilityPage() {
         </p>
       </header>
 
-      {/* Step 2 teaser: connecting a calendar to fill this in automatically. */}
-      <section className="mb-8 rounded-sm border border-dashed border-border-sub bg-black-3/50 p-5">
-        <p className="text-sm text-silver">
-          <span className="font-medium text-ivory">Coming soon:</span> connect your Google, Apple, or
-          Outlook calendar with a private link and your busy times will fill in here automatically.
-          For now, set your availability by hand below.
-        </p>
-      </section>
-
       <AvailabilityBoard initial={initial} />
     </div>
   );

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
@@ -87,7 +88,8 @@ export default async function JournalPostPage({ params }: PageProps) {
     <>
       <Nav links={navLinks} alwaysScrolled />
       <main id="main" className="pt-[var(--nav-h)]">
-        {/* Cover band. Tinted with the post's cover color. Sits between nav and article. */}
+        {/* Cover band. The post's real cover image when it has one, else the
+            tinted gradient. Sits between nav and article. */}
         <div
           aria-hidden
           className="relative h-40 w-full overflow-hidden md:h-56"
@@ -95,8 +97,18 @@ export default async function JournalPostPage({ params }: PageProps) {
             background: `radial-gradient(ellipse at 30% 30%, ${coverColor}44 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, ${coverColor}22 0%, transparent 60%), var(--color-black-2)`,
           }}
         >
-          <MorphBlob color={`${coverColor}33`} size={400} className="-left-20 -top-20" />
-          <MorphBlob color={`${coverColor}22`} size={350} className="-bottom-16 right-10" />
+          {fm.cover?.src ? (
+            <>
+              <Image src={fm.cover.src} alt="" fill sizes="100vw" className="object-cover" priority />
+              {/* Scrim so the band settles calmly into the dark page. */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/55" />
+            </>
+          ) : (
+            <>
+              <MorphBlob color={`${coverColor}33`} size={400} className="-left-20 -top-20" />
+              <MorphBlob color={`${coverColor}22`} size={350} className="-bottom-16 right-10" />
+            </>
+          )}
           <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
         </div>
 
