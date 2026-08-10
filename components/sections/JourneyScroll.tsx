@@ -14,7 +14,7 @@ import { Container } from '../Container';
 import { Reveal } from '../Reveal';
 import { SectionHeader } from '../SectionHeader';
 import { PinnedScrub } from '../motion/PinnedScrub';
-import { OrbLazy } from '../dashboard/OrbLazy';
+import { GlobeHero } from '../dashboard/GlobeHero';
 import { cn } from '@/lib/utils';
 import type { JourneyStage } from '@/lib/dashboard/journey';
 
@@ -24,11 +24,13 @@ import type { JourneyStage } from '@/lib/dashboard/journey';
  * "grows with you" design.
  *
  * On desktop this is a true pinned chapter (PinnedScrub — Lenis runs in
- * window mode, so position:sticky works): the orb holds the viewport and
- * visibly grows through the seasons while the four scene panels pass under
- * the reader's control. Scene crossfades, the ghost season numbers, the
- * accent color wash, and the progress pills all scrub from the same
- * progress value, so the section transforms instead of scrolling past.
+ * window mode, so position:sticky works): the globe holds the viewport and
+ * visibly grows through the seasons (the same GlobeHero members meet on
+ * the dashboard, rain-free here — raindrops belong to a member's real
+ * progress) while the four scene panels pass under the reader's control.
+ * Scene crossfades, the ghost season numbers, the accent color wash, and
+ * the progress pills all scrub from the same progress value, so the
+ * section transforms instead of scrolling past.
  *
  * Touch devices and reduced-motion readers get the linear stacked flow,
  * so every scene is met at reading pace with no pinning.
@@ -78,13 +80,8 @@ const SCENES: Scene[] = [
   },
 ];
 
-const ORB_AREAS = [
-  { id: 'a', name: 'Presence', color: '#c9a548' },
-  { id: 'b', name: 'Honesty', color: '#2d6a4f' },
-  { id: 'c', name: 'Scripture', color: '#e4c97a' },
-  { id: 'd', name: 'Prayer', color: '#5b8db8' },
-  { id: 'e', name: 'Sharpening', color: '#c47b3c' },
-];
+// No rain on the public journey: raindrops are a member's real progress,
+// rendered in code on the dashboard. Here the globe simply grows.
 
 /** Each scene's accent, pre-mixed to a soft rgba for the pinned stage wash. */
 const SCENE_WASHES = [
@@ -253,12 +250,7 @@ function PinnedStage({ progress }: { progress: MotionValue<number> }) {
             style={{ scale: orbScale }}
             className="relative h-[clamp(240px,30vw,380px)] w-[clamp(240px,30vw,380px)]"
           >
-            <OrbLazy
-              className="h-full w-full"
-              areas={ORB_AREAS}
-              vitality={6}
-              stage={SCENES[active].stage}
-            />
+            <GlobeHero className="h-full w-full" stage={SCENES[active].stage} />
           </motion.div>
           <SeasonPills activeIndex={active} />
           <motion.p
@@ -345,11 +337,12 @@ function SeasonPanel({ scene, index }: { scene: Scene; index: number }) {
 }
 
 /**
- * Linear fallback for touch devices and reduced motion: the orb (or its
- * light CSS glow stand-in on phones) grows as the section scrolls past,
- * then each season is its own tall panel, met one at a time.
+ * Linear fallback for touch devices and reduced motion: the globe grows as
+ * the section scrolls past, then each season is its own tall panel, met one
+ * at a time. GlobeHero is an image + static SVG, cheap enough for phones,
+ * so the old CSS glow stand-in is gone.
  */
-function LinearJourney({ isDesktop, reduce }: { isDesktop: boolean; reduce: boolean }) {
+function LinearJourney({ reduce }: { reduce: boolean }) {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
 
@@ -377,23 +370,7 @@ function LinearJourney({ isDesktop, reduce }: { isDesktop: boolean; reduce: bool
           style={reduce ? undefined : { scale: orbScale }}
           className="relative mx-auto mb-6 h-[clamp(220px,38vw,380px)] w-[clamp(220px,38vw,380px)]"
         >
-          {isDesktop ? (
-            <OrbLazy className="h-full w-full" areas={ORB_AREAS} vitality={6} stage={stage} />
-          ) : (
-            <div aria-hidden className="flex h-full w-full items-center justify-center">
-              <div
-                className="relative h-[72%] w-[72%] rounded-full"
-                style={{
-                  background:
-                    'radial-gradient(circle at 50% 38%, rgba(228,201,122,0.30), rgba(201,165,72,0.10) 45%, transparent 70%)',
-                  boxShadow: '0 0 60px rgba(201,165,72,0.18)',
-                }}
-              >
-                <div className="absolute inset-0 rounded-full border border-gold/25" />
-                <div className="absolute inset-[20%] rounded-full border border-gold/15" />
-              </div>
-            </div>
-          )}
+          <GlobeHero className="h-full w-full" stage={stage} />
         </motion.div>
 
         <SeasonPills activeIndex={activeIndex} className="mb-4" />
@@ -412,8 +389,8 @@ function LinearJourney({ isDesktop, reduce }: { isDesktop: boolean; reduce: bool
 }
 
 export function JourneyScroll() {
-  // Both default false so phones never mount the WebGL chunk on first paint;
-  // a capable desktop flips to the pinned chapter right after hydration.
+  // Both default false so first paint is always the linear flow; a capable
+  // desktop flips to the pinned chapter right after hydration.
   const [isDesktop, setIsDesktop] = useState(false);
   const [finePointer, setFinePointer] = useState(false);
   useEffect(() => {
@@ -435,5 +412,5 @@ export function JourneyScroll() {
   const reduce = useReducedMotion() ?? false;
 
   if (isDesktop && finePointer && !reduce) return <PinnedJourney />;
-  return <LinearJourney isDesktop={isDesktop} reduce={reduce} />;
+  return <LinearJourney reduce={reduce} />;
 }

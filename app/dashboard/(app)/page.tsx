@@ -2,7 +2,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import { OrbLazy } from '@/components/dashboard/OrbLazy';
+import { GlobeHero } from '@/components/dashboard/GlobeHero';
 import { TronScrollEffect } from '@/components/dashboard/TronScrollEffect';
 import { HeroPanel } from '@/components/dashboard/HeroPanel';
 import { StatCard } from '@/components/dashboard/StatCard';
@@ -61,14 +61,14 @@ export default async function DashboardHome() {
     Math.floor((now.getTime() - memberSince.getTime()) / (1000 * 60 * 60 * 24)),
   );
 
-  // Vitality drives the orb glow (average of latest progress-area scores).
-  const latestScores = areas
-    .map((a) => a.entries[a.entries.length - 1]?.score)
-    .filter((s): s is number => typeof s === 'number');
-  const vitality =
-    latestScores.length > 0
-      ? latestScores.reduce((a, b) => a + b, 0) / latestScores.length
-      : 0;
+  // Each area's latest score decides how many of its colored raindrops fall
+  // on the globe: the member's progress literally waters the seed.
+  const globeAreas = areas.map((a) => ({
+    id: a.id,
+    name: a.name,
+    color: a.color,
+    score: a.entries[a.entries.length - 1]?.score ?? 0,
+  }));
 
   const dailyRhythms = rhythms.filter((r) => r.cadence === 'daily');
   const keptToday = dailyRhythms.filter((r) => r.doneToday).length;
@@ -230,10 +230,9 @@ export default async function DashboardHome() {
           </div>
 
           <div className="relative aspect-square w-full max-w-[180px] justify-self-center sm:max-w-[280px] md:max-w-[360px] md:justify-self-end">
-            <OrbLazy
+            <GlobeHero
               className="h-full w-full"
-              areas={areas.map((a) => ({ id: a.id, name: a.name, color: a.color }))}
-              vitality={vitality}
+              areas={globeAreas}
               stage={view.journey.stage}
             />
           </div>
