@@ -37,7 +37,8 @@ export function SFPreviewSection() {
 
             <Reveal delay={0.15}>
               <p className="text-sm text-muted">
-                The real tools live on the shelf below. GraceFlow and LearnFlow are open today.
+                The real tools live on the shelf below. GraceFlow is open today, with LearnFlow
+                inside it.
               </p>
             </Reveal>
           </div>

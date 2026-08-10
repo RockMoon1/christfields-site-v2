@@ -47,7 +47,7 @@ export default async function LeaderLayout({ children }: { children: React.React
               {ctx ? 'Leading' : 'FaithFlow Leader'}
             </p>
             <p className="truncate font-display text-lg font-light text-ivory">
-              {ctx ? ctx.orgName : 'Choose your group'}
+              {ctx ? ctx.orgName : 'Choose your small group'}
             </p>
           </div>
           <div className="flex items-center gap-3">

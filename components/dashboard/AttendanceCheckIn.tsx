@@ -36,7 +36,7 @@ export function AttendanceCheckIn({ initial }: { initial: MyAttendanceWeek[] }) 
         setWeeks((w) => w.map((x, i) => (i === 0 ? { ...x, checkedIn: false } : x)));
         setNote(
           res.reason === 'no-group'
-            ? 'Once you are part of a group, you can mark when you gather.'
+            ? 'Once you are part of a small group, you can mark when you gather.'
             : 'Something went wrong. Try again in a moment.',
         );
         return;
@@ -78,7 +78,7 @@ export function AttendanceCheckIn({ initial }: { initial: MyAttendanceWeek[] }) 
 
       {state === 'open' && (
         <>
-          <h3 className="font-display text-2xl font-light text-ivory">Were you at group this week?</h3>
+          <h3 className="font-display text-2xl font-light text-ivory">Were you with your small group this week?</h3>
           <p className="mt-2 text-sm leading-relaxed text-silver">
             The gathering is the heart of this. If you were there, let your leader know.
           </p>

@@ -135,9 +135,9 @@ export default async function SettingsPage() {
           <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.22em] text-gold">
             FaithFlow Leader
           </p>
-          <h3 className="mb-3 font-display text-xl font-light text-ivory">Lead your group</h3>
+          <h3 className="mb-3 font-display text-xl font-light text-ivory">Lead your small group</h3>
           <p className="mb-6 max-w-xl text-sm leading-relaxed text-silver">
-            See how each person in your group is walking, and find prayerful,
+            See how each person in your small group is walking, and find prayerful,
             Scripture-rooted ways to shepherd them. Built for phone, tablet, and desktop.
           </p>
           <Link

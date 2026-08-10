@@ -111,7 +111,7 @@ export function Sidebar({
           </Link>
           <NavTooltip
             label="FaithFlow Leader"
-            hint="Lead your group. See how each person is walking and find prayerful ways to shepherd them."
+            hint="Lead your small group. See how each person is walking and find prayerful ways to shepherd them."
           />
         </div>
       )}

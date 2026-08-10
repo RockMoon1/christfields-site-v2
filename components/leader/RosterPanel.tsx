@@ -161,12 +161,13 @@ export default function RosterPanel({ hasGroup, orgName }: RosterPanelProps) {
             Start here
           </p>
           <h2 className="mb-2 font-display font-light text-xl text-ivory">
-            Start your FaithFlow group
+            Start your small group
           </h2>
           <p className="max-w-prose text-sm leading-relaxed text-ivory-dim">
-            Create a group to get started. Once it is set up, you can invite
-            students by email and Clerk sends them a secure invitation to join.
-            You control who is in the cohort and what role each person holds.
+            Create your small group to get started. Every small group lives within
+            Iron and Ember, our one community. Once it is set up, you can invite
+            members by email and Clerk sends them a secure invitation to join.
+            You control who is in the group and what role each person holds.
           </p>
         </div>
 

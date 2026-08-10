@@ -91,7 +91,19 @@ export function JoinForm() {
         }),
       });
       if (!res.ok) {
-        throw new Error(`Status ${res.status}`);
+        // Surface the server's own message (e.g. the 429 "please wait a
+        // moment") instead of a generic error that invites an instant retry.
+        // Handled inline, NOT thrown: the catch below must stay generic so a
+        // network failure never leaks a raw browser string like
+        // "Failed to fetch" into the UI.
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        setErrorMsg(
+          typeof body?.error === 'string' && body.error
+            ? body.error
+            : 'Something went wrong. Please try again.',
+        );
+        setState('error');
+        return;
       }
       setState('success');
     } catch {
@@ -126,7 +138,7 @@ export function JoinForm() {
               <em className="not-italic text-gold-lt">us.</em>
             </>
           }
-          lede="GraceFlow and LearnFlow are live now, with more tools on the way, alongside our in-person community. Leave your email and we will keep you close: new tools as they open, FaithFlow news, and the occasional note worth reading."
+          lede="GraceFlow is live now, with LearnFlow inside it and more tools on the way, alongside our in-person community. Leave your email and we will keep you close: new tools as they open, FaithFlow news, and the occasional note worth reading."
           className="mb-12"
           ledeClassName="text-silver"
         />
@@ -146,7 +158,7 @@ export function JoinForm() {
                   <ScriptureSymbol className="mb-4 block text-3xl text-gold" />
                   <h3 className="mb-4 font-display text-3xl font-light text-ivory">You&rsquo;re in.</h3>
                   <p className="mb-3 leading-relaxed text-ivory-dim">
-                    Welcome to the journey. We will reach out at launch and along the way.
+                    Welcome to the journey. We will reach out as new tools open and along the way.
                   </p>
                   <p className="font-display italic text-silver">
                     <TextSplit
@@ -177,7 +189,7 @@ export function JoinForm() {
                   </p>
 
                   <div className="grid gap-4 md:grid-cols-2">
-                    <FloatingInput name="name" label="Your name" type="text" required autoComplete="given-name" maxLength={100} />
+                    <FloatingInput name="name" label="Your name" type="text" required autoComplete="name" maxLength={100} />
                     <FloatingInput name="email" label="Your email address" type="email" required autoComplete="email" maxLength={254} />
                   </div>
 

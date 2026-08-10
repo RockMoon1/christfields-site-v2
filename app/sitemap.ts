@@ -27,6 +27,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: `${BASE}/scholarflow`,
+      lastModified: today,
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
       url: `${BASE}/journal`,
       lastModified: today,
       changeFrequency: 'weekly',
@@ -43,6 +49,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: today,
       changeFrequency: 'monthly',
       priority: 0.6,
+    },
+    {
+      url: `${BASE}/privacy`,
+      lastModified: today,
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
+      url: `${BASE}/terms`,
+      lastModified: today,
+      changeFrequency: 'yearly',
+      priority: 0.3,
     },
   ];
 

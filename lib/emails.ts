@@ -41,7 +41,7 @@ export function autoReplyText({ firstName, formName }: AutoReplyVars): string {
     '',
     'You are in. Thank you for joining the journey.',
     '',
-    'Christ Fields is built slowly, on purpose. We will reach out when there is something real to share. ScholarFlow at launch. FaithFlow as new groups form. Build progress as it happens.',
+    'Christ Fields is built slowly, on purpose. We will reach out when there is something real to share. New tools as they open. FaithFlow news as the community grows. Build progress as it happens.',
     '',
     'If you want to follow the work week by week, the Journal is the place to be:',
     'https://christfields2717.com/journal',
@@ -62,7 +62,7 @@ export function autoReplyHtml({ firstName, formName }: AutoReplyVars): string {
     : 'Thank you for joining the journey. Christ Fields is built slowly, on purpose. We will reach out when there is something real to share.';
   const body = isFaithFlow
     ? 'FaithFlow is one community, Iron and Ember, and it grows slowly on purpose. If joining is not the right fit right now, including by distance, we will tell you that honestly, and we will keep you in mind.'
-    : 'ScholarFlow at launch. FaithFlow as new groups form. Build progress as it happens. If you want to follow the work week by week, the Journal is the place.';
+    : 'New tools as they open. FaithFlow news as the community grows. Build progress as it happens. If you want to follow the work week by week, the Journal is the place.';
   const verse = isFaithFlow
     ? '“Let us consider how we may spur one another on toward love and good deeds, not giving up meeting together.”'
     : '“Commit your work to the Lord, and your plans will be established.”';

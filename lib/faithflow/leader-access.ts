@@ -56,12 +56,26 @@ export async function getLeaderContext(): Promise<LeaderContext | null> {
     if (!userId || !orgId || !isLeaderRole(orgRole)) return null;
 
     const client = await clerkClient();
-    const [org, memberships] = await Promise.all([
-      client.organizations.getOrganization({ organizationId: orgId }),
-      client.organizations.getOrganizationMembershipList({ organizationId: orgId, limit: 100 }),
-    ]);
+    const org = await client.organizations.getOrganization({ organizationId: orgId });
 
-    const members: OrgMember[] = memberships.data
+    // Page through the full roster. A single 100-cap call silently truncated
+    // the board once an org (the Iron & Ember main community especially)
+    // outgrew one page; 1000 stays as a sanity ceiling far above real size.
+    const pageSize = 100;
+    const rows: Awaited<
+      ReturnType<typeof client.organizations.getOrganizationMembershipList>
+    >['data'] = [];
+    for (let offset = 0; rows.length < 1000; offset += pageSize) {
+      const page = await client.organizations.getOrganizationMembershipList({
+        organizationId: orgId,
+        limit: pageSize,
+        offset,
+      });
+      rows.push(...page.data);
+      if (page.data.length < pageSize) break;
+    }
+
+    const members: OrgMember[] = rows
       .map((m) => {
         const pud = m.publicUserData;
         const name =

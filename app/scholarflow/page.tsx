@@ -13,7 +13,7 @@ import { SFInvite } from '@/components/sections/scholarflow/SFInvite';
 export const metadata: Metadata = {
   title: 'ScholarFlow',
   description:
-    'ScholarFlow is the Christ Fields category of faith and study tools. Browse the apps we make, GraceFlow and LearnFlow, with more on the way.',
+    'ScholarFlow is the Christ Fields category of faith and study tools. GraceFlow is live today, with LearnFlow, its deep-study tier, inside, and more on the way.',
   openGraph: {
     title: 'ScholarFlow by Christ Fields',
     description:

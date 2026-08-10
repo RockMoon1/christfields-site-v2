@@ -28,9 +28,13 @@ interface NavProps {
   alwaysScrolled?: boolean;
 }
 
+// The nav names what Christ Fields actually offers (FaithFlow, ScholarFlow)
+// instead of abstract section labels; the fields map stays reachable by
+// scrolling and via the footer's Projects link.
 const defaultLinks: NavLink[] = [
   { href: '#vision', label: 'Vision' },
-  { href: '#projects', label: 'Projects' },
+  { href: '/faithflow', label: 'FaithFlow' },
+  { href: '/scholarflow', label: 'ScholarFlow' },
   { href: '/journal', label: 'Journal' },
   { href: '/dashboard/sign-in', label: 'Sign in' },
   { href: '#join', label: 'Join the Journey', cta: true },

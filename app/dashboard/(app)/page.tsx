@@ -104,7 +104,7 @@ export default async function DashboardHome() {
     },
     showCommunity && {
       href: '/dashboard/community',
-      eyebrow: 'Groups',
+      eyebrow: 'Community',
       headline: 'Carry each other',
       sub: 'Pray for one another by name',
       accent: '#c47b3c',
@@ -222,7 +222,7 @@ export default async function DashboardHome() {
                     prefetch
                     className="inline-flex items-center gap-2 rounded-sm border border-gold/45 bg-transparent px-5 py-2.5 text-[11px] font-medium uppercase tracking-[0.07em] text-gold transition-colors hover:bg-gold hover:text-black"
                   >
-                    Your group
+                    Your community
                   </Link>
                 </MagneticButton>
               )}

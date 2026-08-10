@@ -13,11 +13,11 @@ export default async function LeaderPage() {
             Group
           </p>
           <h1 className="font-display text-4xl font-light text-ivory md:text-5xl">
-            Choose your group
+            Choose your small group
           </h1>
           <p className="max-w-md text-sm text-silver leading-relaxed">
-            Use the switcher in the top right to pick an existing group or create a new one.
-            Once you are set as a leader, this page will come to life.
+            Use the switcher in the top right to pick the small group you lead within Iron and
+            Ember. Once you are set as a leader, this page will come to life.
           </p>
         </div>
       </div>
@@ -35,7 +35,7 @@ export default async function LeaderPage() {
             {data.org.name}
           </h1>
           <p className="max-w-md text-sm text-silver leading-relaxed">
-            Your group is set up. Now invite the people you are walking with.
+            Your small group is set up. Now invite the people you are walking with.
           </p>
           <Link
             href="/dashboard/leader/roster"

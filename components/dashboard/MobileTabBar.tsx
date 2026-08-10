@@ -21,7 +21,7 @@ import { isRevealed, type SectionDepth, type SectionKey } from '@/lib/dashboard/
 // in-person gathering is the heartbeat we point new members toward first).
 const TAB_LABEL: Partial<Record<string, string>> = {
   '/dashboard/today': 'Today',
-  '/dashboard/community': 'Groups',
+  '/dashboard/community': 'Community',
 };
 
 export function MobileTabBar({

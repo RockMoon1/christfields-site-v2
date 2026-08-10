@@ -55,9 +55,9 @@ export function WhatIsScholarFlow() {
           </Reveal>
           <Reveal delay={0.1}>
             <p>
-              Two are live today, <strong className="font-medium text-ivory">GraceFlow</strong> and{' '}
-              <strong className="font-medium text-ivory">LearnFlow</strong>. More are coming, in their
-              own time.
+              <strong className="font-medium text-ivory">GraceFlow</strong> is live today, with{' '}
+              <strong className="font-medium text-ivory">LearnFlow</strong>, its deep-study tier,
+              inside. More are coming, in their own time.
             </p>
           </Reveal>
         </div>

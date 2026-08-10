@@ -94,7 +94,19 @@ export function GetInvolved() {
         }),
       });
       if (!res.ok) {
-        throw new Error(`Status ${res.status}`);
+        // Surface the server's own message (e.g. the 429 "please wait a
+        // moment") instead of a generic error that invites an instant retry.
+        // Handled inline, NOT thrown: the catch below must stay generic so a
+        // network failure never leaks a raw browser string like
+        // "Failed to fetch" into the UI.
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        setErrorMsg(
+          typeof body?.error === 'string' && body.error
+            ? body.error
+            : 'Something went wrong. Please try again.',
+        );
+        setState('error');
+        return;
       }
 
       setChosenInterest(interest as InterestKey);

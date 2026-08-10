@@ -21,6 +21,8 @@ const defaultColumns: FooterColumn[] = [
     heading: 'Navigate',
     links: [
       { href: '/#vision', label: 'Vision' },
+      { href: '/faithflow', label: 'FaithFlow' },
+      { href: '/scholarflow', label: 'ScholarFlow' },
       { href: '/#projects', label: 'Projects' },
       { href: '/journal', label: 'Journal' },
       { href: '/#join', label: 'Join' },
@@ -100,6 +102,9 @@ export function Footer({ columns = defaultColumns }: FooterProps) {
             &copy; {new Date().getFullYear()} Christ Fields. All rights reserved.{' '}
             <Link href="/privacy" className="ml-1 underline transition-colors hover:text-ivory">
               Privacy Policy
+            </Link>
+            <Link href="/terms" className="ml-3 underline transition-colors hover:text-ivory">
+              Terms
             </Link>
           </p>
           <p className="font-display italic">As iron sharpens iron. Proverbs 27:17</p>

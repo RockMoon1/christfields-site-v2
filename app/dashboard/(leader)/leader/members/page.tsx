@@ -13,10 +13,10 @@ export default async function MembersPage() {
         <PageHeader />
         <div className="mt-20 flex flex-col items-center gap-4 text-center">
           <p className="font-display text-2xl font-light text-ivory-dim">
-            You are not leading a group yet.
+            You are not leading a small group yet.
           </p>
           <p className="max-w-md text-sm text-silver">
-            Use the group switcher in the top right to choose or create a group. Once you have
+            Use the group switcher in the top right to choose your small group. Once you have
             one, your members will appear here.
           </p>
         </div>

@@ -15,10 +15,10 @@ export default async function AttendancePage() {
         <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-muted">
           Attendance
         </p>
-        <h1 className="font-display text-4xl font-light text-ivory md:text-5xl">Choose your group</h1>
+        <h1 className="font-display text-4xl font-light text-ivory md:text-5xl">Choose your small group</h1>
         <p className="mt-3 max-w-md text-sm leading-relaxed text-silver">
-          Use the switcher in the top right to pick your group. Once you are set as a leader, you
-          can mark who showed up here.
+          Use the switcher in the top right to pick your small group. Once you are set as a
+          leader, you can mark who showed up here.
         </p>
       </div>
     );

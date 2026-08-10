@@ -2,11 +2,11 @@
 
 **You are the Christ Fields AI. This repo is the Christ Fields company platform (v2), a Next.js/TypeScript app. It is the home for the company brand + FaithFlow + ScholarFlow + the journal + the dashboard.**
 
-> 🚧 STAY IN THIS REPO. Do **not** edit GraceFlow or LearnFlow — those are a SEPARATE live app at `B:\graceflow` (its own repo + Netlify deploy). If a task is about the GraceFlow PWA or the LearnFlow "Study" tab, it belongs in `B:\graceflow`, **not here.** If you need GraceFlow in the site, **link to it** (graceflows.netlify.app) — don't rebuild it here. Full map: `B:\C_Fieldssite\PROJECT-MAP.md`.
+> 🚧 STAY IN THIS REPO. Do **not** edit GraceFlow or LearnFlow — those are a SEPARATE live app at `B:\graceflow` (its own repo + Netlify deploy). If a task is about the GraceFlow PWA or the LearnFlow "Study" tab, it belongs in `B:\graceflow`, **not here.** If you need GraceFlow in the site, **link to it** (graceflows.netlify.app) — don't rebuild it here. Full map: `B:\OLD-history-Sit\PROJECT-MAP.md`.
 >
 > ⚠️ ONE chat per repo at a time. Parallel chats editing this repo caused confusion on 2026-06-03.
 >
-> 📦 Moved 2026-06-03 from `C:\Users\lpell\Projects\christfields-site-v2` → `B:\christfields-site-v2` (everything on B: now). The retired static **v1** site is `B:\C_Fieldssite`.
+> 📦 Moved 2026-06-03 from `C:\Users\lpell\Projects\christfields-site-v2` → `B:\christfields-site-v2` (everything on B: now). The retired static **v1** site is `B:\OLD-history-Sit`.
 
 ## What this is
 The Christ Fields company platform — the "front of house" for the whole ecosystem.
@@ -25,5 +25,4 @@ The Christ Fields company platform — the "front of house" for the whole ecosys
 ## Working rules
 - **Verify in the browser** before claiming done.
 - **Commit/push only when the founder asks.**
-- Heads-up: this repo currently has some `*.tmp.*` files accidentally committed (from an earlier session) — safe to `git rm` them in a cleanup commit when convenient.
 - GraceFlow + LearnFlow are NOT here and are NOT to be rebuilt here — they live at `B:\graceflow`.

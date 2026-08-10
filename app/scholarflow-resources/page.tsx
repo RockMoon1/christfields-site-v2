@@ -6,7 +6,7 @@ import { ResourcePage, type Resource } from '@/components/sections/resources/Res
 export const metadata: Metadata = {
   title: 'ScholarFlow Resources',
   description:
-    'Trusted tools recommended by Christ Fields for managing time, resisting distraction, and staying accountable while ScholarFlow is being built.',
+    'Trusted tools recommended by Christ Fields for managing time, resisting distraction, and staying accountable, alongside the growing ScholarFlow shelf.',
   openGraph: {
     title: 'ScholarFlow Resources by Christ Fields',
     description:
@@ -73,7 +73,7 @@ export default function ScholarFlowResourcesPage() {
         eyebrow="ScholarFlow · For Now"
         titleLine1="Trusted Resources"
         titleLine2="While We Build."
-        description="ScholarFlow is coming. Until then, these are the tools we trust for managing time, resisting distraction, and staying accountable. Each one was chosen because it genuinely serves the work, not because it is popular."
+        description="The ScholarFlow shelf is live and growing. Alongside it, these are the tools we trust for managing time, resisting distraction, and staying accountable. Each one was chosen because it genuinely serves the work, not because it is popular."
         resources={resources}
       />
       <Footer columns={footerColumns} />

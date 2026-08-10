@@ -19,20 +19,30 @@ export interface MyAttendanceWeek {
 }
 
 /**
- * The group this member belongs to. Prefer the session's active org, but fall
- * back to their Clerk org membership, so check-in works even when the session
- * has no active org set (common on a phone). Members belong to one group; if
- * somehow more than one, we use the first.
+ * The org this member's check-in belongs to. Under the Iron & Ember structure
+ * (2026-08) a member can belong to BOTH the main community org and a small
+ * group, and the weekly "I was there" is about the small group, so the main
+ * community (MAIN_COMMUNITY_ORG_ID) is excluded when picking. Until that env
+ * var is set, behavior is unchanged: the session's active org first, else the
+ * first Clerk membership.
  */
 async function resolveMemberOrgId(userId: string, activeOrgId: string | null): Promise<string | null> {
-  if (activeOrgId) return activeOrgId;
+  const mainOrgId = process.env.MAIN_COMMUNITY_ORG_ID || null;
+  if (!mainOrgId && activeOrgId) return activeOrgId;
+  if (mainOrgId && activeOrgId && activeOrgId !== mainOrgId) return activeOrgId;
   try {
     const client = await clerkClient();
     const res = await client.users.getOrganizationMembershipList({ userId });
-    return res.data[0]?.organization?.id ?? null;
+    const orgIds = res.data
+      .map((m) => m.organization?.id)
+      .filter((id): id is string => Boolean(id));
+    const smallGroup = mainOrgId ? orgIds.find((id) => id !== mainOrgId) : orgIds[0];
+    // A member who is only in the main community (no small group yet) checks
+    // in against it until a leader takes them into a group.
+    return smallGroup ?? orgIds[0] ?? activeOrgId ?? null;
   } catch (err) {
     console.error('resolveMemberOrgId failed', err);
-    return null;
+    return activeOrgId ?? null;
   }
 }
 

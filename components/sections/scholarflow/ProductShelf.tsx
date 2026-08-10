@@ -40,7 +40,7 @@ export function ProductShelf() {
             </>
           }
           titleClassName="text-[clamp(2.4rem,4.5vw,3.75rem)] leading-[1.1]"
-          lede="Two apps are live today. Tap in and use them now, free to start. More are on the way."
+          lede="GraceFlow is live today, free to start, with LearnFlow, its deep-study tier, inside. More are on the way."
           ledeClassName="text-silver"
           className="mb-14"
         />

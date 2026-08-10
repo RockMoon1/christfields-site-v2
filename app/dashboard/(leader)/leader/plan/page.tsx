@@ -15,11 +15,11 @@ export default async function LeaderPlanPage() {
         <div className="flex flex-col items-start gap-4">
           <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted">Plan</p>
           <h1 className="font-display text-4xl font-light text-ivory md:text-5xl">
-            Choose your group
+            Choose your small group
           </h1>
           <p className="max-w-md text-sm leading-relaxed text-silver">
-            Use the switcher in the top right to pick the group you lead. Then you can see when
-            everyone is free and plan around it.
+            Use the switcher in the top right to pick the small group you lead. Then you can see
+            when everyone is free and plan around it.
           </p>
         </div>
       </div>

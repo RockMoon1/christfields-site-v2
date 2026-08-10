@@ -25,7 +25,9 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://christfields2717.com'),
   title: {
     default: 'Christ Fields',
-    template: '%s by Christ Fields',
+    // A neutral separator: "Privacy Policy by Christ Fields" read as authorship;
+    // the middle dot works for products and plain pages alike.
+    template: '%s · Christ Fields',
   },
   description:
     'Christ Fields is a technology company rooted in Christian faith. Building tools and communities for people who want to live and work with wisdom, integrity, and faithfulness.',
