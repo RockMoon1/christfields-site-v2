@@ -6,6 +6,7 @@ import { ScriptureMarquee } from '@/components/motion/ScriptureMarquee';
 import { SectionRail } from '@/components/motion/SectionRail';
 import { SFHero } from '@/components/sections/scholarflow/SFHero';
 import { WhatIsScholarFlow } from '@/components/sections/scholarflow/WhatIsScholarFlow';
+import { SFPreviewSection } from '@/components/sections/scholarflow/SFPreviewSection';
 import { ProductShelf } from '@/components/sections/scholarflow/ProductShelf';
 import { SFInvite } from '@/components/sections/scholarflow/SFInvite';
 
@@ -35,6 +36,7 @@ const navLinks = [
 const railSections = [
   { id: 'top', label: 'Top' },
   { id: 'what', label: 'The Shelf' },
+  { id: 'preview', label: 'Preview' },
   { id: 'products', label: 'The Tools' },
   { id: 'invite', label: "What's Next" },
 ];
@@ -97,6 +99,7 @@ export default function ScholarFlowPage() {
         <SFHero />
         <ScriptureMarquee lineOne={marqueeOne} lineTwo={marqueeTwo} />
         <WhatIsScholarFlow />
+        <SFPreviewSection />
         <AnimatedDivider />
         <ProductShelf />
         <AnimatedDivider />

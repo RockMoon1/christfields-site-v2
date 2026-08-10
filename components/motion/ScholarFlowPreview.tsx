@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 
 const focusRows = [
@@ -8,21 +9,33 @@ const focusRows = [
   { label: 'Weekly discipline', value: '86%', color: 'from-gold-lt to-emerald-lt' },
 ];
 
-const tasks = [
-  { title: 'Research summary', time: '8:30 AM', state: 'Active' },
-  { title: 'Scripture reflection', time: '11:00 AM', state: 'Ready' },
-  { title: 'Focused writing', time: '2:15 PM', state: 'Next' },
+const TASKS = [
+  { title: 'Research summary', time: '8:30 AM' },
+  { title: 'Scripture reflection', time: '11:00 AM' },
+  { title: 'Focused writing', time: '2:15 PM' },
 ];
 
+const TASK_STATES = ['Next', 'Ready', 'Active', 'Done'] as const;
+type TaskState = (typeof TASK_STATES)[number];
+
 /**
- * Mock ScholarFlow dashboard shown on the homepage feature section. Keeps its
- * signature idle beats (the sweeping light bar, progress fills, staggered task
- * rows) but the old 18s rotating AI coin is retired for a soft radar pulse:
- * a halo that breathes outward, presence instead of spectacle. The container
- * is the family's glass material. All product labels stay verbatim.
+ * Mock ScholarFlow dashboard, now clickable (moved to /scholarflow's preview
+ * section 2026-08-09). Tap a task to walk it through Next -> Ready -> Active
+ * -> Done; all state is local, nothing is tracked or saved. Keeps the
+ * signature idle beats (sweeping light bar, progress fills, radar-pulse AI
+ * halo) on the family's glass material. Product labels stay verbatim.
  */
 export function ScholarFlowPreview() {
   const reduceMotion = useReducedMotion();
+  const [taskStates, setTaskStates] = useState<TaskState[]>(['Active', 'Ready', 'Next']);
+
+  function cycleTask(i: number) {
+    setTaskStates((prev) =>
+      prev.map((s, j) =>
+        j === i ? TASK_STATES[(TASK_STATES.indexOf(s) + 1) % TASK_STATES.length] : s,
+      ),
+    );
+  }
 
   return (
     <div className="cf-glass relative overflow-hidden rounded-md p-5 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
@@ -104,10 +117,11 @@ export function ScholarFlowPreview() {
           </div>
 
           <div className="space-y-3">
-            {tasks.map((task, i) => (
-              <motion.div
+            {TASKS.map((task, i) => (
+              <motion.button
                 key={task.title}
-                className="group rounded-sm border border-border-sub bg-black/30 p-3 transition-colors hover:border-border-gold"
+                onClick={() => cycleTask(i)}
+                className="group block w-full rounded-sm border border-border-sub bg-black/30 p-3 text-left transition-colors hover:border-border-gold"
                 initial={{ opacity: 0, x: 24 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
@@ -116,14 +130,28 @@ export function ScholarFlowPreview() {
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-medium text-ivory">{task.title}</p>
+                    <p
+                      className={`text-sm font-medium ${
+                        taskStates[i] === 'Done' ? 'text-ivory-dim line-through' : 'text-ivory'
+                      }`}
+                    >
+                      {task.title}
+                    </p>
                     <p className="text-xs text-muted">{task.time}</p>
                   </div>
-                  <span className="rounded-sm border border-gold/25 bg-gold/10 px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-gold">
-                    {task.state}
+                  <span
+                    className={`rounded-sm border px-2 py-1 text-[10px] uppercase tracking-[0.12em] transition-colors ${
+                      taskStates[i] === 'Done'
+                        ? 'border-emerald-lt/35 bg-emerald-lt/15 text-emerald-bright'
+                        : taskStates[i] === 'Active'
+                          ? 'border-gold/45 bg-gold/20 text-gold-lt'
+                          : 'border-gold/25 bg-gold/10 text-gold'
+                    }`}
+                  >
+                    {taskStates[i]}
                   </span>
                 </div>
-              </motion.div>
+              </motion.button>
             ))}
           </div>
         </div>
@@ -142,6 +170,11 @@ export function ScholarFlowPreview() {
             Protect the next deep work block. Keep the plan simple, finish one task, then review.
           </p>
         </motion.div>
+
+        <p className="mt-4 text-[11px] text-muted">
+          A small preview to click around. Tap a task to move it along. Nothing here is tracked or
+          saved.
+        </p>
       </div>
     </div>
   );

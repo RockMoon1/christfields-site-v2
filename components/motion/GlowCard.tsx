@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type ReactNode, type MouseEvent } from 'react';
+import { useRef, useState, type CSSProperties, type ReactNode, type MouseEvent } from 'react';
 
 interface GlowCardProps {
   children: ReactNode;
@@ -9,6 +9,8 @@ interface GlowCardProps {
   glowColor?: string;
   /** Radius of the glow in px. */
   glowSize?: number;
+  /** Inline styles for the card root (e.g. a tinted surface gradient). */
+  style?: CSSProperties;
 }
 
 /**
@@ -21,6 +23,7 @@ export function GlowCard({
   className = '',
   glowColor = 'rgba(201, 165, 72, 0.15)',
   glowSize = 200,
+  style,
 }: GlowCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -39,6 +42,7 @@ export function GlowCard({
       onMouseEnter={() => setActive(true)}
       onMouseLeave={() => setActive(false)}
       className={`relative overflow-hidden ${className}`}
+      style={style}
     >
       {/* Glow layer */}
       <div

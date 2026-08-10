@@ -5,6 +5,7 @@ import { AnimatedDivider } from '@/components/motion/AnimatedDivider';
 import { ScriptureMarquee } from '@/components/motion/ScriptureMarquee';
 import { SectionRail } from '@/components/motion/SectionRail';
 import { ActiveGroups } from '@/components/sections/faithflow/ActiveGroups';
+import { DashboardInvite } from '@/components/sections/DashboardInvite';
 import { BiblicalFoundation } from '@/components/sections/faithflow/BiblicalFoundation';
 import { EmberField } from '@/components/sections/faithflow/EmberField';
 import { FFHero } from '@/components/sections/faithflow/FFHero';
@@ -40,6 +41,7 @@ const railSections = [
   { id: 'top', label: 'Top' },
   { id: 'what', label: 'What' },
   { id: 'groups', label: 'Community' },
+  { id: 'dashboard', label: 'Your Space' },
   { id: 'how', label: 'How' },
   { id: 'scripture', label: 'Scripture' },
   { id: 'leaders', label: 'Leaders' },
@@ -52,6 +54,7 @@ const footerColumns = [
     links: [
       { href: '#what', label: 'What It Is' },
       { href: '#groups', label: 'The Community' },
+      { href: '#dashboard', label: 'Member Dashboard' },
       { href: '#how', label: 'How It Works' },
       { href: '#scripture', label: 'Scripture' },
       { href: '#get-involved', label: 'Get Involved' },
@@ -111,6 +114,7 @@ export default function FaithFlowPage() {
         <AnimatedDivider />
         <WhatIsFaithFlow />
         <ActiveGroups />
+        <DashboardInvite />
         <HowGroupsWork />
         <BiblicalFoundation />
         <FutureLeaders />

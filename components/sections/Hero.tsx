@@ -174,7 +174,7 @@ export function Hero() {
 
         <Reveal delay={1.2}>
           <div className="flex flex-wrap justify-center gap-3">
-            <Button href="#scholarflow" variant="primary">
+            <Button href="/scholarflow" variant="primary">
               Discover ScholarFlow{' '}
               <span
                 aria-hidden

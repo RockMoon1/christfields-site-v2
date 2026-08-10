@@ -41,6 +41,12 @@ interface Tile {
   /** Larger title for the hero tile. */
   big?: boolean;
   glow?: string;
+  /** Tinted resting surface so the tile pops off the page background. */
+  surface?: string;
+  /** Per-field border tint (rest + hover). */
+  borderClass?: string;
+  /** Label for the always-visible action hint (defaults to "Open"). */
+  ctaLabel?: string;
 }
 
 const TILES: Tile[] = [
@@ -56,6 +62,8 @@ const TILES: Tile[] = [
     span: 'md:col-span-4 md:row-span-2',
     big: true,
     glow: 'rgba(45, 106, 79, 0.18)',
+    surface: 'linear-gradient(135deg, rgba(45, 106, 79, 0.30) 0%, rgba(13, 20, 16, 0.96) 62%)',
+    borderClass: 'border-emerald-lt/30 hover:border-emerald-lt/60',
   },
   {
     badge: 'Two tools live',
@@ -68,6 +76,8 @@ const TILES: Tile[] = [
     span: 'md:col-span-2',
     href: '/scholarflow',
     glow: 'rgba(228, 201, 122, 0.16)',
+    surface: 'linear-gradient(135deg, rgba(201, 165, 72, 0.24) 0%, rgba(19, 16, 10, 0.96) 62%)',
+    borderClass: 'border-gold/35 hover:border-gold/70',
   },
   {
     badge: 'In development',
@@ -78,7 +88,11 @@ const TILES: Tile[] = [
     access: 'In development. Ask below to be notified.',
     accessTone: 'soon',
     span: 'md:col-span-2',
+    href: '#join',
     glow: 'rgba(196, 123, 60, 0.16)',
+    surface: 'linear-gradient(135deg, rgba(196, 123, 60, 0.20) 0%, rgba(18, 13, 9, 0.96) 62%)',
+    borderClass: 'border-[#c47b3c]/30 hover:border-[#c47b3c]/60',
+    ctaLabel: 'Get notified',
   },
 ];
 
@@ -105,7 +119,10 @@ function TileInner({ tile }: { tile: Tile }) {
   return (
     <GlowCard
       glowColor={tile.glow}
-      className="group h-full rounded-md border border-border-sub bg-black-2 transition-[border-color,transform] duration-300 hover:-translate-y-1 hover:border-border-gold"
+      className={`group h-full rounded-md border shadow-[0_18px_60px_rgba(0,0,0,0.45)] transition-[border-color,transform] duration-300 hover:-translate-y-1 ${
+        tile.borderClass ?? 'border-border-sub hover:border-border-gold'
+      }`}
+      style={{ background: tile.surface ?? 'var(--color-black-2, #101512)' }}
     >
       <div className="flex h-full flex-col p-7 md:p-8">
         <div
@@ -149,9 +166,10 @@ function TileInner({ tile }: { tile: Tile }) {
             </p>
           )}
           {tile.href && (
-            // Visible at rest on touch; hover-revealed only where hover exists.
-            <span className="mt-4 inline-block text-[11px] font-medium uppercase tracking-[0.12em] text-gold transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100">
-              Open &rarr;
+            // Always visible: these tiles are the doors to each field's page,
+            // so the action hint must not hide behind hover.
+            <span className="mt-4 inline-block text-[11px] font-medium uppercase tracking-[0.12em] text-gold transition-transform duration-300 group-hover:translate-x-0.5">
+              {tile.ctaLabel ?? 'Open'} &rarr;
             </span>
           )}
         </div>
@@ -185,7 +203,7 @@ export function BentoGrid() {
               The <em className="not-italic text-gold-lt">whole field.</em>
             </>
           }
-          lede="Christ Fields is an invite-only Christian community, with the faith and study tools to walk it out together. One door is open right now: early access to ScholarFlow. The others open as we grow."
+          lede="Christ Fields is an invite-only Christian community, with the faith and study tools to walk it out together. One door is open right now: the ScholarFlow tools. The others open as we grow."
         />
         <Reveal delay={0.4}>
           <p className="mt-3 text-sm text-muted">Started and built by Lisandro Pellow.</p>

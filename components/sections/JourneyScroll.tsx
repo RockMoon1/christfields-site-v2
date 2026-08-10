@@ -107,7 +107,7 @@ function JourneyHeader({ className }: { className?: string }) {
           It <em className="not-italic text-gold-lt">grows</em> with you.
         </>
       }
-      lede="No one is handed the deep things on day one. The dashboard, like the walk, opens up a little more as you go. Take it slowly. There is no race here."
+      lede="No one is handed the deep things on day one. The walk opens up a little more as you go. Take it slowly. There is no race here."
       ledeClassName="max-w-xl"
       className={className}
     />

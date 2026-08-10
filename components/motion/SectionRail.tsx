@@ -22,10 +22,8 @@ const HOME_SECTIONS: RailSection[] = [
   { id: 'home', label: 'Home' },
   { id: 'vision', label: 'Mission' },
   { id: 'walk', label: 'The Walk' },
-  { id: 'dashboard', label: 'Dashboard' },
   { id: 'practices', label: 'Practices' },
   { id: 'day', label: 'A Day' },
-  { id: 'scholarflow', label: 'Study' },
   { id: 'projects', label: 'Fields' },
   { id: 'join', label: 'Join' },
 ];

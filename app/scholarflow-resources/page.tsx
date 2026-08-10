@@ -53,7 +53,7 @@ const footerColumns = [
     links: [
       { href: '/', label: 'Main Site' },
       { href: '/#vision', label: 'Vision' },
-      { href: '/#scholarflow', label: 'ScholarFlow' },
+      { href: '/scholarflow', label: 'ScholarFlow' },
       { href: '/#projects', label: 'Projects' },
     ],
   },
