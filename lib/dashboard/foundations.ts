@@ -225,6 +225,11 @@ export interface StageUnlock {
  * What newly opens up at each crossing, named plainly so a member notices the
  * change and actually uses what they have been given. (Seed has the welcome
  * instead, so it has no unlock list.)
+ *
+ * IMPORTANT: every item here must match DEPTH_BY_STAGE in lib/dashboard/journey.ts
+ * for the stage it sits under. These cards announce the change and fly to the
+ * matching nav link, so naming a section that is still hidden both tells the
+ * member something untrue and leaves the animation with no target to fly to.
  */
 export const STAGE_UNLOCKS: Partial<Record<JourneyStage, StageUnlock>> = {
   sprout: {
@@ -232,14 +237,14 @@ export const STAGE_UNLOCKS: Partial<Record<JourneyStage, StageUnlock>> = {
     intro: 'As you keep showing up, a little more opens up. Two new places to explore:',
     items: [
       {
-        label: 'Reflect',
-        note: 'A few honest minutes: how you really are, and what you are thankful for.',
-        href: '/dashboard/reflect',
+        label: 'Rhythms',
+        note: 'One gentle daily practice, kept at your own pace.',
+        href: '/dashboard/rhythms',
       },
       {
-        label: 'Scripture',
-        note: 'A verse to carry today, and the ones you are learning by heart.',
-        href: '/dashboard/scripture',
+        label: 'Prayer',
+        note: 'Hold what you are praying about, and mark answers as God moves.',
+        href: '/dashboard/prayer',
       },
     ],
   },
@@ -248,19 +253,14 @@ export const STAGE_UNLOCKS: Partial<Record<JourneyStage, StageUnlock>> = {
     intro: 'New ground as your roots grow down:',
     items: [
       {
-        label: 'Resources',
-        note: 'Scripture and next steps matched to right where you are.',
-        href: '/dashboard/resources',
-      },
-      {
-        label: 'Reflect, deeper',
-        note: 'The nightly examen, and a gentle way to reframe a hard thought.',
+        label: 'Reflect',
+        note: 'A few honest minutes: how you really are, and what you are thankful for.',
         href: '/dashboard/reflect',
       },
       {
-        label: 'Scripture memory',
-        note: 'Hide verses in your heart and return to them over time.',
-        href: '/dashboard/scripture',
+        label: 'Progress',
+        note: 'An honest look at the areas you are asking God to grow.',
+        href: '/dashboard/progress',
       },
     ],
   },
@@ -269,9 +269,9 @@ export const STAGE_UNLOCKS: Partial<Record<JourneyStage, StageUnlock>> = {
     intro: 'This part of the walk turns outward, toward the people around you:',
     items: [
       {
-        label: 'Sharpening others',
-        note: 'Help someone else grow, as iron sharpens iron.',
-        href: '/dashboard/progress',
+        label: 'Resources',
+        note: 'Scripture and next steps matched to right where you are.',
+        href: '/dashboard/resources',
       },
       {
         label: 'Carrying the community',

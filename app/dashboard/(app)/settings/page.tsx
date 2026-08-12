@@ -3,13 +3,32 @@ import Link from 'next/link';
 import { isLeaderRole } from '@/lib/faithflow/roles';
 import { InstallAppCard } from '@/components/dashboard/InstallAppCard';
 import { FeedbackCard } from '@/components/dashboard/FeedbackCard';
+import { getJourney } from '@/lib/dashboard/journey-data';
+import { isRevealed, type SectionKey } from '@/lib/dashboard/journey';
+
+/** The explore grid, in nav order, each tied to the section that reveals it. */
+const EXPLORE: { href: string; label: string; note: string; section: SectionKey }[] = [
+  { href: '/dashboard/rhythms', label: 'Rhythms', note: 'Daily and weekly practices', section: 'rhythms' },
+  { href: '/dashboard/prayer', label: 'Prayer', note: 'Requests and answered prayers', section: 'prayer' },
+  { href: '/dashboard/reflect', label: 'Reflect', note: 'Mood, gratitude, examen', section: 'reflect' },
+  { href: '/dashboard/scripture', label: 'Scripture', note: 'Verse of the day and memory', section: 'scripture' },
+  { href: '/dashboard/progress', label: 'Progress', note: 'Areas you are growing in', section: 'progress' },
+  { href: '/dashboard/community', label: 'Community', note: 'Pray for one another', section: 'community' },
+];
 
 export default async function SettingsPage() {
   const user = await currentUser();
   const { orgRole } = await auth();
+  // getJourney is request-cached, so this costs nothing extra on this render.
+  const view = await getJourney();
   const isLeader = isLeaderRole(orgRole);
   const displayName = user?.firstName || user?.username || 'friend';
   const initial = displayName.charAt(0).toUpperCase();
+
+  // Show only what the walk has actually opened, exactly like the nav does.
+  // A static list here handed brand-new members links to pages the rest of the
+  // dashboard is deliberately still holding back.
+  const explore = EXPLORE.filter((item) => view.revealAll || isRevealed(view.sections[item.section]));
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -86,8 +105,15 @@ export default async function SettingsPage() {
         <h3 className="mb-4 font-display text-xl font-light text-ivory">Your data</h3>
         <ul className="space-y-3 text-sm leading-relaxed text-silver">
           <li>
-            Your rhythms, prayers, reflections, gratitude, and verses are private to you.
-            Only you can see them here.
+            What you write stays yours. The words in your reflections, your gratitude, your
+            examen, your mood notes, and any prayer you have not shared are never shown to
+            anyone, including your leader.
+          </li>
+          <li>
+            Your leader sees how you are walking, not what you wrote. They can see whether you
+            kept your rhythms, the direction your mood is trending, your progress scores, the
+            verses you are learning, and whether you were at the gathering. It is how they know
+            when to check in on you.
           </li>
           <li>
             Anything you post on the Community wall is visible to other signed-in members.
@@ -104,14 +130,7 @@ export default async function SettingsPage() {
       <section className="rounded-sm border border-border-sub bg-black-3 p-8">
         <h3 className="mb-5 font-display text-xl font-light text-ivory">Your dashboard</h3>
         <div className="grid gap-3 sm:grid-cols-2">
-          {[
-            { href: '/dashboard/rhythms', label: 'Rhythms', note: 'Daily and weekly practices' },
-            { href: '/dashboard/prayer', label: 'Prayer', note: 'Requests and answered prayers' },
-            { href: '/dashboard/reflect', label: 'Reflect', note: 'Mood, gratitude, examen' },
-            { href: '/dashboard/scripture', label: 'Scripture', note: 'Verse of the day and memory' },
-            { href: '/dashboard/progress', label: 'Progress', note: 'Areas you are growing in' },
-            { href: '/dashboard/community', label: 'Community', note: 'Pray for one another' },
-          ].map((item) => (
+          {explore.map((item) => (
             <Link
               key={item.href}
               href={item.href}

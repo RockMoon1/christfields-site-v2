@@ -186,9 +186,11 @@ export async function saveExamen(input: {
   const sb = getSupabase();
   const today = todayUTC();
 
+  // All three fields share the textarea's 1000-character limit. A lower cap
+  // here silently ate the end of a member's own words.
   const consolation = input.consolation.trim().slice(0, 1000);
   const desolation = input.desolation.trim().slice(0, 1000);
-  const intention = input.intention.trim().slice(0, 500);
+  const intention = input.intention.trim().slice(0, 1000);
 
   // Check for existing row.
   const { data: existing } = await sb

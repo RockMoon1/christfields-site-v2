@@ -112,6 +112,17 @@ export async function setMemberAttendance(
 ): Promise<{ ok: boolean }> {
   if (!WEEK_RE.test(weekAnchor)) return { ok: false };
 
+  // Never trust the client's anchor: snap any date to its week's Sunday and
+  // refuse future weeks. Without this, arbitrary date strings each count as
+  // their own "confirmed week" toward the in-person gate (journey-data counts
+  // distinct gathering_date values), letting crafted requests unlock stages
+  // the gathering never earned. The board UI only sends real Sunday anchors,
+  // so nothing user-visible changes.
+  const parsed = new Date(`${weekAnchor}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return { ok: false };
+  const snapped = weekAnchorUTC(parsed);
+  if (snapped > weekAnchorUTC()) return { ok: false };
+
   const ctx = await getLeaderContext();
   if (!ctx) return { ok: false };
   if (!ctx.members.some((m) => m.userId === memberId)) return { ok: false };
@@ -123,7 +134,7 @@ export async function setMemberAttendance(
     {
       org_id: ctx.orgId,
       clerk_user_id: memberId,
-      gathering_date: weekAnchor,
+      gathering_date: snapped,
       confirmed: present,
       confirmed_by: present ? leaderId : null,
       updated_at: new Date().toISOString(),

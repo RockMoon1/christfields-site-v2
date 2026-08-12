@@ -222,9 +222,10 @@ export async function deletePrayer(id: string) {
 }
 
 /**
- * Copy a prayer request to the community wall. Sets shared = true on the
- * original. Fails quietly if the community_prayers table does not exist yet
- * so the request keeps processing normally.
+ * Copy a prayer request to the community wall, then mark the original shared.
+ * The share only counts if the wall actually received it: telling a member
+ * their prayer is with their people when it never arrived is the one outcome
+ * worth failing loudly for.
  */
 export async function shareToCommunity(id: string) {
   const userId = await requireUser();
@@ -242,23 +243,27 @@ export async function shareToCommunity(id: string) {
 
   const request = existing as PrayerRequest;
 
+  let authorName = 'A member';
   try {
     const user = await currentUser();
-    const authorName = user?.firstName ? user.firstName : 'A member';
-
-    await sb.from('community_prayers').insert({
-      clerk_user_id: userId,
-      author_name: authorName,
-      title: request.title,
-      body: request.body,
-    });
-  } catch (err) {
-    // Community table may not exist yet. Log and continue.
-    console.warn('shareToCommunity: community insert failed (table may be missing)', err);
+    if (user?.firstName) authorName = user.firstName;
+  } catch {
+    // The name is a nice-to-have; the prayer still goes to the wall.
   }
 
-  // Mark the original as shared even if the community insert failed,
-  // so the UI state stays consistent with intent.
+  // supabase-js resolves with { error } rather than throwing, so this must be
+  // checked, not caught. If the wall did not receive it, do not mark it shared.
+  const { error: insertErr } = await sb.from('community_prayers').insert({
+    clerk_user_id: userId,
+    author_name: authorName,
+    title: request.title,
+    body: request.body,
+  });
+  if (insertErr) {
+    console.error('shareToCommunity: community insert failed', { code: insertErr.code });
+    throw new Error('Could not share this prayer right now. Please try again.');
+  }
+
   const { error: updateErr } = await sb
     .from('prayer_requests')
     .update({ shared: true })

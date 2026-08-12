@@ -36,13 +36,22 @@ export function MobileTabBar({
   // Today is always first (the home); then the revealed sections in nav order.
   // Settings and the full Overview live in the menu / behind Today. Cap at five
   // so the bar stays thumb-friendly and uncluttered.
-  const revealedItems = NAV_ITEMS.filter((it) => {
+  const candidates = NAV_ITEMS.filter((it) => {
     if (it.href === '/dashboard/today') return true; // Today is the home, always
     if (it.href === '/dashboard') return false; // the full Overview lives behind Today + the menu
     if (it.href === '/dashboard/settings') return false; // lives in the menu
     if (!it.section) return false;
     return revealAll || !sections || isRevealed(sections[it.section]);
-  }).slice(0, 5);
+  });
+
+  // Community is pinned like Today: the in-person gathering is the heartbeat we
+  // point new members toward, and it sits last in nav order, so a plain cap
+  // would drop it off the bar exactly as a member grows into more sections.
+  const community = candidates.find((it) => it.href === '/dashboard/community');
+  const rest = candidates.filter((it) => it !== community);
+  const revealedItems = community
+    ? [...rest.slice(0, 4), community]
+    : rest.slice(0, 5);
 
   return (
     <nav

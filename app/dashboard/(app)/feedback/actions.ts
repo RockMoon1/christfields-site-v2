@@ -3,12 +3,15 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { Resend } from 'resend';
 import { feedbackNotificationHtml } from '@/lib/emails';
+import { getSupabase } from '@/lib/supabase';
 
 /**
  * In-app feedback. A signed-in member sends a short note about what they would
- * like added or changed, and it is emailed to the Christ Fields inbox so
- * Lisandro sees every suggestion. No database table needed: feedback is
- * low-volume and email is the place it is actually acted on.
+ * like added or changed. Like the public form route, the note is stored first
+ * (public_submissions, form_name 'feedback') so a missing or failing email key
+ * can never silently lose it, then emailed to the Christ Fields inbox where it
+ * is actually acted on. Resend v6 never rejects: emails.send() resolves with
+ * { error }, so the error is checked, not caught.
  *
  * Env (shared with the public form route):
  *   RESEND_API_KEY  required to actually send
@@ -44,6 +47,36 @@ function rateLimited(userId: string): boolean {
   return false;
 }
 
+/** Durable record, best effort; degrades gracefully until migration 012 runs. */
+async function storeFeedback(row: {
+  name: string;
+  email: string;
+  interest: string;
+  message: string;
+}): Promise<string | null> {
+  try {
+    const sb = getSupabase();
+    const { data, error } = await sb
+      .from('public_submissions')
+      .insert({ form_name: 'feedback', ...row })
+      .select('id')
+      .single();
+    if (error || !data?.id) return null;
+    return data.id as string;
+  } catch {
+    return null;
+  }
+}
+
+async function markEmailed(id: string): Promise<void> {
+  try {
+    const sb = getSupabase();
+    await sb.from('public_submissions').update({ emailed: true }).eq('id', id);
+  } catch {
+    // The row simply keeps emailed=false, which is the honest state.
+  }
+}
+
 export async function submitFeedback(input: {
   category: string;
   message: string;
@@ -75,14 +108,24 @@ export async function submitFeedback(input: {
       // identity is a nice-to-have; the feedback itself still goes through
     }
 
+    // Durable record first; email is the notification of it.
+    const storedId = await storeFeedback({
+      name: fromName,
+      email: fromEmail,
+      interest: category,
+      message,
+    });
+    const stored = storedId !== null;
+
     if (!process.env.RESEND_API_KEY) {
-      // Do not lose the member: log it and report success so they are not stuck.
-      console.warn('Feedback received but RESEND_API_KEY is not set', { category, fromEmail, message });
-      return { ok: true };
+      // No PII in logs: category and outcome are enough to spot the misconfig.
+      console.warn('Feedback received but RESEND_API_KEY is not set', { category, stored });
+      if (stored) return { ok: true };
+      return { ok: false, error: 'Could not send right now. Please try again.' };
     }
 
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
+    const { error: sendError } = await resend.emails.send({
       from: FROM,
       to: NOTIFY,
       replyTo: fromEmail || undefined,
@@ -90,6 +133,14 @@ export async function submitFeedback(input: {
       html: feedbackNotificationHtml({ category, message, fromName, fromEmail }),
       text: `Member feedback (${category})\n\nFrom: ${fromName} ${fromEmail ? `<${fromEmail}>` : ''}\n\n${message}`,
     });
+    if (sendError) {
+      // name only: Resend messages can echo addresses (PII) into logs.
+      console.error('Feedback email failed', { name: sendError.name, stored });
+      if (!stored) return { ok: false, error: 'Could not send right now. Please try again.' };
+      // Stored safely; a retry would only duplicate the note.
+    } else if (storedId) {
+      await markEmailed(storedId);
+    }
 
     return { ok: true };
   } catch (err) {
