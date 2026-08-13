@@ -53,36 +53,41 @@ Check items off by editing this file, or ask any Claude session to update it.
 - [ ] **hstspreload.org**: check christfields2717.com is submitted (the header
   is already sent; only the external submission is unverified).
 
-## Decisions waiting on you (from the dashboard audit, 2026-08-10)
+## Decisions from the dashboard audit (settled 2026-08-10)
 
-- [ ] **Verse of the day translation.** `lib/dashboard/content.ts` holds 20
-  hand-typed verses labelled ESV. The ESV is copyrighted; Crossway's gratis
-  policy covers this many verses but requires a visible attribution notice,
-  which the dashboard does not carry. Meanwhile the repo built `lib/bible`
-  precisely so verse text comes from a verified source (public-domain WEB),
-  and memory verses already use it. Options: serve the daily verse through
-  lib/bible (no licensing question, consistent), or keep ESV and add the
-  required notice. Recommend the former.
-- [ ] **Pages reachable before they are revealed.** Rhythms, Prayer, and
-  Reflect are hidden from the nav at early stages but still load if the URL is
-  typed. Options: redirect to Today, show a gentle "not yet" page, or leave it
-  (a URL is not a secret, and "show me everything" exists). Low stakes either
-  way; needs a call so the intent is written down.
-- [ ] **The vanity-metric inventory** (this is the long-standing decision 2).
-  Exact member-facing surfaces, if you decide to strip them: rhythm streaks
-  (`RhythmCard.tsx:195`), Progress self-scores and targets
+Four of the five were decided and implemented. Reverse any of them by saying so;
+each is a small, self-contained change.
+
+- [x] **Daily verse licensing: keep the ESV wording, add the notice.** The 20
+  hand-typed verses in `lib/dashboard/content.ts` are ESV, which is
+  copyrighted. Crossway's policy allows this many verses without written
+  permission provided a copyright notice appears, so the notice now sits in
+  Settings under "Scripture". The alternative, serving the daily verse from
+  the public-domain WEB via `lib/bible`, was tested and rejected: the WEB
+  renders "Yahweh is my shepherd" rather than "The LORD is my shepherd", which
+  changes words members read every day. Say the word if you would rather have
+  the public-domain text and accept that wording.
+- [x] **Pages stay reachable by direct URL before they are revealed.** The
+  progressive reveal exists so a new member is not overwhelmed, not to lock
+  anyone out, and the "show me everything" preference already proves that
+  intent. Redirecting a curious member away from a page they asked for would
+  be the unkind version. Recorded as a comment in `lib/dashboard/journey.ts`.
+- [x] **Leader analytics now count showing up.** Confirmed in-person
+  attendance feeds "last active", so a member who comes every week but rarely
+  opens the app no longer reads to their leader as "quiet for N days".
+- [x] **Leaders keep the ability to reset or remove a memory verse**, because
+  it is a deliberate feature for testing someone out loud, but members are now
+  told plainly in Settings that a leader can do it.
+- [ ] **The vanity-metric inventory** (the long-standing decision 2)
+  **deliberately NOT actioned.** The council ruled this gets scoped by the
+  five-questions conversation with real Iron & Ember members, and that has not
+  happened yet, so stripping now would be guessing at what your people
+  actually feel. The exact surfaces, ready for the day you have those answers:
+  rhythm streaks (`RhythmCard.tsx:195`), Progress self-scores and targets
   (`ProgressBoard.tsx:411`), overview stat tiles (`page.tsx:284`), weekly
   counts (`streaks.ts:73`), Scripture review counts (`MemoryVerses.tsx:144`),
   community "N praying" tallies (`CommunityWall.tsx:361`), event "N going"
-  (`EventBanner.tsx:231`). Leader-side equivalents live in
-  `MembersBoard.tsx:325`.
-- [ ] **Leader analytics are attendance-blind** (`lib/faithflow/analytics.ts`).
-  "Quiet for N days" counts app activity only, so a member who shows up in
-  person every week but rarely opens the app reads as struggling. Worth
-  deciding, given the whole model says the gathering is what counts.
-- [ ] **Leaders can see a member's full memory-verse list**, including verse
-  text and review counts, with remove/reset controls
-  (`MembersBoard.tsx:396`). Consistent with "signals not words", or too far?
+  (`EventBanner.tsx:231`), leader-side equivalents (`MembersBoard.tsx:325`).
 
 ## Deliberately deferred (on purpose, not forgotten)
 

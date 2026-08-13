@@ -116,6 +116,10 @@ export default async function SettingsPage() {
             when to check in on you.
           </li>
           <li>
+            Because Scripture memory is meant to be tested out loud, your leader can also send a
+            verse back to learning or take it off your list after they test you on it.
+          </li>
+          <li>
             Anything you post on the Community wall is visible to other signed-in members.
             You choose what to share there.
           </li>
@@ -124,6 +128,23 @@ export default async function SettingsPage() {
             with God.
           </li>
         </ul>
+      </section>
+
+      {/* Scripture credits. The daily verses are quoted from the ESV, which is
+          copyrighted; Crossway's permissions policy allows this many verses
+          without written permission provided the notice below appears. Memory
+          verses come from the public-domain World English Bible via lib/bible,
+          credited here as a courtesy rather than a requirement. */}
+      <section className="mb-6 rounded-sm border border-border-sub bg-black-3 p-8">
+        <h3 className="mb-4 font-display text-xl font-light text-ivory">Scripture</h3>
+        <p className="mb-3 text-xs leading-relaxed text-muted">
+          Scripture quotations marked ESV are from the ESV&reg; Bible (The Holy Bible, English
+          Standard Version&reg;), copyright &copy; 2001 by Crossway, a publishing ministry of
+          Good News Publishers. Used by permission. All rights reserved.
+        </p>
+        <p className="text-xs leading-relaxed text-muted">
+          Verses marked WEB are from the World English Bible, which is in the public domain.
+        </p>
       </section>
 
       {/* Explore */}

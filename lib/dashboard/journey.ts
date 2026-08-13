@@ -325,6 +325,13 @@ export function computeJourney(signals: JourneySignals, floorStage: JourneyStage
  * hidden or gentle section to 'full' so nothing is ever gated against a
  * curious member, but it does not fabricate 'deep' — the outward flourish stays
  * an honest sign of real growth.
+ *
+ * Note on direct links (decided 2026-08-10): a section that is still hidden is
+ * absent from the nav, but its page still loads if the URL is typed. That is
+ * deliberate, and it follows from this preference existing at all: the reveal
+ * is here to keep a new member from being overwhelmed, not to lock them out.
+ * Redirecting a curious member away from a page they asked for would be the
+ * one genuinely unkind version of progressive reveal.
  */
 export function withRevealAll(
   sections: Record<SectionKey, SectionDepth>,

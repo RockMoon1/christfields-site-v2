@@ -175,15 +175,22 @@ export async function computeGroup(
     const sb = getSupabase();
     const since = lastNDays(30)[0];
 
-    const [areaRes, practiceRes, moodRes] = await Promise.all([
+    const [areaRes, practiceRes, moodRes, attendanceRes] = await Promise.all([
       sb.from('progress_areas').select('id, clerk_user_id, name, preset_key, color, target_score').in('clerk_user_id', memberIds),
       sb.from('practices').select('id, clerk_user_id, name, color, cadence, target_per_week').eq('archived', false).in('clerk_user_id', memberIds),
       sb.from('mood_checkins').select('clerk_user_id, mood, checked_at').in('clerk_user_id', memberIds).gte('checked_at', since),
+      // Being present counts as being active. Without this, a member who comes
+      // to the gathering every week but rarely opens the app reads to their
+      // leader as "quiet for N days", which is the opposite of the truth.
+      sb.from('group_attendance').select('clerk_user_id, gathering_date').eq('confirmed', true).in('clerk_user_id', memberIds),
     ]);
 
     const areaRows = (areaRes.data as AreaRow[] | null) ?? [];
     const practiceRows = (practiceRes.data as PracticeRow[] | null) ?? [];
     const moodRows = (moodRes.data as MoodRow[] | null) ?? [];
+    const attendanceRows =
+      (attendanceRes.data as { clerk_user_id: string; gathering_date: string }[] | null) ?? [];
+    const attendanceByUser = groupBy(attendanceRows, (a) => a.clerk_user_id);
 
     const areaIds = areaRows.map((a) => a.id);
     const entryRes = areaIds.length
@@ -243,7 +250,11 @@ export async function computeGroup(
       const lastEntry = maxDate(memberAreaIds.flatMap((id) => (entriesByArea.get(id) || []).map((e) => e.logged_at)));
       const lastLog = maxDate((practiceByUser.get(uid) || []).flatMap((p) => (logsByPractice.get(p.id) || []).map((l) => l.done_on)));
       const lastMood = maxDate((moodByUser.get(uid) || []).map((m) => m.checked_at));
-      const lastActive = maxDate([lastEntry, lastLog, lastMood]);
+      const lastGathering = maxDate(
+        (attendanceByUser.get(uid) || []).map((a) => a.gathering_date),
+      );
+      // Showing up in person is activity, and the truest kind.
+      const lastActive = maxDate([lastEntry, lastLog, lastMood, lastGathering]);
       const sinceActive = daysSince(lastActive);
 
       const scored = areas.filter((a) => a.latest !== null);
@@ -336,7 +347,8 @@ export async function computeMemberDetail(member: OrgMember): Promise<MemberDeta
     const sb = getSupabase();
     const since = lastNDays(30)[0];
 
-    const [areaRes, practiceRes, moodRes, prayerRes, sharedRes, memoryRes, communityRes] = await Promise.all([
+    const [areaRes, practiceRes, moodRes, prayerRes, sharedRes, memoryRes, communityRes, attendanceRes] =
+      await Promise.all([
       sb.from('progress_areas').select('id, clerk_user_id, name, preset_key, color, target_score').eq('clerk_user_id', memberId),
       sb.from('practices').select('id, clerk_user_id, name, color, cadence, target_per_week').eq('archived', false).eq('clerk_user_id', memberId),
       sb.from('mood_checkins').select('clerk_user_id, mood, checked_at').eq('clerk_user_id', memberId).gte('checked_at', since).order('checked_at', { ascending: true }),
@@ -344,6 +356,8 @@ export async function computeMemberDetail(member: OrgMember): Promise<MemberDeta
       sb.from('prayer_requests').select('title, body, status').eq('clerk_user_id', memberId).eq('shared', true).order('created_at', { ascending: false }),
       sb.from('memory_verses').select('id, reference, verse_text, translation, status, reviews').eq('clerk_user_id', memberId).order('created_at', { ascending: false }),
       sb.from('community_prayers').select('id, title, body, pray_count, answered').eq('clerk_user_id', memberId).order('created_at', { ascending: false }),
+      // Presence counts as activity here too (see computeGroup).
+      sb.from('group_attendance').select('gathering_date').eq('clerk_user_id', memberId).eq('confirmed', true),
     ]);
 
     const areaRows = (areaRes.data as AreaRow[] | null) ?? [];
@@ -422,7 +436,12 @@ export async function computeMemberDetail(member: OrgMember): Promise<MemberDeta
     const lastEntry = maxDate(entryRows.map((e) => e.logged_at));
     const lastLog = maxDate(logRows.map((l) => l.done_on));
     const lastMood = maxDate(moodRows.map((m) => m.checked_at));
-    const lastActive = maxDate([lastEntry, lastLog, lastMood]);
+    const lastGathering = maxDate(
+      ((attendanceRes.data as { gathering_date: string }[] | null) ?? []).map(
+        (a) => a.gathering_date,
+      ),
+    );
+    const lastActive = maxDate([lastEntry, lastLog, lastMood, lastGathering]);
     const sinceActive = daysSince(lastActive);
 
     const vitality = vitalityOf(areas);
