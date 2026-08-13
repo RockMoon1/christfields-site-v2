@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { ScriptureSymbol } from '@/components/motion/ScriptureSymbol';
@@ -35,6 +35,38 @@ type Phase = 'intro' | 'gates' | 'doctrine' | 'about' | 'commitments' | 'walk' |
 
 /** Why the form ended, so the closing screen can say the true thing. */
 type StopReason = 'gate' | 'doctrine' | 'age';
+
+/**
+ * Draft storage.
+ *
+ * This is half an hour and twelve essay boxes. Held only in React state, a
+ * phone call, a dead battery, or a stray back-swipe takes all of it, including
+ * the answer about what someone is struggling with — and that is a far more
+ * likely way to hurt an applicant than anything in the scenarios.
+ *
+ * Only the written answers are kept, never the name, email, phone, church, or
+ * guardian details: a draft on a shared family computer should not be a
+ * readable dossier, and it should never be the thing that tells a parent their
+ * child applied. It is cleared the moment the form is sent, and the applicant
+ * is told it exists and given a button to erase it.
+ */
+const DRAFT_KEY = 'cf-leader-readiness-draft';
+
+type Draft = { walk: Record<string, string>; scenarios: Record<string, string> };
+
+function loadDraft(): Draft | null {
+  try {
+    const raw = window.localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Draft;
+    const w = parsed?.walk ?? {};
+    const s = parsed?.scenarios ?? {};
+    if (!Object.values({ ...w, ...s }).some((v) => typeof v === 'string' && v.trim())) return null;
+    return { walk: w, scenarios: s };
+  } catch {
+    return null;
+  }
+}
 
 function VerseLine({ scripture }: { scripture: Scripture }) {
   return (
@@ -101,8 +133,8 @@ function ShareToggle({
       aria-pressed={shared}
       aria-label={
         shared
-          ? 'This answer will be included in your parent or guardian email. Tap to keep it out.'
-          : 'This answer will be kept out of your parent or guardian email. Tap to include it.'
+          ? 'Your parent or guardian may be shown this answer. Tap to keep it from them.'
+          : 'This answer will be kept from your parent or guardian. Tap to share it.'
       }
       className={cn(
         'mt-3 inline-flex min-h-[44px] items-center gap-2.5 rounded-sm border px-3 py-2 text-[11px] transition-colors',
@@ -121,7 +153,7 @@ function ShareToggle({
       >
         <span className="block h-3 w-3 rounded-full bg-black-2" />
       </span>
-      {shared ? 'Your parent will see this' : 'Kept out of their email'}
+      {shared ? 'Your parent may see this' : 'Kept from your parent'}
     </button>
   );
 }
@@ -134,9 +166,12 @@ function CrisisLine() {
   return (
     <p className="mt-3 rounded-sm border border-border-sub bg-black-2 px-3 py-2.5 text-[11px] leading-relaxed text-silver">
       {CRISIS_LINE.lead}{' '}
-      <a href="tel:988" className="text-gold-lt underline underline-offset-2">
-        {CRISIS_LINE.body}
+      {/* The number is written out, not hidden behind a link: tel: does
+          nothing on most desktops, and this has to work everywhere. */}
+      <a href="tel:988" className="font-medium text-gold-lt underline underline-offset-2">
+        988
       </a>
+      {CRISIS_LINE.body}
     </p>
   );
 }
@@ -212,6 +247,46 @@ export function ReadinessForm() {
 
   const COMMITMENT_SET = commitmentsFor(isMinor);
 
+  const [restored, setRestored] = useState(false);
+  const hydrated = useRef(false);
+
+  // Restore once, before anything is typed.
+  useEffect(() => {
+    const d = loadDraft();
+    if (d) {
+      setWalk(d.walk);
+      setScenarios(d.scenarios);
+      setRestored(true);
+    }
+    hydrated.current = true;
+  }, []);
+
+  // Save as they write. Guarded so the empty first render cannot wipe a draft
+  // before the restore above has run.
+  useEffect(() => {
+    if (!hydrated.current) return;
+    try {
+      window.localStorage.setItem(DRAFT_KEY, JSON.stringify({ walk, scenarios }));
+    } catch {
+      // Private mode, or a full quota. Losing the draft is not worth an error.
+    }
+  }, [walk, scenarios]);
+
+  function clearDraft() {
+    try {
+      window.localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      /* nothing to do, and nothing worth saying */
+    }
+  }
+
+  function forgetDraft() {
+    clearDraft();
+    setWalk({});
+    setScenarios({});
+    setRestored(false);
+  }
+
   function stop(reason: StopReason) {
     setStopReason(reason);
     setPhase('stopped');
@@ -263,8 +338,11 @@ export function ReadinessForm() {
         scenarios,
         visibility,
       }).catch(() => ({ ok: false, error: 'Something went wrong. Please try again.' }));
-      if (res.ok) setPhase('done');
-      else setError(res.error ?? 'Could not send. Please try again.');
+      if (res.ok) {
+        // It is with us now. Nothing personal stays on this device.
+        clearDraft();
+        setPhase('done');
+      } else setError(res.error ?? 'Could not send. Please try again.');
     });
   }
 
@@ -284,6 +362,14 @@ export function ReadinessForm() {
                   The first few questions decide whether the rest is worth your time. If one of
                   them is a no, we will say so straight away rather than let you spend half an
                   hour on something that was never going to fit.
+                </p>
+                {/* Used throughout, and it carries the privacy promise. A
+                    stranger should never have to guess what it means. */}
+                <p className="mt-4 border-t border-border-sub pt-4 text-xs leading-relaxed text-silver">
+                  You will see us say <span className="text-ivory">the Table</span>. That is the
+                  small group of people who lead Iron and Ember together and who make this
+                  decision. It is not software and it is not a committee somewhere else; it is a
+                  handful of named people, and they are the only ones who read this.
                 </p>
                 <VerseLine
                   scripture={{
@@ -435,8 +521,16 @@ export function ReadinessForm() {
               <div className="mt-6 rounded-sm border border-border-sub bg-black-3 p-5">
                 <p className="text-sm text-ivory">How old are you?</p>
                 <p className="mt-1 text-xs leading-relaxed text-silver">
-                  Leaders under 18 serve here, always under a screened adult. It just means a
-                  parent or guardian signs the covenant alongside you.
+                  Leaders under 18 serve here, always under a screened adult — meaning a background
+                  check and references, renewed. It just means a parent or guardian signs the
+                  covenant alongside you.
+                </p>
+                {/* The one question on this form somebody has a reason to lie
+                    about, and every protection for a young person hangs on it.
+                    Naming that is the only lever we have. */}
+                <p className="mt-2 text-xs leading-relaxed text-muted">
+                  Answer this one straight. It is the only question here that changes how we look
+                  after you, and every protection you are owed is built on it.
                 </p>
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                   {([
@@ -504,12 +598,14 @@ export function ReadinessForm() {
                     <div className="rounded-sm border border-gold/30 bg-gold/[0.05] p-4">
                       <p className="text-xs leading-relaxed text-ivory-dim">
                         We will email them as soon as you finish, to let them know you asked
-                        about this and what leading here involves.
+                        about this and what leading here involves. That email has none of your
+                        answers in it.
                       </p>
                       <p className="mt-2 text-xs leading-relaxed text-silver">
-                        Your written answers go in that email too, and under each one you will
-                        find a switch. Leave it on and they see that answer. Turn it off and
-                        they do not. You decide, one answer at a time.
+                        Under each written question you will find a switch. Leave it on and your
+                        parent may see that answer. Turn it off and they will not. You decide,
+                        one answer at a time. Nothing goes to them automatically: a person here
+                        reads what you wrote first, and then sends on what you left switched on.
                       </p>
                       <p className="mt-2 text-xs leading-relaxed text-silver">
                         Two things we will not pretend about. Turning a switch off does not hide
@@ -517,8 +613,8 @@ export function ReadinessForm() {
                         that is what you are asking us to weigh. And if you tell us something
                         that makes us think you are not safe, we will not sit on it. We will get
                         help. Depending on what it is, that may mean talking to your parents, and
-                        it may mean the people whose job it is to keep you safe. That promise is
-                        the reason you can be honest with the rest.
+                        it may mean the people whose job it is to keep you safe. We cannot promise
+                        to keep that kind of thing secret, and we would not want to.
                       </p>
                     </div>
                   </motion.div>
@@ -590,6 +686,19 @@ export function ReadinessForm() {
                       onChange={(v) => setCommitments((m) => ({ ...m, [c.id]: v }))}
                       idPrefix={c.id}
                     />
+                    {/* Told here, not discovered at the end. These do not stop
+                        the form — an honest no is worth reading, and cutting
+                        someone off would only teach them to lie next time. But
+                        they should not spend another twenty minutes believing
+                        it made no difference. */}
+                    {c.nonNegotiable && commitments[c.id] === false && (
+                      <p className="mt-3 rounded-sm border border-gold/35 bg-gold/[0.06] px-3 py-2.5 text-xs leading-relaxed text-ivory-dim">
+                        We would rather you said that than pretended. Be aware it is a stopping
+                        point for leading, so this will not end with a yes. You are welcome to keep
+                        going and we will still read every word, and it is worth a conversation
+                        either way.
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -613,6 +722,21 @@ export function ReadinessForm() {
               title="Before you carry anyone else."
               lede="Nobody reading this is looking for a polished answer. They are looking for a true one."
             >
+              {/* Said once, where the writing starts. */}
+              <div className="mb-6 rounded-sm border border-border-sub bg-black-3 px-4 py-3">
+                <p className="text-xs leading-relaxed text-silver">
+                  {restored
+                    ? 'We brought back what you had written before. It is saved on this device as you type, so a phone call or a closed tab will not cost you the whole evening.'
+                    : 'What you write is saved on this device as you type, so a phone call or a closed tab will not cost you the whole evening. It is erased the moment you send it to us.'}
+                </p>
+                <button
+                  type="button"
+                  onClick={forgetDraft}
+                  className="mt-2 min-h-[44px] text-[11px] uppercase tracking-[0.12em] text-gold-lt underline underline-offset-4 hover:text-gold"
+                >
+                  Erase it from this device
+                </button>
+              </div>
               <div className="flex flex-col gap-6">
                 {WALK.map((w) => (
                   <div key={w.id} className="rounded-sm border border-border-sub bg-black-3 p-5">
@@ -632,7 +756,7 @@ export function ReadinessForm() {
                     />
                     <p className="mt-1 text-right text-[10px] text-muted">
                       {(walk[w.id] ?? '').trim().length < w.minChars
-                        ? `keep going when you are ready · ${w.minChars - (walk[w.id] ?? '').trim().length}`
+                        ? 'keep going when you are ready'
                         : 'thank you'}
                     </p>
                     {CRISIS_LINE_IDS.includes(w.id) && <CrisisLine />}
@@ -673,8 +797,11 @@ export function ReadinessForm() {
                       {s.title}
                     </p>
                     <p className="text-sm leading-relaxed text-ivory-dim">{s.situation}</p>
+                    {/* A minor is barred from ever holding that room alone, so
+                        asking them to answer as the responsible adult grades
+                        them on a call they are not allowed to make. */}
                     <label htmlFor={s.id} className="mt-3 block text-sm font-medium leading-relaxed text-ivory">
-                      {s.ask}
+                      {isMinor && s.askMinor ? s.askMinor : s.ask}
                     </label>
                     <VerseLine scripture={s.scripture} />
                     <textarea
@@ -688,7 +815,7 @@ export function ReadinessForm() {
                     />
                     <p className="mt-1 text-right text-[10px] text-muted">
                       {(scenarios[s.id] ?? '').trim().length < s.minChars
-                        ? `keep going when you are ready · ${s.minChars - (scenarios[s.id] ?? '').trim().length}`
+                        ? 'keep going when you are ready'
                         : 'thank you'}
                     </p>
                     {CRISIS_LINE_IDS.includes(s.id) && <CrisisLine />}

@@ -96,8 +96,14 @@ export default function LeaderReadinessPage() {
                 That is the only other thing they are ever used for.
               </li>
               <li>
-                Ask us to delete yours and we will, whenever you want, and you never have to say
-                why.
+                One limit on that, said plainly rather than buried: if something you write means
+                a child is being harmed, or that you are not safe, we are not free to keep it
+                between us, and we would not want to be. Everything else stays with the Table.
+              </li>
+              <li>
+                We keep them for three years, or for as long as you lead here and three years
+                after. Ask us to delete yours and we will, whenever you want, and you never have
+                to say why.
               </li>
               <li>
                 If it goes further, the next step is the Leadership Covenant, walked through in

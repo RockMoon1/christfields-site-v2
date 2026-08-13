@@ -78,7 +78,7 @@ export const GATES: GateQuestion[] = [
     question:
       'Will you be at the named gatherings twice a week, whatever the activity is that week?',
     help:
-      'Some weeks it is Scripture. Some weeks it is a meal, a drive, a climb, a hard conversation. The commitment is to the people, not to the kind of evening. Persistent absence is handled through the correction process, not ignored.',
+      'Some weeks it is Scripture. Some weeks it is a meal, a drive, a climb, a hard conversation. The commitment is to the people, not to the kind of evening. Persistent absence is handled through the correction process, not ignored. If the only thing in the way is a ride, that is not a no — say yes and tell us, because we can usually solve a ride.',
     scripture: {
       ref: 'Psalm 15:4',
       text: '“He who keeps an oath even when it hurts, and doesn’t change.”',
@@ -247,7 +247,7 @@ export const COMMITMENTS: YesNoQuestion[] = [
     question:
       'Will you serve under a screened adult, and never take sole responsibility for a group?',
     help:
-      'This is the rule that makes leading under 18 possible at all. You are never the only leader in the room, and you are never the one left holding it.',
+      'This is the rule that makes leading under 18 possible at all. You are never the only leader in the room, and you are never the one left holding it. "Screened" means a background check and references, renewed, before that adult is ever alone in a room with young people.',
     covenant: 'Section 14',
     nonNegotiable: true,
     minorOnly: true,
@@ -537,6 +537,16 @@ export interface ScenarioQuestion {
   title: string;
   situation: string;
   ask: string;
+  /**
+   * Asked instead of `ask` when the applicant is under 18.
+   *
+   * Some of these scenarios put the applicant in the chair of the responsible
+   * adult. A minor leader is barred by `c_minor_under_adult` from ever holding
+   * that room alone, so asking them to answer as the adult grades them on a
+   * judgment they are structurally forbidden to make. The minor version asks
+   * for the reflex they actually need: who do you go get, and how fast.
+   */
+  askMinor?: string;
   scripture: Scripture;
   minChars: number;
 }
@@ -562,6 +572,8 @@ export const SCENARIOS: ScenarioQuestion[] = [
       'After the group, one of your people stays behind. They tell you something heavy, and they start with “please do not tell anyone.” As they talk, it becomes clear they are thinking about hurting themselves. They are fifteen.',
     ask:
       'What do you say to them in that moment, and what do you do in the next hour? Be specific about who you contact.',
+    askMinor:
+      'What do you say to them in that moment? Then: who do you go and get, and how fast? You are never the only one holding this, and we want to know that you know that.',
     scripture: {
       ref: 'Galatians 6:2',
       text: '“Bear one another’s burdens, and so fulfill the law of Christ.”',
@@ -643,23 +655,24 @@ export const SCENARIOS: ScenarioQuestion[] = [
  * not as an alarm about the person reading it.
  */
 export const CRISIS_LINE = {
-  lead: 'If any of this is close to home for you right now,',
+  lead: 'If any of this is close to home for you right now, call or text',
   body:
-    'call or text 988. It is free, it is answered any hour of the day, and you do not have to be in crisis to use it.',
+    '. It is free, it is answered any hour of the day, and you do not have to be in crisis to use it.',
 };
 
 /** The questions heavy enough to carry it. */
 export const CRISIS_LINE_IDS = ['w_current_struggle', 's_disclosure'];
 
 /**
- * The written answers an under-18 applicant can choose to keep out of the
- * email their guardian receives. Everything defaults to shared; switching one
- * off only removes it from that email.
+ * The written answers an under-18 applicant can choose to keep from their
+ * parent. Everything defaults to shared.
  *
- * It never hides anything from the Table, and it never overrides the duty to
- * contact a parent when a young person may not be safe. Both of those are said
- * plainly on the form, because a privacy control that quietly means less than
- * it appears to would be worse than having none.
+ * A switch does three things and no more: it decides what a person here may
+ * pass on to the guardian AFTER reading it (nothing is ever forwarded
+ * automatically), it never hides anything from the Table, and it never
+ * overrides the duty to act when a young person may not be safe. All three are
+ * said plainly on the form, because a privacy control that quietly means less
+ * than it appears to would be worse than having none.
  */
 export const SHAREABLE_IDS: string[] = [
   ...WALK.map((w) => w.id),

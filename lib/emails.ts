@@ -223,6 +223,13 @@ export function leaderAssessmentHtml(v: {
   isMinor: boolean;
   guardianName: string;
   guardianEmail: string;
+  /** Whether the parent actually heard, said here rather than left in a log. */
+  guardianStatus: 'sent' | 'failed' | 'suppressed' | 'none';
+  /** Keyword hits in what they wrote about themselves. Not a diagnosis. */
+  urgent: string[];
+  /** Under-18: exactly what they chose to let their parent see. */
+  forwardable: { prompt: string; answer: string }[];
+  withheldCount: number;
   gatePassed: boolean;
   /** Non-negotiables answered "no". The loudest thing this form can produce. */
   declined: string[];
@@ -310,6 +317,24 @@ export function leaderAssessmentHtml(v: {
             }
           </p>
           ${
+            v.urgent.length
+              ? `<p style="margin:0 0 10px 0;padding:14px 16px;background:#a4463f;font-size:15px;line-height:1.6;color:#ffffff;">
+                   <strong>Read this one today.</strong><br>
+                   What they wrote about their own life contains: ${v.urgent.map((t) => escapeHtml(t)).join(', ')}.<br>
+                   <span style="font-size:13px;opacity:0.9;">A keyword match, not a judgment. It may be nothing. Open it and decide, rather than find out on Tuesday.</span>
+                 </p>`
+              : ''
+          }
+          ${
+            v.guardianStatus === 'failed' || v.guardianStatus === 'suppressed'
+              ? `<p style="margin:0 0 10px 0;padding:12px 14px;background:#f8eeed;border-left:4px solid #a4463f;font-size:14px;line-height:1.6;color:#2b332e;">
+                   <strong style="color:#a4463f;">The guardian was not emailed.</strong>
+                   ${v.guardianStatus === 'suppressed' ? 'A rate limit suppressed it, which usually means a resubmission.' : 'The send failed.'}
+                   Contact ${escapeHtml(v.guardianName || 'them')} yourself today.
+                 </p>`
+              : ''
+          }
+          ${
             v.declined.length
               ? `<p style="margin:0 0 4px 0;padding:12px 14px;background:#f8eeed;border-left:4px solid #a4463f;font-size:14px;line-height:1.6;color:#2b332e;">
                    <strong style="color:#a4463f;">Answered no to ${v.declined.length === 1 ? 'a non-negotiable' : `${v.declined.length} non-negotiables`}.</strong><br>
@@ -331,6 +356,30 @@ export function leaderAssessmentHtml(v: {
           )}
           ${textBlock('Their walk', v.walk)}
           ${textBlock('Scenarios', v.scenarios)}
+          ${
+            v.isMinor
+              ? `<div style="margin:26px 0 0 0;padding:16px 18px;background:#eef5f0;border:1px solid #cfe0d5;">
+                   <p style="margin:0 0 8px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#2d6a4f;font-weight:600;">Ready to send ${escapeHtml(v.guardianName || 'their guardian')}, once you have read it</p>
+                   <p style="margin:0 0 12px 0;font-size:13px;line-height:1.6;color:#4a544e;">
+                     ${escapeHtml(v.guardianName || 'The guardian')} has already been told ${escapeHtml(v.name)} applied, and that
+                     the answers come from a person after we have read them. This is exactly what
+                     ${escapeHtml(v.name)} chose to let them see${v.withheldCount > 0 ? `, with ${v.withheldCount} held back` : ''}. Nothing below has been sent yet.
+                   </p>
+                   ${
+                     v.forwardable.length
+                       ? v.forwardable
+                           .map(
+                             (s) => `<div style="margin:0 0 12px 0;padding:10px 12px;background:#ffffff;border-left:3px solid #2d6a4f;">
+                                <p style="margin:0 0 4px 0;font-size:11px;color:#8a9a92;">${escapeHtml(s.prompt)}</p>
+                                <p style="margin:0;font-size:14px;line-height:1.55;color:#2b332e;">${escapeHtml(s.answer).replace(/\n/g, '<br>')}</p>
+                              </div>`,
+                           )
+                           .join('')
+                       : `<p style="margin:0;font-size:14px;color:#4a544e;">They kept every answer back. Worth a gentle conversation in person, not an email.</p>`
+                   }
+                 </div>`
+              : ''
+          }
           <p style="margin:22px 0 0 0;font-size:12px;line-height:1.6;color:#8a9a92;">
             ${
               v.isMinor
@@ -349,50 +398,41 @@ export function leaderAssessmentHtml(v: {
  * Sent to a parent or guardian the moment someone under 18 submits the leader
  * readiness assessment.
  *
- * CONTAINS ONLY THE ANSWERS THE YOUNG PERSON LEFT SWITCHED ON. Every written
- * answer defaults to shared, so the parent normally sees all of it; each one
- * also carries a switch the applicant can turn off.
+ * CONTAINS NONE OF THEIR ANSWERS, and that is the whole point of this template.
  *
- * That switch exists because the form asks a young person what they are
- * struggling with and who holds them accountable, and one who knows every word
- * goes straight home writes what sounds right instead of what is true. It never
- * hides anything from the Table, and it never overrides the duty to act when
- * someone may not be safe.
+ * The applicant chooses, one answer at a time, what their parent may see, and
+ * the default is everything. But this email leaves automatically, in the same
+ * second the young person presses send, before a single word has been read.
+ * Sending the answers on that trigger would mean an honest account of what a
+ * fifteen-year-old is struggling with arriving in a house that may be the
+ * reason she is struggling, with nobody having looked first. So the parent gets
+ * the notice now, and the answers their child chose to share come from a human
+ * afterwards. The founder's own copy carries a ready-to-forward block.
+ *
+ * Which also keeps this email honest. It cannot claim anything about what is in
+ * the answers, because at send time nothing knows.
  */
 export function guardianNoticeHtml(v: {
   guardianName: string;
   leaderName: string;
-  /** Only the answers the young person chose to share. May be empty. */
-  shared: { prompt: string; answer: string }[];
-  /** How many they kept back, so the parent is told the shape of it honestly. */
-  withheldCount: number;
+  /** True if they wrote anything at all, so the note can be accurate. */
+  hasAnswers: boolean;
 }): string {
-  const sharedBlock =
-    v.shared.length > 0
-      ? `
-          <p style="margin:22px 0 8px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#a8842c;font-weight:600;">What they chose to share with you</p>
-          ${v.shared
-            .map(
-              (s) => `<div style="margin:0 0 14px 0;padding:12px 14px;background:#f6f7f5;border-left:3px solid #e4c97a;">
-                 <p style="margin:0 0 6px 0;font-size:12px;color:#8a9a92;">${escapeHtml(s.prompt)}</p>
-                 <p style="margin:0;font-size:15px;line-height:1.6;color:#2b332e;">${escapeHtml(s.answer).replace(/\n/g, '<br>')}</p>
-               </div>`,
-            )
-            .join('')}`
-      : '';
-
-  const withheldBlock =
-    v.withheldCount > 0
-      ? `<p style="margin:0 0 14px 0;font-size:14px;line-height:1.65;color:#4a544e;">
-           ${v.withheldCount === 1 ? 'One answer is' : `${v.withheldCount} answers are`} not included here. We asked
-           ${escapeHtml(v.leaderName)} some personal questions and gave them the choice, one answer at a
-           time, about what came to you. That choice is deliberate: a young person who knows every word
-           goes straight home tends to write what sounds right rather than what is true, and we would
-           rather have the truth. Those answers are read by us, and they are ${escapeHtml(v.leaderName)}&rsquo;s
-           to tell you in their own time. If anything in them made us think they were not safe, we would
-           not sit on it &mdash; we would act, and we would be picking up a phone rather than sending an email.
-         </p>`
-      : '';
+  const answersBlock = v.hasAnswers
+    ? `<p style="margin:22px 0 14px 0;padding:12px 14px;background:#f6f7f5;border-left:3px solid #e4c97a;font-size:15px;line-height:1.65;color:#2b332e;">
+         ${escapeHtml(v.leaderName)} wrote answers to all of it, and chose, question by question, which
+         of them we may show you. Nothing is attached here, because this email left the moment they
+         pressed send and none of us has read a word yet. Once we have, we will send you what they
+         chose to share &mdash; and the rest is theirs to tell you in their own time.
+       </p>
+       <p style="margin:0 0 14px 0;font-size:15px;line-height:1.65;">
+         We gave them that choice on purpose. A young person who knows every word goes straight home
+         tends to write what sounds right rather than what is true, and the truth is what keeps them
+         safe. What we will not do is sit on something. If anything they write makes us think
+         ${escapeHtml(v.leaderName)} is not safe, we act on it &mdash; and depending on what it is, that
+         means a phone call to you, and it may mean the people whose job it is to keep them safe.
+       </p>`
+    : '';
 
   return `<!doctype html>
 <html lang="en">
@@ -445,8 +485,7 @@ export function guardianNoticeHtml(v: {
             of them.
           </p>
 
-          ${sharedBlock}
-          ${withheldBlock}
+          ${answersBlock}
 
           <p style="margin:0 0 14px 0;font-size:15px;line-height:1.65;">
             Their answers are kept in our records so we can read them properly and come back to
