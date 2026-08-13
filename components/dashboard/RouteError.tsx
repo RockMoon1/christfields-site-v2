@@ -70,19 +70,32 @@ export default function RouteError({
               <code className="break-all font-mono text-gold-lt">{error.digest}</code>
             </p>
           )}
-          <p className="text-xs">
-            <span className="text-silver">Message: </span>
-            <code className="break-all font-mono text-ivory">{error.message || '(no message)'}</code>
-          </p>
-          {error.stack && (
-            <details className="mt-3">
-              <summary className="cursor-pointer text-[10px] uppercase tracking-[0.16em] text-silver">
-                Stack
-              </summary>
-              <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-all text-[10px] leading-relaxed text-silver">
-                {error.stack}
-              </pre>
-            </details>
+          {/* The message and stack are for whoever is building this, not for a
+              member having a bad moment. In production they see the digest,
+              which is what we need to find the error in the logs anyway. */}
+          {process.env.NODE_ENV !== 'production' ? (
+            <>
+              <p className="text-xs">
+                <span className="text-silver">Message: </span>
+                <code className="break-all font-mono text-ivory">
+                  {error.message || '(no message)'}
+                </code>
+              </p>
+              {error.stack && (
+                <details className="mt-3">
+                  <summary className="cursor-pointer text-[10px] uppercase tracking-[0.16em] text-silver">
+                    Stack
+                  </summary>
+                  <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-all text-[10px] leading-relaxed text-silver">
+                    {error.stack}
+                  </pre>
+                </details>
+              )}
+            </>
+          ) : (
+            <p className="text-xs leading-relaxed text-silver">
+              If you tell us that code, we can find exactly what went wrong.
+            </p>
           )}
         </div>
       )}

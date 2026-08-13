@@ -2,7 +2,7 @@
 
 import { auth } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
-import { getLeaderContext, canViewMember } from '@/lib/faithflow/leader-access';
+import { getLeaderContext } from '@/lib/faithflow/leader-access';
 import { computeGroup, computeMemberDetail } from '@/lib/faithflow/analytics';
 import { getSupabase } from '@/lib/supabase';
 import { weekAnchorUTC } from '@/lib/dashboard/journey';
@@ -26,7 +26,7 @@ function recentWeekAnchors(count = 6): string[] {
 
 /**
  * Server actions for the FaithFlow leader dashboard. Authorization lives in
- * leader-access (the requester must be the admin of the active org, and a
+ * leader-access (the requester must hold a leader role in the active org, and a
  * target member must belong to it). The actual analytics live in the shared
  * engine in lib/faithflow/analytics.ts.
  */
@@ -42,7 +42,8 @@ export async function getGroupData(): Promise<GroupDataResult> {
 }
 
 export async function getMemberDetail(memberId: string): Promise<MemberDetail | null> {
-  if (!(await canViewMember(memberId))) return null;
+  // Finding the member in the leader's own roster IS the authorization check,
+  // so there is no need to call canViewMember separately for the same answer.
   const ctx = await getLeaderContext();
   const member = ctx?.members.find((m) => m.userId === memberId);
   if (!member) return null;

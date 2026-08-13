@@ -4,6 +4,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { Resend } from 'resend';
 import { feedbackNotificationHtml } from '@/lib/emails';
 import { getSupabase } from '@/lib/supabase';
+import { takeRateLimit } from '@/lib/rate-limit';
 
 /**
  * In-app feedback. A signed-in member sends a short note about what they would
@@ -92,7 +93,14 @@ export async function submitFeedback(input: {
       ? (input.category as Category)
       : 'Other';
 
-    if (rateLimited(userId)) {
+    // Durable limit when migration 011 has been run, else the in-memory one
+    // (which resets per serverless instance), same pattern as /api/submit.
+    const rl = await takeRateLimit(
+      `feedback:${userId}`,
+      RATE_LIMIT,
+      Math.floor(RATE_WINDOW_MS / 1000),
+    );
+    if (rl.durable ? !rl.allowed : rateLimited(userId)) {
       return { ok: false, error: 'Thanks. Give it a few minutes before sending more.' };
     }
 

@@ -17,7 +17,8 @@ import { RevealToggle } from './RevealToggle';
  * why to use it, so a new member can learn the dashboard by exploring rather
  * than sitting through a forced tour.
  *
- * Leaders (org admins) also get a "FaithFlow Leader" entry. Members never see
+ * Leaders (org:leader, with org:admin as a fallback) also get a "FaithFlow
+ * Leader" entry. Members never see
  * it. Hidden under lg breakpoint; mobile users get the MobileNav drawer.
  */
 export function Sidebar({

@@ -184,7 +184,7 @@ export default async function DashboardHome() {
         </div>
       </section>
 
-      {/* Greeting + 3D orb. Compact on phones so the page stays short. */}
+      {/* Greeting + the growing globe. Compact on phones so the page stays short. */}
       <HeroPanel>
         <div className="grid items-center gap-4 p-6 sm:gap-6 md:grid-cols-2 md:p-12">
           <div>

@@ -5,7 +5,7 @@ import { LeaderNav } from '@/components/leader/LeaderNav';
 import { isLeaderAnywhere, getLeaderContext } from '@/lib/faithflow/leader-access';
 
 /**
- * Immersive shell for the FaithFlow leader dashboard. Gated to org admins
+ * Immersive shell for the FaithFlow leader dashboard. Gated to leader roles
  * (leaders). Non-leaders are sent back to their own dashboard. This segment
  * deliberately does NOT use the member (app) layout, so leaders get a distinct,
  * focused, desktop-first analytics environment.

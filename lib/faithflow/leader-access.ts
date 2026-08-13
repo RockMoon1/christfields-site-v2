@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import type { OrgMember } from './types';
 import { isLeaderRole } from './roles';
@@ -49,8 +50,13 @@ export async function isLeaderAnywhere(): Promise<boolean> {
 /**
  * Returns the active organization plus its members, but only if the signed-in
  * user holds a leader role in that organization. Returns null otherwise.
+ *
+ * Request-cached: this pages the whole Clerk roster, and a single leader page
+ * load used to call it three or four times over (the layout, the page's
+ * action, then canViewMember and getMemberDetail on a drilldown), paying the
+ * full round trip each time.
  */
-export async function getLeaderContext(): Promise<LeaderContext | null> {
+export const getLeaderContext = cache(async (): Promise<LeaderContext | null> => {
   try {
     const { userId, orgId, orgRole } = await auth();
     if (!userId || !orgId || !isLeaderRole(orgRole)) return null;
@@ -98,7 +104,7 @@ export async function getLeaderContext(): Promise<LeaderContext | null> {
     console.error('getLeaderContext failed', err);
     return null;
   }
-}
+});
 
 /**
  * Authorization gate for individual member data. True only if the requester is

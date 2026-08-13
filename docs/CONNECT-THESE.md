@@ -37,7 +37,13 @@ create unique index if not exists gratitude_entries_user_day_idx
 
 create unique index if not exists reflections_user_day_idx
   on reflections (clerk_user_id, entry_date);
+
+create index if not exists community_prayers_user_idx
+  on community_prayers (clerk_user_id, created_at desc);
 ```
+
+The last line is a speed index: the community count runs on every dashboard
+load and that table was only indexed by date.
 
 *(Migration 012, the durable form submissions table, is already done.)*
 

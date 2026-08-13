@@ -30,3 +30,9 @@ create unique index if not exists gratitude_entries_user_day_idx
 
 create unique index if not exists reflections_user_day_idx
   on reflections (clerk_user_id, entry_date);
+
+-- Hot-path index: the community wall's per-member count runs on every dashboard
+-- load (lib/dashboard/journey-data.ts) and again in the leader drilldown, but
+-- community_prayers was only indexed by created_at.
+create index if not exists community_prayers_user_idx
+  on community_prayers (clerk_user_id, created_at desc);

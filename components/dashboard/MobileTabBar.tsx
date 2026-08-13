@@ -17,11 +17,11 @@ import { isRevealed, type SectionDepth, type SectionKey } from '@/lib/dashboard/
  * Hidden on lg+ where the sidebar takes over.
  */
 
-// Short, warm labels for the bar (community reads as "Groups" here, since the
-// in-person gathering is the heartbeat we point new members toward first).
+// Short, warm labels for the bar. Community keeps its full name: the in-person
+// gathering is the heartbeat we point new members toward first, which is also
+// why it is pinned below rather than allowed to fall off the end.
 const TAB_LABEL: Partial<Record<string, string>> = {
   '/dashboard/today': 'Today',
-  '/dashboard/community': 'Community',
 };
 
 export function MobileTabBar({

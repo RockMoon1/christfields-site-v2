@@ -138,14 +138,6 @@ export function graceNoteForToday(d: Date = new Date()): string {
   return GRACE_NOTES[day % GRACE_NOTES.length];
 }
 
-/** Short encouragements for the community wall and faith-friend reactions. */
-export const ENCOURAGEMENTS: string[] = [
-  'Praying for you.',
-  'He is with you in this.',
-  'Keep going, friend.',
-  'You are not alone.',
-  'Holding this with you.',
-];
 
 /* ============================================================
    CBT reframe helps. Theme to Scripture pairing

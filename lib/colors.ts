@@ -1,6 +1,6 @@
 /**
  * Shared color palette for progress areas. Used both on cards (as a
- * left-edge stripe and accent) and on the dashboard orb (as the node color)
+ * left-edge stripe and accent) and on the dashboard globe (as the raindrop color)
  * so users can match a card to its dot at a glance.
  *
  * Colors are hand-picked to work against the dark Christ Fields theme:

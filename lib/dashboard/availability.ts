@@ -23,23 +23,7 @@ export const SLOT_HINT: Record<Slot, string> = {
   evening: '5 – 10pm',
 };
 
-/** Local-hour ranges for each slot. Used later to map calendar events to slots. */
-export const SLOT_RANGE: Record<Slot, { start: number; end: number }> = {
-  morning: { start: 6, end: 12 },
-  afternoon: { start: 12, end: 17 },
-  evening: { start: 17, end: 22 },
-};
-
 export const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-export const WEEKDAY_FULL = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-];
 
 export function isSlot(value: string): value is Slot {
   return value === 'morning' || value === 'afternoon' || value === 'evening';
