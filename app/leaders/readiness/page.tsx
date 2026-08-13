@@ -90,8 +90,14 @@ export default function LeaderReadinessPage() {
                 decided by a form.
               </li>
               <li>
-                They are kept private to the Table and used only to decide whether to sit down
-                together. If you would rather we deleted them, say so and we will.
+                They are kept private to the Table, and they are kept. Deciding whether to sit
+                down together is the first thing they are for; over time they also help us see
+                what actually marked out a good leader, so we ask better questions than these.
+                That is the only other thing they are ever used for.
+              </li>
+              <li>
+                Ask us to delete yours and we will, whenever you want, and you never have to say
+                why.
               </li>
               <li>
                 If it goes further, the next step is the Leadership Covenant, walked through in

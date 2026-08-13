@@ -19,7 +19,7 @@ const steps: Step[] = [
   },
   {
     title: 'Led with Humility',
-    body: 'Each small group has a leader who serves humbly. Leaders guide and equip. They do not dominate or perform.',
+    body: 'Each small group is led by two leaders together, never one alone. They guide and equip. They do not dominate or perform.',
   },
   {
     title: 'Scripture-Rooted',

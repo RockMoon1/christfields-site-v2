@@ -83,7 +83,7 @@ export const FAITHFLOW_CONTENT: Record<InterestKey, TailoredContent> = {
         items: [
           '<strong>Small and personal.</strong> Small groups stay intentionally small. As Iron and Ember grows, new small groups form prayerfully within it.',
           '<strong>One shared identity.</strong> Iron and Ember is the one name everyone shares. The small groups within it carry the same character, rooted in the same FaithFlow principles.',
-          '<strong>Led with humility.</strong> Each small group has a leader who serves, guides, and equips. They do not dominate or perform.',
+          '<strong>Led with humility.</strong> Each small group is led by two leaders together, never one alone. They serve, guide, and equip. They do not dominate or perform.',
           '<strong>Scripture-rooted.</strong> The Bible is the foundation, not an afterthought.',
           '<strong>Faithful community.</strong> The goal is faithfulness, not metrics or hype.',
         ],

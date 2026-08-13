@@ -47,12 +47,25 @@ load and that table was only indexed by date.
 
 *(Migration 012, the durable form submissions table, is already done.)*
 
-### 1b. Migration 014 — leader assessment responses  ⬅ NEW
+### 1b. Migration 014 — leader assessment responses  ✅ DONE
 
-Stores answers from `/leaders/readiness`. Until you run it, the form still
-works and the notification email carries each response; you just will not have
-them in a table to analyze later. The full file is
-`db/migrations/014_leader_assessments.sql` — paste that whole file.
+### 1c. Migration 015 — guardian notified flag  ⬅ NEW
+
+One line. Records whether the parent of an under-18 applicant was actually
+emailed, so a bounce is visible rather than assumed delivered. The notice sends
+either way; this only records it.
+
+```sql
+alter table leader_assessments
+  add column if not exists guardian_emailed boolean not null default false;
+
+alter table leader_assessments
+  add column if not exists visibility jsonb not null default '{}'::jsonb;
+```
+
+The second line records which answers an under-18 applicant chose to share with
+their parent. Both features work without it; you would just lose the record of
+the choice.
 
 ---
 

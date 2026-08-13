@@ -27,9 +27,13 @@ export interface Scripture {
 }
 
 /* ============================================================
-   Part 1: the four gates.
+   Part 1: the gates.
    Answered "no", the assessment ends there. Nobody should spend
    thirty minutes on something that was never going to fit.
+
+   Four things gate this form: the three below, and the doctrinal
+   affirmation that follows them, which ends the form the same way
+   when someone says they cannot affirm it.
    ============================================================ */
 
 export interface GateQuestion {
@@ -53,13 +57,15 @@ export const GATES: GateQuestion[] = [
     },
   },
   {
-    // Covenant Section 2: church at least three times per month, serving at
-    // least twice per month.
+    // Covenant Section 2. Deliberately split from the three-times-a-month and
+    // serving-twice-a-month figures, which the covenant states as forward
+    // commitments ("I will attend...", "I will serve...") rather than as a test
+    // of this month. Being planted somewhere is the disqualifier; a schedule
+    // someone could start next week is not, so it is asked as a commitment.
     id: 'gate_church',
-    question:
-      'Are you part of a local church, there at least three times a month and serving at least twice a month?',
+    question: 'Are you part of a local church, under real pastoral authority?',
     help:
-      'FaithFlow does not replace the church and never will. A leader here is someone already planted somewhere, under real pastoral authority, not someone using this instead of a church.',
+      'FaithFlow does not replace the church and never will. A leader here is someone already planted somewhere, with people who know them and can speak to how they live, not someone using this instead of a church.',
     scripture: {
       ref: 'Hebrews 10:24-25',
       text:
@@ -184,10 +190,14 @@ export interface YesNoQuestion {
   question: string;
   help?: string;
   scripture: Scripture;
+  /** A second passage, where the covenant pairs two and both are needed. */
+  alsoScripture?: Scripture;
   /** Covenant section this comes from, shown to the applicant. */
   covenant?: string;
   /** Marked in the UI: a "no" here ends it, whatever else is true. */
   nonNegotiable?: boolean;
+  /** Only asked of applicants under 18, and only counted for them. */
+  minorOnly?: boolean;
 }
 
 export const COMMITMENTS: YesNoQuestion[] = [
@@ -229,6 +239,24 @@ export const COMMITMENTS: YesNoQuestion[] = [
       text: '“Rescue those who are being led away to death.”',
     },
   },
+  {
+    // Covenant Section 14, second bullet. Asked of the person it actually
+    // governs: the guardian is told this and the applicant is shown it as a
+    // reassurance, but until now the young leader was never asked to affirm it.
+    id: 'c_minor_under_adult',
+    question:
+      'Will you serve under a screened adult, and never take sole responsibility for a group?',
+    help:
+      'This is the rule that makes leading under 18 possible at all. You are never the only leader in the room, and you are never the one left holding it.',
+    covenant: 'Section 14',
+    nonNegotiable: true,
+    minorOnly: true,
+    scripture: {
+      ref: '1 Timothy 4:12',
+      text:
+        '“Let no man despise your youth; but be an example to those who believe, in word, in your way of life, in love, in spirit, in faith, in purity.”',
+    },
+  },
   // ---- Section 3: one-on-one boundaries. Non-negotiable. ----
   {
     id: 'c_opposite_sex',
@@ -245,6 +273,22 @@ export const COMMITMENTS: YesNoQuestion[] = [
   },
   // ---- Section 2: daily faith. ----
   {
+    // The half of Section 2 the gate deliberately does not test. Stated the way
+    // the covenant states it, as something you will do, not something you have
+    // already been doing.
+    id: 'c_church_rhythm',
+    question:
+      'Will you be at your church at least three times a month, and serving there at least twice a month?',
+    help:
+      'Your own church, not this. If you are between churches or newly moved, say no here and tell us about it later; it is a conversation, not a door.',
+    covenant: 'Section 2',
+    scripture: {
+      ref: 'Hebrews 10:24-25',
+      text:
+        '“Not forsaking our own assembling together, as the custom of some is, but exhorting one another.”',
+    },
+  },
+  {
     id: 'c_pray_daily',
     question: 'Will you pray daily, as the first priority?',
     covenant: 'Section 2',
@@ -260,7 +304,7 @@ export const COMMITMENTS: YesNoQuestion[] = [
     covenant: 'Section 2',
     scripture: {
       ref: 'Psalm 1:2',
-      text: '“His delight is in the law of the Lord. On his law he meditates day and night.”',
+      text: '“His delight is in Yahweh’s law. On his law he meditates day and night.”',
     },
   },
   // ---- Section 5 and 6: role, pairs, the Table. ----
@@ -285,6 +329,13 @@ export const COMMITMENTS: YesNoQuestion[] = [
     scripture: {
       ref: 'Hebrews 13:17',
       text: '“Obey your leaders and submit to them, for they watch on behalf of your souls.”',
+    },
+    // The covenant pairs these two, and the second is the whole reason the
+    // exception in the question is real. Shown together or the escape clause
+    // sits under a proof text pointing the other way.
+    alsoScripture: {
+      ref: 'Acts 5:29',
+      text: '“We must obey God rather than men.”',
     },
   },
   {
@@ -316,7 +367,21 @@ export const COMMITMENTS: YesNoQuestion[] = [
     covenant: 'Section 4',
     scripture: {
       ref: '2 Timothy 2:15',
-      text: '“Giving diligence to present yourself approved by God, rightly handling the Word of Truth.”',
+      text: '“Give diligence to present yourself approved by God, properly handling the Word of Truth.”',
+    },
+  },
+  {
+    // Covenant Section 9. A property commitment, and exactly the kind of clause
+    // people are surprised by at a signing table, so it is said here first.
+    id: 'c_content_ownership',
+    question:
+      'Do you understand that anything you make for the ministry in this role belongs to the ministry, and that you hand back accounts and materials when you step away?',
+    help:
+      'Studies, graphics, group accounts, photos taken in the role. It is not about your own work or your own words elsewhere, and stepping away is never held against you.',
+    covenant: 'Section 9',
+    scripture: {
+      ref: '1 Chronicles 29:14',
+      text: '“For all things come from you, and of your own have we given you.”',
     },
   },
   {
@@ -382,8 +447,20 @@ export const COMMITMENTS: YesNoQuestion[] = [
   },
 ];
 
+/** The commitments that apply to this applicant. Minor-only items are asked of,
+ *  and counted for, nobody else. */
+export function commitmentsFor(isMinor: boolean): YesNoQuestion[] {
+  return COMMITMENTS.filter((c) => !c.minorOnly || isMinor);
+}
+
 /* ============================================================
    Part 3: the walk. Short honest answers, not pass or fail.
+
+   The minimums here are floors against a blank box, not a
+   standard. w_accountable_who tells people to say plainly if
+   nobody comes to mind, and "nobody, honestly" has to be an
+   answer the form accepts, or the page is asking for length
+   while claiming to ask for truth.
    ============================================================ */
 
 export interface OpenQuestion {
@@ -403,9 +480,9 @@ export const WALK: OpenQuestion[] = [
     placeholder: 'An honest small answer is worth more here than an impressive one.',
     scripture: {
       ref: 'Psalm 1:2',
-      text: '“His delight is in the law of the Lord.”',
+      text: '“His delight is in Yahweh’s law. On his law he meditates day and night.”',
     },
-    minChars: 40,
+    minChars: 20,
   },
   {
     id: 'w_accountable_who',
@@ -415,7 +492,7 @@ export const WALK: OpenQuestion[] = [
       ref: 'James 5:16',
       text: '“Confess your offenses to one another, and pray for one another.”',
     },
-    minChars: 30,
+    minChars: 12,
   },
   {
     id: 'w_current_struggle',
@@ -426,7 +503,7 @@ export const WALK: OpenQuestion[] = [
       ref: '2 Corinthians 12:9',
       text: '“My grace is sufficient for you, for my power is made perfect in weakness.”',
     },
-    minChars: 40,
+    minChars: 12,
   },
   {
     id: 'w_why_lead',
@@ -436,7 +513,7 @@ export const WALK: OpenQuestion[] = [
       ref: 'Jeremiah 17:9',
       text: '“The heart is deceitful above all things. Who can know it?”',
     },
-    minChars: 60,
+    minChars: 30,
   },
   {
     id: 'w_who_suggested',
@@ -447,7 +524,7 @@ export const WALK: OpenQuestion[] = [
       ref: '1 Timothy 3:7',
       text: '“He must have good testimony from those who are outside.”',
     },
-    minChars: 30,
+    minChars: 12,
   },
 ];
 
@@ -525,7 +602,7 @@ export const SCENARIOS: ScenarioQuestion[] = [
     scripture: {
       ref: 'Luke 15:4',
       text:
-        '“Doesn’t he leave the ninety-nine and go after the one that was lost, until he found it?”',
+        '“…wouldn’t leave the ninety-nine in the wilderness, and go after the one that was lost, until he found it?”',
     },
     minChars: 120,
   },
@@ -555,12 +632,48 @@ export const SCENARIOS: ScenarioQuestion[] = [
   },
 ];
 
+/**
+ * Shown wherever this form asks someone to sit with something heavy.
+ *
+ * The assessment walks an applicant, who may themselves be fifteen, through a
+ * vignette about a fifteen-year-old thinking of hurting themselves, and two
+ * steps earlier asks them to name what they are struggling with right now. To
+ * do that and then say "thank you" with no help offered would be indefensible.
+ * Kept small and calm rather than a banner: it should read as a door left open,
+ * not as an alarm about the person reading it.
+ */
+export const CRISIS_LINE = {
+  lead: 'If any of this is close to home for you right now,',
+  body:
+    'call or text 988. It is free, it is answered any hour of the day, and you do not have to be in crisis to use it.',
+};
+
+/** The questions heavy enough to carry it. */
+export const CRISIS_LINE_IDS = ['w_current_struggle', 's_disclosure'];
+
+/**
+ * The written answers an under-18 applicant can choose to keep out of the
+ * email their guardian receives. Everything defaults to shared; switching one
+ * off only removes it from that email.
+ *
+ * It never hides anything from the Table, and it never overrides the duty to
+ * contact a parent when a young person may not be safe. Both of those are said
+ * plainly on the form, because a privacy control that quietly means less than
+ * it appears to would be worse than having none.
+ */
+export const SHAREABLE_IDS: string[] = [
+  ...WALK.map((w) => w.id),
+  ...SCENARIOS.map((s) => s.id),
+];
+
 /** Everything the form collects, for the server action and the storage shape. */
 export interface AssessmentSubmission {
   name: string;
   email: string;
   phone: string;
   church: string;
+  /** Honeypot. Always empty from a person; a filled value means a script. */
+  website: string;
   /** Covenant Section 13 and 14: a leader under 18 needs a guardian co-signature. */
   isMinor: boolean;
   guardianName: string;
@@ -570,4 +683,6 @@ export interface AssessmentSubmission {
   commitments: Record<string, boolean>;
   walk: Record<string, string>;
   scenarios: Record<string, string>;
+  /** Per-answer: may this appear in the guardian's email? Defaults to true. */
+  visibility: Record<string, boolean>;
 }

@@ -222,26 +222,54 @@ export function leaderAssessmentHtml(v: {
   church: string;
   isMinor: boolean;
   guardianName: string;
+  guardianEmail: string;
   gatePassed: boolean;
+  /** Non-negotiables answered "no". The loudest thing this form can produce. */
+  declined: string[];
+  /** The questions as asked, so rows read as questions and not as column names. */
+  commitmentSet: { id: string; question: string; nonNegotiable?: boolean }[];
   gates: Record<string, boolean>;
   doctrine: Record<string, boolean>;
   commitments: Record<string, boolean>;
   walk: Record<string, string>;
   scenarios: Record<string, string>;
+  /** Under-18 only: which written answers the applicant sent to their guardian. */
+  visibility?: Record<string, boolean>;
 }): string {
+  /**
+   * Worth seeing. A young person who kept a particular answer back is telling
+   * you something too, and it is usually the one to ask gently about in person.
+   */
+  const kept = (id: string) =>
+    v.isMinor && v.visibility && v.visibility[id] === false
+      ? '<span style="margin-left:8px;padding:1px 6px;background:#f8eeed;color:#a4463f;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;">kept from parent</span>'
+      : '';
+
   const yn = (b: boolean) =>
     b
       ? '<span style="color:#2d6a4f;font-weight:600;">Yes</span>'
       : '<span style="color:#a4463f;font-weight:600;">No</span>';
 
-  const boolBlock = (title: string, map: Record<string, boolean>) => `
+  /**
+   * `labels` turns the stored ids into the questions as they were asked. Without
+   * it a declined non-negotiable renders as `c_report_abuse  No` and sits
+   * visually identical to `c_not_status  No` in a seventeen-row list, which is
+   * the single most important signal on the form hiding in the least readable
+   * place in the artifact.
+   */
+  const boolBlock = (
+    title: string,
+    map: Record<string, boolean>,
+    labels?: Record<string, { question: string; nonNegotiable?: boolean }>,
+  ) => `
     <p style="margin:20px 0 6px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#a8842c;font-weight:600;">${escapeHtml(title)}</p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
       ${Object.entries(map)
-        .map(
-          ([k, val]) =>
-            `<tr><td style="padding:4px 0;font-size:13px;color:#4a544e;">${escapeHtml(k)}</td><td style="padding:4px 0;font-size:13px;text-align:right;">${yn(val)}</td></tr>`,
-        )
+        .map(([k, val]) => {
+          const meta = labels?.[k];
+          const flag = meta?.nonNegotiable && !val;
+          return `<tr><td style="padding:6px 10px 6px 0;font-size:13px;line-height:1.5;color:${flag ? '#a4463f' : '#4a544e'};${flag ? 'font-weight:600;background:#f8eeed;' : ''}">${escapeHtml(meta?.question ?? k)}</td><td style="padding:6px 0;font-size:13px;text-align:right;vertical-align:top;${flag ? 'background:#f8eeed;' : ''}">${yn(val)}</td></tr>`;
+        })
         .join('')}
     </table>`;
 
@@ -251,7 +279,7 @@ export function leaderAssessmentHtml(v: {
       .map(
         ([k, val]) =>
           `<div style="margin:0 0 14px 0;padding:10px 12px;background:#f6f7f5;border-left:3px solid #e4c97a;">
-             <p style="margin:0 0 4px 0;font-size:11px;color:#8a9a92;">${escapeHtml(k)}</p>
+             <p style="margin:0 0 4px 0;font-size:11px;color:#8a9a92;">${escapeHtml(k)}${kept(k)}</p>
              <p style="margin:0;font-size:14px;line-height:1.55;color:#2b332e;">${escapeHtml(val || '(left blank)').replace(/\n/g, '<br>')}</p>
            </div>`,
       )
@@ -277,19 +305,164 @@ export function leaderAssessmentHtml(v: {
             Church: ${escapeHtml(v.church)}
             ${
               v.isMinor
-                ? `<br><strong style="color:#a4463f;">Under 18.</strong> Guardian: ${escapeHtml(v.guardianName)}. The covenant needs a guardian co-signature (Section 13), and this leader serves under a screened adult (Section 14).`
+                ? `<br><strong style="color:#a4463f;">Under 18.</strong> Guardian: ${escapeHtml(v.guardianName)}${v.guardianEmail ? ` &lt;${escapeHtml(v.guardianEmail)}&gt;` : ''}. The covenant needs a guardian co-signature (Section 13), and this leader serves under a screened adult (Section 14).`
                 : ''
             }
           </p>
+          ${
+            v.declined.length
+              ? `<p style="margin:0 0 4px 0;padding:12px 14px;background:#f8eeed;border-left:4px solid #a4463f;font-size:14px;line-height:1.6;color:#2b332e;">
+                   <strong style="color:#a4463f;">Answered no to ${v.declined.length === 1 ? 'a non-negotiable' : `${v.declined.length} non-negotiables`}.</strong><br>
+                   ${v.declined.map((q) => escapeHtml(q)).join('<br>')}
+                 </p>`
+              : ''
+          }
           <p style="margin:0 0 4px 0;padding:10px 12px;background:${v.gatePassed ? '#eef5f0' : '#f8eeed'};font-size:14px;color:#2b332e;">
             Gates and doctrine: ${v.gatePassed ? '<strong style="color:#2d6a4f;">all affirmed</strong>' : '<strong style="color:#a4463f;">not all affirmed</strong>'}
           </p>
           ${boolBlock('Gates', v.gates)}
           ${boolBlock('Doctrine', v.doctrine)}
-          ${boolBlock('Commitments', v.commitments)}
+          ${boolBlock(
+            'Commitments',
+            v.commitments,
+            Object.fromEntries(
+              v.commitmentSet.map((c) => [c.id, { question: c.question, nonNegotiable: c.nonNegotiable }]),
+            ),
+          )}
           ${textBlock('Their walk', v.walk)}
           ${textBlock('Scenarios', v.scenarios)}
-          <p style="margin:22px 0 0 0;font-size:12px;color:#8a9a92;">Reply to this email to reach ${escapeHtml(v.name)} directly.</p>
+          <p style="margin:22px 0 0 0;font-size:12px;line-height:1.6;color:#8a9a92;">
+            ${
+              v.isMinor
+                ? `Under 18. Replies go to ${escapeHtml(v.guardianName || 'their guardian')}, not to ${escapeHtml(v.name)}. Do not open a private one-to-one thread with this applicant &mdash; Covenant Section 14, and the commitment they just made on this form.`
+                : `Reply to this email to reach ${escapeHtml(v.name)} directly.`
+            }
+          </p>
+        </td></tr>
+      </table>
+    </td></tr></table>
+  </body>
+</html>`;
+}
+
+/**
+ * Sent to a parent or guardian the moment someone under 18 submits the leader
+ * readiness assessment.
+ *
+ * CONTAINS ONLY THE ANSWERS THE YOUNG PERSON LEFT SWITCHED ON. Every written
+ * answer defaults to shared, so the parent normally sees all of it; each one
+ * also carries a switch the applicant can turn off.
+ *
+ * That switch exists because the form asks a young person what they are
+ * struggling with and who holds them accountable, and one who knows every word
+ * goes straight home writes what sounds right instead of what is true. It never
+ * hides anything from the Table, and it never overrides the duty to act when
+ * someone may not be safe.
+ */
+export function guardianNoticeHtml(v: {
+  guardianName: string;
+  leaderName: string;
+  /** Only the answers the young person chose to share. May be empty. */
+  shared: { prompt: string; answer: string }[];
+  /** How many they kept back, so the parent is told the shape of it honestly. */
+  withheldCount: number;
+}): string {
+  const sharedBlock =
+    v.shared.length > 0
+      ? `
+          <p style="margin:22px 0 8px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#a8842c;font-weight:600;">What they chose to share with you</p>
+          ${v.shared
+            .map(
+              (s) => `<div style="margin:0 0 14px 0;padding:12px 14px;background:#f6f7f5;border-left:3px solid #e4c97a;">
+                 <p style="margin:0 0 6px 0;font-size:12px;color:#8a9a92;">${escapeHtml(s.prompt)}</p>
+                 <p style="margin:0;font-size:15px;line-height:1.6;color:#2b332e;">${escapeHtml(s.answer).replace(/\n/g, '<br>')}</p>
+               </div>`,
+            )
+            .join('')}`
+      : '';
+
+  const withheldBlock =
+    v.withheldCount > 0
+      ? `<p style="margin:0 0 14px 0;font-size:14px;line-height:1.65;color:#4a544e;">
+           ${v.withheldCount === 1 ? 'One answer is' : `${v.withheldCount} answers are`} not included here. We asked
+           ${escapeHtml(v.leaderName)} some personal questions and gave them the choice, one answer at a
+           time, about what came to you. That choice is deliberate: a young person who knows every word
+           goes straight home tends to write what sounds right rather than what is true, and we would
+           rather have the truth. Those answers are read by us, and they are ${escapeHtml(v.leaderName)}&rsquo;s
+           to tell you in their own time. If anything in them made us think they were not safe, we would
+           not sit on it &mdash; we would act, and we would be picking up a phone rather than sending an email.
+         </p>`
+      : '';
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Christ Fields</title>
+  </head>
+  <body style="margin:0;padding:0;background-color:#eef0ec;color:#2b332e;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#eef0ec"><tr><td align="center" style="padding:32px 20px;">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="max-width:560px;width:100%;background-color:#ffffff;border:1px solid #e3e7e1;border-radius:6px;">
+        <tr><td style="height:3px;background:linear-gradient(to right, #e4c97a, #c9a548);font-size:0;line-height:0;">&nbsp;</td></tr>
+        <tr><td style="padding:28px 36px 30px 36px;">
+          <img src="https://christfields2717.com/assets/logo.png" alt="Christ Fields" width="120" style="display:block;margin:0 auto 18px auto;width:120px;max-width:50%;height:auto;border:0;" />
+          <p style="margin:0 0 4px 0;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#a8842c;font-weight:600;">Christ Fields &middot; Iron and Ember</p>
+          <h1 style="margin:0 0 16px 0;font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:26px;color:#1a221d;">${escapeHtml(v.guardianName)}, a quick note about ${escapeHtml(v.leaderName)}.</h1>
+
+          <p style="margin:0 0 14px 0;font-size:15px;line-height:1.65;">
+            ${escapeHtml(v.leaderName)} has just asked to be considered for leading a small group
+            with us, and gave us your email because they are under 18. We wanted you to hear that
+            from us straight away rather than later.
+          </p>
+
+          <p style="margin:0 0 14px 0;font-size:15px;line-height:1.65;">
+            Nothing has been decided and nothing has been signed. This was a set of honest
+            questions about whether leading is right for them in this season.
+          </p>
+
+          <p style="margin:22px 0 8px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#a8842c;font-weight:600;">What leading here involves</p>
+          <ul style="margin:0 0 14px 0;padding-left:20px;font-size:15px;line-height:1.7;">
+            <li>Being at the gatherings twice a week, alongside a co-leader, never on their own.</li>
+            <li>A leader under 18 always serves under the supervision of a screened adult, and is never left solely responsible for a group.</li>
+            <li>No adult is ever alone one on one with a minor, and messaging with minors stays in group channels or includes a parent.</li>
+            <li>They stay planted in your own church; this does not replace it.</li>
+          </ul>
+
+          <p style="margin:22px 0 8px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#a8842c;font-weight:600;">What we would ask of you</p>
+          <p style="margin:0 0 14px 0;font-size:15px;line-height:1.65;">
+            If this does go further, our Leadership Covenant needs your signature alongside
+            theirs. We would walk you both through it in person and give it to you at least
+            seven days before anyone signs, so you can read it properly and pray about it.
+          </p>
+
+          <p style="margin:22px 0 8px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#a8842c;font-weight:600;">What we asked them</p>
+          <p style="margin:0 0 14px 0;font-size:15px;line-height:1.65;">
+            Their own prayer and Scripture, who holds them accountable, what they are struggling
+            with, why they want to lead, and how they would handle real situations with young
+            people. The questions are not confidential &mdash; reply and we will send you every one
+            of them.
+          </p>
+
+          ${sharedBlock}
+          ${withheldBlock}
+
+          <p style="margin:0 0 14px 0;font-size:15px;line-height:1.65;">
+            Their answers are kept in our records so we can read them properly and come back to
+            them. Reply at any time and we will delete them.
+          </p>
+
+          <p style="margin:0 0 6px 0;font-size:15px;line-height:1.65;">
+            If you have questions, or you would rather they did not go further with this, just
+            reply to this email. Either answer is completely fine.
+          </p>
+
+          <p style="margin:22px 0 0 0;padding-top:16px;border-top:1px solid #e3e7e1;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:14px;color:#4a544e;">
+            &ldquo;As iron sharpens iron, so one person sharpens another.&rdquo;
+            <span style="display:block;margin-top:4px;font-style:normal;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#a8842c;">Proverbs 27:17</span>
+          </p>
+          <p style="margin:16px 0 0 0;font-size:14px;color:#2b332e;">Lisandro<br><span style="color:#8a9a92;">Christ Fields</span></p>
         </td></tr>
       </table>
     </td></tr></table>

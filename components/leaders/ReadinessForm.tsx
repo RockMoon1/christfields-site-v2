@@ -8,9 +8,11 @@ import { submitLeaderAssessment } from '@/app/leaders/readiness/actions';
 import {
   GATES,
   DOCTRINE,
-  COMMITMENTS,
+  commitmentsFor,
   WALK,
   SCENARIOS,
+  CRISIS_LINE,
+  CRISIS_LINE_IDS,
   type Scripture,
 } from '@/lib/leaders/assessment';
 
@@ -18,10 +20,10 @@ import {
  * The leader readiness assessment.
  *
  * Built as one step at a time rather than a wall of fields, because the
- * questions deserve to be read rather than skimmed. The four gates come first
- * and end the form immediately on a "no": someone who cannot make those
- * commitments should find that out in ninety seconds, not after half an hour
- * of writing.
+ * questions deserve to be read rather than skimmed. Four things gate it and end
+ * it immediately: the three yes/no questions, and the doctrinal affirmation.
+ * Someone this was never going to fit should find that out in ninety seconds,
+ * not after half an hour of writing.
  *
  * Nothing here scores or judges on the client. Every answer goes to the
  * founder to read.
@@ -29,7 +31,10 @@ import {
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-type Phase = 'intro' | 'gates' | 'doctrine' | 'about' | 'commitments' | 'walk' | 'scenarios' | 'review' | 'done' | 'stopped';
+type Phase = 'intro' | 'gates' | 'doctrine' | 'about' | 'commitments' | 'walk' | 'scenarios' | 'done' | 'stopped';
+
+/** Why the form ended, so the closing screen can say the true thing. */
+type StopReason = 'gate' | 'doctrine' | 'age';
 
 function VerseLine({ scripture }: { scripture: Scripture }) {
   return (
@@ -72,6 +77,70 @@ function StepShell({
   );
 }
 
+/**
+ * Per-answer control for an under-18 applicant: does this one go in the email
+ * their guardian receives? Defaults to yes.
+ *
+ * The wording is deliberate. It never claims the answer is hidden, because it
+ * is not: the Table still reads everything, and a safety concern still reaches
+ * a parent. It only controls the automatic copy.
+ */
+function ShareToggle({
+  shared,
+  onChange,
+  id,
+}: {
+  shared: boolean;
+  onChange: (v: boolean) => void;
+  id: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!shared)}
+      aria-pressed={shared}
+      aria-label={
+        shared
+          ? 'This answer will be included in your parent or guardian email. Tap to keep it out.'
+          : 'This answer will be kept out of your parent or guardian email. Tap to include it.'
+      }
+      className={cn(
+        'mt-3 inline-flex min-h-[44px] items-center gap-2.5 rounded-sm border px-3 py-2 text-[11px] transition-colors',
+        shared
+          ? 'border-emerald-lt/40 bg-emerald-lt/[0.07] text-emerald-bright'
+          : 'border-border-sub text-silver hover:border-border-gold',
+      )}
+      id={`share-${id}`}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          'flex h-4 w-7 items-center rounded-full px-0.5 transition-colors',
+          shared ? 'justify-end bg-emerald-lt/70' : 'justify-start bg-border-sub',
+        )}
+      >
+        <span className="block h-3 w-3 rounded-full bg-black-2" />
+      </span>
+      {shared ? 'Your parent will see this' : 'Kept out of their email'}
+    </button>
+  );
+}
+
+/**
+ * A door left open, under the two questions heavy enough to need one.
+ * Deliberately quiet: it is not an alarm about the person reading it.
+ */
+function CrisisLine() {
+  return (
+    <p className="mt-3 rounded-sm border border-border-sub bg-black-2 px-3 py-2.5 text-[11px] leading-relaxed text-silver">
+      {CRISIS_LINE.lead}{' '}
+      <a href="tel:988" className="text-gold-lt underline underline-offset-2">
+        {CRISIS_LINE.body}
+      </a>
+    </p>
+  );
+}
+
 function YesNo({
   value,
   onChange,
@@ -108,31 +177,51 @@ function YesNo({
 
 export function ReadinessForm() {
   const [phase, setPhase] = useState<Phase>('intro');
+  const [stopReason, setStopReason] = useState<StopReason>('gate');
   const [gateIndex, setGateIndex] = useState(0);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState('');
+  // Never shown to a person. A script filling every field trips it.
+  const [website, setWebsite] = useState('');
 
   const [gates, setGates] = useState<Record<string, boolean>>({});
   const [doctrine, setDoctrine] = useState<Record<string, boolean>>({});
   const [commitments, setCommitments] = useState<Record<string, boolean>>({});
   const [walk, setWalk] = useState<Record<string, string>>({});
   const [scenarios, setScenarios] = useState<Record<string, string>>({});
+  // Under-18 only. Everything is shared with their guardian unless they say
+  // otherwise, so the default is trust in both directions.
+  const [visibility, setVisibility] = useState<Record<string, boolean>>({});
+  const isShared = (id: string) => visibility[id] !== false;
+  const setShared = (id: string, v: boolean) =>
+    setVisibility((m) => ({ ...m, [id]: v }));
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [church, setChurch] = useState('');
   // The covenant allows leaders under 18 (Section 14), serving under a screened
-  // adult, and it needs a parent or guardian co-signature (Section 13).
-  const [isMinor, setIsMinor] = useState<boolean | null>(null);
+  // adult, and it needs a parent or guardian co-signature (Section 13). Below
+  // fourteen the form stops and stores nothing: the privacy policy says this
+  // site does not knowingly collect from under-13s, and a covenant written
+  // around a minor serving under a screened adult does not envision a child.
+  const [ageBand, setAgeBand] = useState<'adult' | 'teen' | 'child' | null>(null);
+  const isMinor = ageBand === 'teen';
   const [guardianName, setGuardianName] = useState('');
   const [guardianEmail, setGuardianEmail] = useState('');
+
+  const COMMITMENT_SET = commitmentsFor(isMinor);
+
+  function stop(reason: StopReason) {
+    setStopReason(reason);
+    setPhase('stopped');
+  }
 
   function answerGate(value: boolean) {
     const gate = GATES[gateIndex];
     setGates((g) => ({ ...g, [gate.id]: value }));
     if (!value) {
-      setPhase('stopped');
+      stop('gate');
       return;
     }
     if (gateIndex + 1 < GATES.length) setGateIndex(gateIndex + 1);
@@ -140,14 +229,16 @@ export function ReadinessForm() {
   }
 
   const allDoctrine = DOCTRINE.every((d) => doctrine[d.id]);
-  const commitmentsAnswered = COMMITMENTS.every((c) => typeof commitments[c.id] === 'boolean');
+  const commitmentsAnswered = COMMITMENT_SET.every(
+    (c) => typeof commitments[c.id] === 'boolean',
+  );
   const walkDone = WALK.every((w) => (walk[w.id] ?? '').trim().length >= w.minChars);
   const scenariosDone = SCENARIOS.every(
     (s) => (scenarios[s.id] ?? '').trim().length >= s.minChars,
   );
   const guardianDone =
-    isMinor === false ||
-    (isMinor === true &&
+    ageBand === 'adult' ||
+    (isMinor &&
       guardianName.trim().length > 1 &&
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guardianEmail));
   const aboutDone =
@@ -161,7 +252,8 @@ export function ReadinessForm() {
         email,
         phone,
         church,
-        isMinor: isMinor === true,
+        website,
+        isMinor,
         guardianName,
         guardianEmail,
         gates,
@@ -169,6 +261,7 @@ export function ReadinessForm() {
         commitments,
         walk,
         scenarios,
+        visibility,
       }).catch(() => ({ ok: false, error: 'Something went wrong. Please try again.' }));
       if (res.ok) setPhase('done');
       else setError(res.error ?? 'Could not send. Please try again.');
@@ -277,14 +370,6 @@ export function ReadinessForm() {
                 })}
               </div>
 
-              {!allDoctrine && (
-                <p className="mt-5 text-xs leading-relaxed text-muted">
-                  If one of these is something you are still working through, that is an honest
-                  place to be, and it is worth a conversation rather than a checkbox. Say hello
-                  through the FaithFlow form instead.
-                </p>
-              )}
-
               <button
                 type="button"
                 disabled={!allDoctrine}
@@ -293,6 +378,26 @@ export function ReadinessForm() {
               >
                 Continue
               </button>
+
+              {/* This is the fourth gate, and it has to be able to end the form
+                  the way the other three do. Without a way out, someone who
+                  cannot affirm one of these is left staring at a dead button
+                  with no idea what to do next. */}
+              {!allDoctrine && (
+                <div className="mt-5 rounded-sm border border-border-sub bg-black-3 p-5">
+                  <p className="text-xs leading-relaxed text-silver">
+                    If one of these is something you are still working through, that is an
+                    honest place to be, and it is worth a conversation rather than a checkbox.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => stop('doctrine')}
+                    className="mt-3 min-h-[44px] w-full rounded-sm border border-border-gold px-5 py-3 text-[11px] font-medium uppercase tracking-[0.12em] text-gold-lt transition-colors hover:bg-gold hover:text-black"
+                  >
+                    I cannot affirm all of these
+                  </button>
+                </div>
+              )}
             </StepShell>
           </motion.div>
         )}
@@ -328,24 +433,30 @@ export function ReadinessForm() {
                   guardian co-signature, so we need to know now rather than
                   discover it at the signing table. */}
               <div className="mt-6 rounded-sm border border-border-sub bg-black-3 p-5">
-                <p className="text-sm text-ivory">Are you 18 or older?</p>
+                <p className="text-sm text-ivory">How old are you?</p>
                 <p className="mt-1 text-xs leading-relaxed text-silver">
                   Leaders under 18 serve here, always under a screened adult. It just means a
                   parent or guardian signs the covenant alongside you.
                 </p>
-                <div className="mt-4 flex gap-3">
-                  {[
-                    { label: '18 or older', minor: false },
-                    { label: 'Under 18', minor: true },
-                  ].map((o) => (
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                  {([
+                    { label: '18 or older', band: 'adult' },
+                    { label: '14 to 17', band: 'teen' },
+                    { label: '13 or younger', band: 'child' },
+                  ] as const).map((o) => (
                     <button
-                      key={o.label}
+                      key={o.band}
                       type="button"
-                      onClick={() => setIsMinor(o.minor)}
-                      aria-pressed={isMinor === o.minor}
+                      onClick={() => {
+                        setAgeBand(o.band);
+                        // Nothing is collected from a child here. The form ends
+                        // before a single personal question is asked.
+                        if (o.band === 'child') stop('age');
+                      }}
+                      aria-pressed={ageBand === o.band}
                       className={cn(
                         'min-h-[44px] flex-1 rounded-sm border px-4 py-3 text-[11px] font-medium uppercase tracking-[0.1em] transition-colors',
-                        isMinor === o.minor
+                        ageBand === o.band
                           ? 'border-gold/60 bg-gold/15 text-gold-lt'
                           : 'border-border-sub text-silver hover:border-border-gold hover:text-ivory',
                       )}
@@ -355,7 +466,7 @@ export function ReadinessForm() {
                   ))}
                 </div>
 
-                {isMinor === true && (
+                {isMinor && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
@@ -387,8 +498,45 @@ export function ReadinessForm() {
                         className="w-full rounded-sm border border-border-sub bg-black-2 px-3 py-2.5 text-sm text-ivory focus:border-gold focus:outline-none"
                       />
                     </div>
+
+                    {/* Said before they answer the honest questions, not after.
+                        They should know exactly who hears what. */}
+                    <div className="rounded-sm border border-gold/30 bg-gold/[0.05] p-4">
+                      <p className="text-xs leading-relaxed text-ivory-dim">
+                        We will email them as soon as you finish, to let them know you asked
+                        about this and what leading here involves.
+                      </p>
+                      <p className="mt-2 text-xs leading-relaxed text-silver">
+                        Your written answers go in that email too, and under each one you will
+                        find a switch. Leave it on and they see that answer. Turn it off and
+                        they do not. You decide, one answer at a time.
+                      </p>
+                      <p className="mt-2 text-xs leading-relaxed text-silver">
+                        Two things we will not pretend about. Turning a switch off does not hide
+                        anything from us; the Table still reads everything you write, because
+                        that is what you are asking us to weigh. And if you tell us something
+                        that makes us think you are not safe, we will not sit on it. We will get
+                        help. Depending on what it is, that may mean talking to your parents, and
+                        it may mean the people whose job it is to keep you safe. That promise is
+                        the reason you can be honest with the rest.
+                      </p>
+                    </div>
                   </motion.div>
                 )}
+              </div>
+
+              {/* Never seen or focused by a person. */}
+              <div aria-hidden className="h-px w-px overflow-hidden opacity-0">
+                <label htmlFor="lw">Website</label>
+                <input
+                  id="lw"
+                  name="website"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                />
               </div>
 
               <button
@@ -412,7 +560,7 @@ export function ReadinessForm() {
               lede="Answer these the way you would actually live them, not the way they are supposed to sound. A no here is information, not a failure."
             >
               <div className="flex flex-col gap-5">
-                {COMMITMENTS.map((c, i) => (
+                {COMMITMENT_SET.map((c, i) => (
                   <div
                     key={c.id}
                     className={cn(
@@ -436,6 +584,7 @@ export function ReadinessForm() {
                     </p>
                     {c.help && <p className="mt-2 text-xs leading-relaxed text-silver">{c.help}</p>}
                     <VerseLine scripture={c.scripture} />
+                    {c.alsoScripture && <VerseLine scripture={c.alsoScripture} />}
                     <YesNo
                       value={typeof commitments[c.id] === 'boolean' ? commitments[c.id] : null}
                       onChange={(v) => setCommitments((m) => ({ ...m, [c.id]: v }))}
@@ -483,9 +632,17 @@ export function ReadinessForm() {
                     />
                     <p className="mt-1 text-right text-[10px] text-muted">
                       {(walk[w.id] ?? '').trim().length < w.minChars
-                        ? `a little more, please`
+                        ? `keep going when you are ready · ${w.minChars - (walk[w.id] ?? '').trim().length}`
                         : 'thank you'}
                     </p>
+                    {CRISIS_LINE_IDS.includes(w.id) && <CrisisLine />}
+                    {isMinor && (
+                      <ShareToggle
+                        id={w.id}
+                        shared={isShared(w.id)}
+                        onChange={(v) => setShared(w.id, v)}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
@@ -531,9 +688,17 @@ export function ReadinessForm() {
                     />
                     <p className="mt-1 text-right text-[10px] text-muted">
                       {(scenarios[s.id] ?? '').trim().length < s.minChars
-                        ? 'a little more, please'
+                        ? `keep going when you are ready · ${s.minChars - (scenarios[s.id] ?? '').trim().length}`
                         : 'thank you'}
                     </p>
+                    {CRISIS_LINE_IDS.includes(s.id) && <CrisisLine />}
+                    {isMinor && (
+                      <ShareToggle
+                        id={s.id}
+                        shared={isShared(s.id)}
+                        onChange={(v) => setShared(s.id, v)}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
@@ -562,17 +727,33 @@ export function ReadinessForm() {
             <div className="rounded-sm border border-border-gold bg-black-3 p-8 text-center">
               <ScriptureSymbol className="mb-4 block text-3xl text-gold" />
               <h2 className="mb-4 font-display text-3xl font-light text-ivory">
-                Then this is not the season.
+                {stopReason === 'age' ? 'Not yet, and that is all this means.' : 'Then this is not the season.'}
               </h2>
-              <p className="mx-auto mb-5 max-w-md text-sm leading-relaxed text-ivory-dim">
-                That is not a judgment on you, and it is not a door closing. Leading a group here
-                asks for those specific things, and answering honestly instead of telling us what
-                we wanted to hear is exactly the character we would want in a leader anyway.
-              </p>
-              <p className="mx-auto mb-6 max-w-md text-sm leading-relaxed text-silver">
-                Come and be part of Iron and Ember. That is where leaders come from here, never
-                from a form.
-              </p>
+              {stopReason === 'age' ? (
+                <>
+                  <p className="mx-auto mb-5 max-w-md text-sm leading-relaxed text-ivory-dim">
+                    Leading a group here starts at fourteen, and there is a real reason for it:
+                    a leader carries other people, sometimes on their hardest nights, and that is
+                    a weight we are not willing to hand to someone younger.
+                  </p>
+                  <p className="mx-auto mb-6 max-w-md text-sm leading-relaxed text-silver">
+                    Nothing you typed has been kept. Come and be part of Iron and Ember in the
+                    meantime, and if you want to be here, ask a parent to reach out to us.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="mx-auto mb-5 max-w-md text-sm leading-relaxed text-ivory-dim">
+                    {stopReason === 'doctrine'
+                      ? 'Saying so plainly instead of ticking a box you did not mean is the honest thing, and it is worth more to us than a form that came back complete.'
+                      : 'That is not a judgment on you, and it is not a door closing. Leading a group here asks for those specific things, and answering honestly instead of telling us what we wanted to hear is exactly the character we would want in a leader anyway.'}
+                  </p>
+                  <p className="mx-auto mb-6 max-w-md text-sm leading-relaxed text-silver">
+                    Come and be part of Iron and Ember. That is where leaders come from here,
+                    never from a form.
+                  </p>
+                </>
+              )}
               <p className="font-display text-sm italic text-silver">
                 “There is a season for everything, and a time for every purpose under heaven.”
                 <span className="mt-1 block text-[10px] uppercase not-italic tracking-[0.16em] text-gold-lt">
@@ -606,6 +787,11 @@ export function ReadinessForm() {
                   Luke 16:10
                 </span>
               </p>
+              {/* Some of what they just wrote was heavy. Nobody should be sent
+                  away from it with nothing but thank you. */}
+              <div className="mx-auto mt-6 max-w-md text-left">
+                <CrisisLine />
+              </div>
             </div>
           </motion.div>
         )}
