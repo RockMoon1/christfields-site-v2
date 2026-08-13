@@ -46,14 +46,19 @@ async function requireUser(): Promise<string | null> {
 }
 
 /** Confirm a timezone string is a real IANA zone, else fall back to UTC. */
-function safeTz(tz: unknown): string {
-  if (typeof tz !== 'string' || !tz) return 'UTC';
+/** True if this runtime recognizes the zone. */
+function isRealTz(tz: unknown): tz is string {
+  if (typeof tz !== 'string' || !tz) return false;
   try {
     new Intl.DateTimeFormat('en-US', { timeZone: tz });
-    return tz;
+    return true;
   } catch {
-    return 'UTC';
+    return false;
   }
+}
+
+function safeTz(tz: unknown): string {
+  return isRealTz(tz) ? tz : 'UTC';
 }
 
 function startOfTodayUtcMs(): number {
@@ -275,7 +280,10 @@ export async function refreshCalendar(tz: string): Promise<{ ok: boolean; error?
     const feed = data as Pick<CalendarFeedRow, 'ics_url' | 'tz'> | null;
     if (!feed?.ics_url) return { ok: false, error: 'No calendar connected.' };
 
-    return await syncFeed(userId, feed.ics_url, safeTz(tz) || feed.tz);
+    // Keep the zone the feed was connected with unless the caller sends a real
+    // one. safeTz() alone always returns a string, so the previous `|| feed.tz`
+    // never ran and a garbage value silently re-bucketed every busy block to UTC.
+    return await syncFeed(userId, feed.ics_url, isRealTz(tz) ? tz : feed.tz);
   } catch (err) {
     console.error('refreshCalendar failed', err);
     return { ok: false, error: 'Could not refresh your calendar.' };

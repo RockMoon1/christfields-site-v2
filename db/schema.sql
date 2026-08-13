@@ -33,8 +33,9 @@ create table if not exists progress_entries (
 create index if not exists progress_entries_area_idx
   on progress_entries (area_id, logged_at);
 
--- Notes from Christ Fields admins to specific members. Members see these
--- on their /dashboard/notes page; admins write them from the admin view.
+-- RESERVED, NOT IN USE. Nothing in the app reads or writes this table: there is
+-- no /dashboard/notes page and no admin view. Kept so an existing database is
+-- not disturbed; drop it in a cleanup migration if it is still empty.
 create table if not exists member_notes (
   id            uuid primary key default gen_random_uuid(),
   clerk_user_id text not null,

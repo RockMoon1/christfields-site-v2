@@ -129,10 +129,11 @@ export default function VerseContextPage() {
           >
             <span className="text-sm font-medium text-ivory">LearnFlow</span>
             <p className="mt-1 text-xs leading-relaxed text-silver">
-              Go to the source: the original Greek and Hebrew, word by word, with cross-references.
+              Go to the source: the original Greek and Hebrew, word by word, with
+              cross-references. It is the Study tab inside GraceFlow.
             </p>
             <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-[0.07em] text-gold transition-colors group-hover:text-gold-lt">
-              Open LearnFlow &#8599;
+              Open the Study tab &#8599;
             </span>
           </a>
         </div>

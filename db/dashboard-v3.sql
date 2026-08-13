@@ -27,8 +27,11 @@
 
 -- ── Dashboard preferences / journey state ────────────────────────────────────
 -- journey_started_at is set when the row is first created (a member's first
--- dashboard load). Engagement and attendance are counted from this point, so
--- when this ships everyone begins fresh at the first stage and grows from here.
+-- dashboard load). ENGAGEMENT signals are counted from this point, so when this
+-- ships everyone begins fresh at the first stage and grows from here.
+-- ATTENDANCE deliberately is NOT: confirmed in-person weeks count for a member's
+-- whole history (lib/dashboard/journey-data.ts), because showing up before the
+-- dashboard existed still counted.
 create table if not exists dashboard_prefs (
   clerk_user_id      text primary key,
   reveal_all         boolean     not null default false,
