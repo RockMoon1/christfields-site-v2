@@ -215,7 +215,7 @@ export function PrayerBoard({ initialOpen, initialAnswered }: PrayerBoardProps) 
             <button
               type="button"
               onClick={() => setShowAdd(true)}
-              className="flex items-center gap-1.5 rounded-sm border border-border-sub px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.1em] text-silver transition-colors hover:border-border-gold hover:text-ivory"
+              className="flex items-center gap-1.5 min-h-[44px] rounded-sm border border-border-sub px-3 py-2 text-[11px] font-medium uppercase tracking-[0.1em] text-silver transition-colors hover:border-border-gold hover:text-ivory"
             >
               <PlusIcon />
               Add request
@@ -585,7 +585,7 @@ function OpenCard({ request, onMarkAnswered, onShare, onDelete }: OpenCardProps)
           <button
             type="button"
             onClick={() => setShowAnswerInput(true)}
-            className="rounded-sm border border-emerald-lt/40 px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-emerald-bright transition-colors hover:bg-emerald-lt/10"
+            className="min-h-[44px] rounded-sm border border-emerald-lt/40 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.08em] text-emerald-bright transition-colors hover:bg-emerald-lt/10"
           >
             Answered
           </button>
@@ -593,7 +593,7 @@ function OpenCard({ request, onMarkAnswered, onShare, onDelete }: OpenCardProps)
             <button
               type="button"
               onClick={() => onShare(request.id)}
-              className="rounded-sm border border-border-sub px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-silver transition-colors hover:border-border-gold hover:text-ivory"
+              className="min-h-[44px] rounded-sm border border-border-sub px-3 py-2 text-[11px] font-medium uppercase tracking-[0.08em] text-silver transition-colors hover:border-border-gold hover:text-ivory"
             >
               Share to wall
             </button>

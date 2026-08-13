@@ -60,6 +60,7 @@ export function GratitudeCard({ initialGratitude }: GratitudeCardProps) {
               {idx + 1}
             </span>
             <textarea
+              aria-label={placeholder}
               value={value}
               onChange={(e) => {
                 setter(e.target.value);

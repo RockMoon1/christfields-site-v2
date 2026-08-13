@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import { SLOTS, SLOT_LABEL } from '@/lib/dashboard/availability';
 import type { PlanDay, PlanBest } from '@/app/dashboard/(leader)/leader/plan/actions';
+import { PlanCell } from './PlanCell';
 
 /**
  * Read-only planning heatmap for leaders. Shows, for the next three weeks, how
  * many members are free in each morning/afternoon/evening slot, with the best
- * times pulled out on top. Server-rendered; no interactivity beyond links.
+ * times pulled out on top. Server-rendered; each cell taps open to name who is
+ * free, since a hover tooltip is invisible on the iPad this page is built for.
  */
 export function PlanBoard({
   total,
@@ -60,7 +62,7 @@ export function PlanBoard({
       <section>
         <h2 className="mb-1 font-display text-2xl font-light text-ivory">The next three weeks</h2>
         <p className="mb-5 text-sm text-silver">
-          Brighter means more people are free. Hover a cell to see who.
+          Brighter means more people are free. Tap a cell to see who.
         </p>
 
         <div className="overflow-x-auto">
@@ -85,27 +87,15 @@ export function PlanBoard({
                 <div className="text-xs text-silver">
                   <span className="text-ivory">{day.dayShort}</span> {day.dateLabel}
                 </div>
-                {day.slots.map((cell) => {
-                  const ratio = total > 0 ? cell.freeCount / total : 0;
-                  return (
-                    <div
-                      key={cell.slot}
-                      title={
-                        cell.freeNames.length > 0
-                          ? `Free: ${cell.freeNames.join(', ')}`
-                          : 'No one marked free'
-                      }
-                      className="flex h-9 items-center justify-center rounded-sm border border-border-sub text-xs"
-                      style={{
-                        backgroundColor: `rgba(201, 165, 72, ${(0.06 + ratio * 0.5).toFixed(3)})`,
-                        color: ratio > 0.45 ? '#e4c97a' : ratio > 0 ? '#c9b98a' : '#7e8c84',
-                      }}
-                    >
-                      {cell.freeCount}
-                      <span className="text-muted">/{total}</span>
-                    </div>
-                  );
-                })}
+                {day.slots.map((cell) => (
+                  <PlanCell
+                    key={cell.slot}
+                    freeCount={cell.freeCount}
+                    total={total}
+                    freeNames={cell.freeNames}
+                    label={`${day.dayShort} ${day.dateLabel}, ${SLOT_LABEL[cell.slot]}`}
+                  />
+                ))}
               </div>
             ))}
           </div>

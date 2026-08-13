@@ -64,6 +64,7 @@ export function ExamenCard({ initialExamen }: ExamenCardProps) {
               <p className="mt-0.5 text-xs italic text-muted">{step.hint}</p>
             </div>
             <textarea
+              aria-label={step.prompt}
               value={values[step.key]}
               onChange={(e) => {
                 setters[step.key](e.target.value);

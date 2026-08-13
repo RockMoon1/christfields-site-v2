@@ -67,6 +67,7 @@ export function MoodCheckinCard({ initialMood, recentMoods }: MoodCheckinCardPro
             onClick={() => handleMoodSelect(level.value)}
             title={level.caption}
             aria-label={level.label}
+            aria-pressed={selectedMood === level.value}
             className={cn(
               'flex flex-1 flex-col items-center gap-1.5 rounded-sm border py-3 text-center transition-all',
               selectedMood === level.value
@@ -129,8 +130,9 @@ export function MoodCheckinCard({ initialMood, recentMoods }: MoodCheckinCardPro
                     onClick={() =>
                       setSelectedEmotion((prev) => (prev === word ? '' : word))
                     }
+                    aria-pressed={selectedEmotion === word}
                     className={cn(
-                      'rounded-sm border px-2.5 py-1 text-[11px] tracking-wide transition-all',
+                      'min-h-[44px] rounded-sm border px-3 py-2 text-[11px] tracking-wide transition-all',
                       selectedEmotion === word
                         ? 'border-gold/50 bg-gold/10 text-gold-lt'
                         : 'border-border-sub text-silver hover:border-border-gold hover:text-ivory',
