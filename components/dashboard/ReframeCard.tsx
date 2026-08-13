@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { REFRAME_HELPS, REFRAME_STEPS } from '@/lib/dashboard/content';
 import type { ThoughtRecord } from '@/lib/supabase';
 import { saveThoughtRecord } from '@/app/dashboard/(app)/reflect/actions';
+import { SaveNote, SAVE_FAILED } from './SaveNote';
 
 interface ReframeCardProps {
   reframes: ThoughtRecord[];
@@ -17,6 +18,7 @@ export function ReframeCard({ reframes }: ReframeCardProps) {
   const [reframe, setReframe] = useState('');
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -37,6 +39,7 @@ export function ReframeCard({ reframes }: ReframeCardProps) {
   function handleSave() {
     if (!thought.trim()) return;
     const scriptureRef = chosenHelp?.scripture_ref ?? '';
+    setSaveError(null);
     startTransition(async () => {
       try {
         await saveThoughtRecord({ situation, thought, reframe, scriptureRef });
@@ -47,6 +50,9 @@ export function ReframeCard({ reframes }: ReframeCardProps) {
         setSelectedTheme(null);
       } catch (err) {
         console.error('saveThoughtRecord failed', err);
+        // The fields are deliberately not cleared on failure, so the message
+        // below is true: what they wrote is still on screen.
+        setSaveError(SAVE_FAILED);
       }
     });
   }
@@ -146,6 +152,8 @@ export function ReframeCard({ reframes }: ReframeCardProps) {
         >
           {isPending ? 'Saving...' : saved ? 'Saved' : 'Save reframe'}
         </button>
+
+        <SaveNote message={saveError} />
 
         <AnimatePresence>
           {saved && (

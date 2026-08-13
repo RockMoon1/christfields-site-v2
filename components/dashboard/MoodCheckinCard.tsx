@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { MOOD_LEVELS, EMOTION_WORDS, graceNoteForToday } from '@/lib/dashboard/content';
 import type { MoodCheckin } from '@/lib/supabase';
 import { saveMood } from '@/app/dashboard/(app)/reflect/actions';
+import { SaveNote, SAVE_FAILED } from './SaveNote';
 
 interface MoodCheckinCardProps {
   initialMood: MoodCheckin | null;
@@ -18,6 +19,7 @@ export function MoodCheckinCard({ initialMood, recentMoods }: MoodCheckinCardPro
   const [note, setNote] = useState(initialMood?.note ?? '');
   const [saved, setSaved] = useState(!!initialMood);
   const [showGrace, setShowGrace] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleMoodSelect(value: number) {
@@ -32,6 +34,7 @@ export function MoodCheckinCard({ initialMood, recentMoods }: MoodCheckinCardPro
     const level = MOOD_LEVELS.find((l) => l.value === selectedMood);
     const label = selectedEmotion || level?.label || '';
 
+    setSaveError(null);
     startTransition(async () => {
       try {
         await saveMood({ mood: selectedMood, label, note });
@@ -39,6 +42,7 @@ export function MoodCheckinCard({ initialMood, recentMoods }: MoodCheckinCardPro
         if (selectedMood <= 2) setShowGrace(true);
       } catch (err) {
         console.error('saveMood failed', err);
+        setSaveError(SAVE_FAILED);
       }
     });
   }
@@ -164,6 +168,8 @@ export function MoodCheckinCard({ initialMood, recentMoods }: MoodCheckinCardPro
           {isPending ? 'Saving...' : saved ? 'Saved' : 'Save check-in'}
         </button>
       )}
+
+      <SaveNote message={saveError} />
 
       {/* Grace note for low moods */}
       <AnimatePresence>

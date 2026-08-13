@@ -45,6 +45,9 @@ export function PrayerBoard({ initialOpen, initialAnswered }: PrayerBoardProps) 
   const [answered, setAnswered] = useState<PrayerRequest[]>(initialAnswered);
   const [showAdd, setShowAdd] = useState(false);
   const [isPending, startTransition] = useTransition();
+  // Failures used to be console-only, so a rolled-back optimistic update just
+  // looked like the app forgetting what the member did. Say it plainly instead.
+  const [note, setNote] = useState<string | null>(null);
 
   // Called from AddPrayerForm with the form values.
   function handleAdd(input: { title: string; body: string; category: string }) {
@@ -64,6 +67,7 @@ export function PrayerBoard({ initialOpen, initialAnswered }: PrayerBoardProps) 
 
     setOpen((prev) => [optimistic, ...prev]);
     setShowAdd(false);
+    setNote(null);
 
     startTransition(async () => {
       try {
@@ -72,11 +76,18 @@ export function PrayerBoard({ initialOpen, initialAnswered }: PrayerBoardProps) 
       } catch (err) {
         setOpen((prev) => prev.filter((r) => r.id !== tempId));
         console.error(err);
+        setNote('Could not save that prayer. Please try again.');
       }
     });
   }
 
-  function handleMarkAnswered(id: string, note: string) {
+  function handleMarkAnswered(id: string, answeredNote: string) {
+    // A prayer still being saved has no real id yet; acting on it would send
+    // "temp-..." to a uuid column and bounce straight back.
+    if (id.startsWith('temp-')) {
+      setNote('Still saving that one. Give it a second and try again.');
+      return;
+    }
     const request = open.find((r) => r.id === id);
     if (!request) return;
 
@@ -84,25 +95,31 @@ export function PrayerBoard({ initialOpen, initialAnswered }: PrayerBoardProps) 
       ...request,
       status: 'answered',
       answered_at: new Date().toISOString(),
-      answered_note: note,
+      answered_note: answeredNote,
     };
 
     setOpen((prev) => prev.filter((r) => r.id !== id));
     setAnswered((prev) => [updated, ...prev]);
+    setNote(null);
 
     startTransition(async () => {
       try {
-        await markAnswered(id, note);
+        await markAnswered(id, answeredNote);
       } catch (err) {
         // Roll back: put it back in open.
         setOpen((prev) => [request, ...prev]);
         setAnswered((prev) => prev.filter((r) => r.id !== id));
         console.error(err);
+        setNote('Could not mark that answered. Please try again.');
       }
     });
   }
 
   function handleReopen(id: string) {
+    if (id.startsWith('temp-')) {
+      setNote('Still saving that one. Give it a second and try again.');
+      return;
+    }
     const request = answered.find((r) => r.id === id);
     if (!request) return;
 
@@ -115,6 +132,7 @@ export function PrayerBoard({ initialOpen, initialAnswered }: PrayerBoardProps) 
 
     setAnswered((prev) => prev.filter((r) => r.id !== id));
     setOpen((prev) => [updated, ...prev]);
+    setNote(null);
 
     startTransition(async () => {
       try {
@@ -123,16 +141,22 @@ export function PrayerBoard({ initialOpen, initialAnswered }: PrayerBoardProps) 
         setAnswered((prev) => [request, ...prev]);
         setOpen((prev) => prev.filter((r) => r.id !== id));
         console.error(err);
+        setNote('Could not reopen that prayer. Please try again.');
       }
     });
   }
 
   function handleDelete(id: string) {
+    if (id.startsWith('temp-')) {
+      setNote('Still saving that one. Give it a second and try again.');
+      return;
+    }
     const fromOpen = open.find((r) => r.id === id);
     const fromAnswered = answered.find((r) => r.id === id);
 
     if (fromOpen) setOpen((prev) => prev.filter((r) => r.id !== id));
     if (fromAnswered) setAnswered((prev) => prev.filter((r) => r.id !== id));
+    setNote(null);
 
     startTransition(async () => {
       try {
@@ -141,15 +165,21 @@ export function PrayerBoard({ initialOpen, initialAnswered }: PrayerBoardProps) 
         if (fromOpen) setOpen((prev) => [fromOpen, ...prev]);
         if (fromAnswered) setAnswered((prev) => [fromAnswered, ...prev]);
         console.error(err);
+        setNote('Could not remove that prayer. It is still here.');
       }
     });
   }
 
   function handleShare(id: string) {
+    if (id.startsWith('temp-')) {
+      setNote('Still saving that one. Give it a second and try again.');
+      return;
+    }
+    setNote(null);
     startTransition(async () => {
       try {
         await shareToCommunity(id);
-        // Mark shared optimistically in whichever list it lives in.
+        // Only mark shared once the wall actually received it.
         setOpen((prev) =>
           prev.map((r) => (r.id === id ? { ...r, shared: true } : r)),
         );
@@ -158,12 +188,23 @@ export function PrayerBoard({ initialOpen, initialAnswered }: PrayerBoardProps) 
         );
       } catch (err) {
         console.error(err);
+        setNote('Could not share that prayer right now. Please try again.');
       }
     });
   }
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[1fr_380px]">
+    <div>
+      {/* Save failures, said plainly. aria-live so it is announced, not just seen. */}
+      <div aria-live="polite">
+        {note && (
+          <p className="mb-6 rounded-sm border border-gold/35 bg-gold/[0.07] px-4 py-3 text-sm text-ivory-dim">
+            {note}
+          </p>
+        )}
+      </div>
+
+      <div className="grid gap-10 lg:grid-cols-[1fr_380px]">
       {/* Left: open requests */}
       <section>
         <div className="mb-6 flex items-center justify-between">
@@ -288,7 +329,59 @@ export function PrayerBoard({ initialOpen, initialAnswered }: PrayerBoardProps) 
           ))}
         </AnimatePresence>
       </section>
+      </div>
     </div>
+  );
+}
+
+/**
+ * Remove control for a prayer card. Deleting a prayer is permanent and there
+ * is no undo, so it asks once before doing it. Always visible rather than
+ * hover-revealed: an invisible-but-tappable target sitting on the corner of
+ * every card is how a phone loses a prayer to a stray thumb.
+ */
+function DeleteControl({
+  onConfirm,
+  label,
+}: {
+  onConfirm: () => void;
+  label: string;
+}) {
+  const [confirming, setConfirming] = useState(false);
+
+  if (confirming) {
+    return (
+      <span className="flex shrink-0 items-center gap-2 text-[11px]">
+        <button
+          type="button"
+          onClick={() => {
+            setConfirming(false);
+            onConfirm();
+          }}
+          className="rounded-sm border border-gold/40 px-2 py-1 uppercase tracking-[0.1em] text-gold transition-colors hover:bg-gold hover:text-black"
+        >
+          Remove
+        </button>
+        <button
+          type="button"
+          onClick={() => setConfirming(false)}
+          className="rounded-sm border border-border-sub px-2 py-1 uppercase tracking-[0.1em] text-silver transition-colors hover:text-ivory"
+        >
+          Keep
+        </button>
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setConfirming(true)}
+      className="shrink-0 p-1 text-muted transition-colors hover:text-silver"
+      aria-label={label}
+    >
+      <XIcon />
+    </button>
   );
 }
 
@@ -322,7 +415,13 @@ function AddPrayerForm({ onCancel, onSubmit, isPending }: AddPrayerFormProps) {
         New request
       </p>
 
+      {/* Real labels, visually hidden: a placeholder disappears the moment
+          someone types, so on its own it leaves a screen reader with nothing. */}
+      <label htmlFor="prayer-title" className="sr-only">
+        What are you bringing to God?
+      </label>
       <input
+        id="prayer-title"
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -332,7 +431,11 @@ function AddPrayerForm({ onCancel, onSubmit, isPending }: AddPrayerFormProps) {
         className="mb-3 w-full rounded-sm border border-border-sub bg-black-2 px-3 py-2 text-sm text-ivory placeholder:text-muted focus:border-gold focus:outline-none"
       />
 
+      <label htmlFor="prayer-body" className="sr-only">
+        More detail, if you want it here. Optional.
+      </label>
       <textarea
+        id="prayer-body"
         value={body}
         onChange={(e) => setBody(e.target.value)}
         placeholder="More detail, if you want it here. (Optional)"
@@ -341,7 +444,11 @@ function AddPrayerForm({ onCancel, onSubmit, isPending }: AddPrayerFormProps) {
         className="mb-3 w-full rounded-sm border border-border-sub bg-black-2 px-3 py-2 text-sm text-ivory placeholder:text-muted focus:border-gold focus:outline-none"
       />
 
+      <label htmlFor="prayer-category" className="sr-only">
+        Category
+      </label>
       <select
+        id="prayer-category"
         value={category}
         onChange={(e) => setCategory(e.target.value)}
         className="mb-4 w-full rounded-sm border border-border-sub bg-black-2 px-3 py-2 text-sm text-ivory focus:border-gold focus:outline-none"
@@ -424,14 +531,10 @@ function OpenCard({ request, onMarkAnswered, onShare, onDelete }: OpenCardProps)
             </p>
           )}
         </div>
-        <button
-          type="button"
-          onClick={() => onDelete(request.id)}
-          className="shrink-0 text-muted opacity-0 transition-opacity hover:text-silver group-hover:opacity-100"
-          aria-label="Remove prayer request"
-        >
-          <XIcon />
-        </button>
+        <DeleteControl
+          onConfirm={() => onDelete(request.id)}
+          label="Remove prayer request"
+        />
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -535,14 +638,10 @@ function AnsweredCard({ request, onReopen, onDelete }: AnsweredCardProps) {
             </p>
           )}
         </div>
-        <button
-          type="button"
-          onClick={() => onDelete(request.id)}
-          className="shrink-0 text-muted opacity-0 transition-opacity hover:text-silver group-hover:opacity-100"
-          aria-label="Remove this record"
-        >
-          <XIcon />
-        </button>
+        <DeleteControl
+          onConfirm={() => onDelete(request.id)}
+          label="Remove this record"
+        />
       </div>
 
       <div className="flex items-center gap-2 border-t border-border-sub pt-4">

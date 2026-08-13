@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { EXAMEN_STEPS, EXAMEN_CLOSING } from '@/lib/dashboard/content';
 import type { Reflection } from '@/lib/supabase';
 import { saveExamen } from '@/app/dashboard/(app)/reflect/actions';
+import { SaveNote, SAVE_FAILED } from './SaveNote';
 
 interface ExamenCardProps {
   initialExamen: Reflection | null;
@@ -15,6 +16,7 @@ export function ExamenCard({ initialExamen }: ExamenCardProps) {
   const [desolation, setDesolation] = useState(initialExamen?.desolation ?? '');
   const [intention, setIntention] = useState(initialExamen?.intention ?? '');
   const [saved, setSaved] = useState(!!initialExamen);
+  const [note, setNote] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const values: Record<string, string> = { consolation, desolation, intention };
@@ -25,12 +27,14 @@ export function ExamenCard({ initialExamen }: ExamenCardProps) {
   };
 
   function handleSave() {
+    setNote(null);
     startTransition(async () => {
       try {
         await saveExamen({ consolation, desolation, intention });
         setSaved(true);
       } catch (err) {
         console.error('saveExamen failed', err);
+        setNote(SAVE_FAILED);
       }
     });
   }
@@ -82,6 +86,8 @@ export function ExamenCard({ initialExamen }: ExamenCardProps) {
       >
         {isPending ? 'Saving...' : saved ? 'Saved' : 'Save examen'}
       </button>
+
+      <SaveNote message={note} />
 
       <AnimatePresence>
         {saved && (

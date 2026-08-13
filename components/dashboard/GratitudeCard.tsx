@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { GRATITUDE_PROMPTS } from '@/lib/dashboard/content';
 import type { GratitudeEntry } from '@/lib/supabase';
 import { saveGratitude } from '@/app/dashboard/(app)/reflect/actions';
+import { SaveNote, SAVE_FAILED } from './SaveNote';
 
 interface GratitudeCardProps {
   initialGratitude: GratitudeEntry | null;
@@ -15,6 +16,7 @@ export function GratitudeCard({ initialGratitude }: GratitudeCardProps) {
   const [itemTwo, setItemTwo] = useState(initialGratitude?.item_two ?? '');
   const [itemThree, setItemThree] = useState(initialGratitude?.item_three ?? '');
   const [saved, setSaved] = useState(!!initialGratitude);
+  const [note, setNote] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   // Pick a prompt that rotates by the day. Stable within the session.
@@ -25,12 +27,14 @@ export function GratitudeCard({ initialGratitude }: GratitudeCardProps) {
 
   function handleSave() {
     if (!itemOne.trim() && !itemTwo.trim() && !itemThree.trim()) return;
+    setNote(null);
     startTransition(async () => {
       try {
         await saveGratitude({ itemOne, itemTwo, itemThree });
         setSaved(true);
       } catch (err) {
         console.error('saveGratitude failed', err);
+        setNote(SAVE_FAILED);
       }
     });
   }
@@ -78,6 +82,8 @@ export function GratitudeCard({ initialGratitude }: GratitudeCardProps) {
       >
         {isPending ? 'Saving...' : saved ? 'Saved' : 'Save gratitude'}
       </button>
+
+      <SaveNote message={note} />
 
       <AnimatePresence>
         {saved && (
