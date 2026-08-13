@@ -47,6 +47,13 @@ load and that table was only indexed by date.
 
 *(Migration 012, the durable form submissions table, is already done.)*
 
+### 1b. Migration 014 — leader assessment responses  ⬅ NEW
+
+Stores answers from `/leaders/readiness`. Until you run it, the form still
+works and the notification email carries each response; you just will not have
+them in a table to analyze later. The full file is
+`db/migrations/014_leader_assessments.sql` — paste that whole file.
+
 ---
 
 ## 2. Netlify → Environment variables

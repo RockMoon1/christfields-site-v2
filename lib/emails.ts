@@ -210,6 +210,93 @@ export function feedbackNotificationHtml(v: {
 </html>`;
 }
 
+/**
+ * Internal email for a leader readiness assessment. Long on purpose: the whole
+ * point is to read what someone actually wrote, so the scenarios come through
+ * in full rather than as a "view in dashboard" link.
+ */
+export function leaderAssessmentHtml(v: {
+  name: string;
+  email: string;
+  phone: string;
+  church: string;
+  isMinor: boolean;
+  guardianName: string;
+  gatePassed: boolean;
+  gates: Record<string, boolean>;
+  doctrine: Record<string, boolean>;
+  commitments: Record<string, boolean>;
+  walk: Record<string, string>;
+  scenarios: Record<string, string>;
+}): string {
+  const yn = (b: boolean) =>
+    b
+      ? '<span style="color:#2d6a4f;font-weight:600;">Yes</span>'
+      : '<span style="color:#a4463f;font-weight:600;">No</span>';
+
+  const boolBlock = (title: string, map: Record<string, boolean>) => `
+    <p style="margin:20px 0 6px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#a8842c;font-weight:600;">${escapeHtml(title)}</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      ${Object.entries(map)
+        .map(
+          ([k, val]) =>
+            `<tr><td style="padding:4px 0;font-size:13px;color:#4a544e;">${escapeHtml(k)}</td><td style="padding:4px 0;font-size:13px;text-align:right;">${yn(val)}</td></tr>`,
+        )
+        .join('')}
+    </table>`;
+
+  const textBlock = (title: string, map: Record<string, string>) => `
+    <p style="margin:22px 0 6px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#a8842c;font-weight:600;">${escapeHtml(title)}</p>
+    ${Object.entries(map)
+      .map(
+        ([k, val]) =>
+          `<div style="margin:0 0 14px 0;padding:10px 12px;background:#f6f7f5;border-left:3px solid #e4c97a;">
+             <p style="margin:0 0 4px 0;font-size:11px;color:#8a9a92;">${escapeHtml(k)}</p>
+             <p style="margin:0;font-size:14px;line-height:1.55;color:#2b332e;">${escapeHtml(val || '(left blank)').replace(/\n/g, '<br>')}</p>
+           </div>`,
+      )
+      .join('')}`;
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="color-scheme" content="light">
+    <title>Leader readiness</title>
+  </head>
+  <body style="margin:0;padding:0;background-color:#eef0ec;color:#2b332e;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#eef0ec"><tr><td align="center" style="padding:32px 20px;">
+      <table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="max-width:640px;width:100%;background-color:#ffffff;border:1px solid #e3e7e1;border-radius:6px;">
+        <tr><td style="height:3px;background:linear-gradient(to right, #e4c97a, #c9a548);font-size:0;line-height:0;">&nbsp;</td></tr>
+        <tr><td style="padding:24px 36px 28px 36px;">
+          <p style="margin:0 0 4px 0;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#a8842c;font-weight:600;">Leader readiness</p>
+          <h1 style="margin:0 0 6px 0;font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:26px;color:#1a221d;">${escapeHtml(v.name)}</h1>
+          <p style="margin:0 0 18px 0;font-size:14px;color:#4a544e;">
+            <a href="mailto:${escapeHtml(v.email)}" style="color:#a8842c;text-decoration:none;">${escapeHtml(v.email)}</a>
+            ${v.phone ? ` &middot; ${escapeHtml(v.phone)}` : ''}<br>
+            Church: ${escapeHtml(v.church)}
+            ${
+              v.isMinor
+                ? `<br><strong style="color:#a4463f;">Under 18.</strong> Guardian: ${escapeHtml(v.guardianName)}. The covenant needs a guardian co-signature (Section 13), and this leader serves under a screened adult (Section 14).`
+                : ''
+            }
+          </p>
+          <p style="margin:0 0 4px 0;padding:10px 12px;background:${v.gatePassed ? '#eef5f0' : '#f8eeed'};font-size:14px;color:#2b332e;">
+            Gates and doctrine: ${v.gatePassed ? '<strong style="color:#2d6a4f;">all affirmed</strong>' : '<strong style="color:#a4463f;">not all affirmed</strong>'}
+          </p>
+          ${boolBlock('Gates', v.gates)}
+          ${boolBlock('Doctrine', v.doctrine)}
+          ${boolBlock('Commitments', v.commitments)}
+          ${textBlock('Their walk', v.walk)}
+          ${textBlock('Scenarios', v.scenarios)}
+          <p style="margin:22px 0 0 0;font-size:12px;color:#8a9a92;">Reply to this email to reach ${escapeHtml(v.name)} directly.</p>
+        </td></tr>
+      </table>
+    </td></tr></table>
+  </body>
+</html>`;
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
