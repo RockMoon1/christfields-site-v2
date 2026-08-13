@@ -137,7 +137,7 @@ export function AttendanceBoard({ initial }: { initial: ReadyBoard }) {
                 )}
               </p>
               {member.checkedIn && !member.confirmed && (
-                <p className="mt-0.5 text-[11px] text-gold-lt">Checked themselves in — confirm?</p>
+                <p className="mt-0.5 text-[11px] text-gold-lt">Checked themselves in. Confirm?</p>
               )}
               {!member.checkedIn && !member.confirmed && (
                 <p className="mt-0.5 text-[11px] text-muted">No check-in yet</p>

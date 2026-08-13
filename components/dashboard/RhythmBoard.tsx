@@ -12,6 +12,7 @@ import {
   type RhythmWithStatus,
 } from '@/app/dashboard/(app)/rhythms/actions';
 import { RhythmCard } from './RhythmCard';
+import { SaveNote } from './SaveNote';
 import type { Cadence } from '@/lib/supabase';
 
 interface RhythmBoardProps {
@@ -278,6 +279,9 @@ function AddRhythmForm({ onCancel, onSubmit, isPending }: AddRhythmFormProps) {
 export function RhythmBoard({ initialRhythms }: RhythmBoardProps) {
   const [rhythms, setRhythms] = useState<RhythmWithStatus[]>(initialRhythms);
   const [showAdd, setShowAdd] = useState(false);
+  // Inline instead of alert(): a native dialog is jarring against the calm of
+  // this page, and the rest of the dashboard already says things this way.
+  const [note, setNote] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const totalDoneToday = rhythms.filter((r) => r.doneToday).length;
@@ -289,6 +293,10 @@ export function RhythmBoard({ initialRhythms }: RhythmBoardProps) {
       return;
     }
 
+    // Keep the row exactly as it was, so a failure restores the truth rather
+    // than trying to invert the change a second time.
+    const before = rhythms.find((r) => r.id === practiceId);
+
     setRhythms((prev) =>
       prev.map((r) =>
         r.id === practiceId
@@ -296,7 +304,11 @@ export function RhythmBoard({ initialRhythms }: RhythmBoardProps) {
               ...r,
               doneToday: !r.doneToday,
               weekDone: r.doneToday ? Math.max(0, r.weekDone - 1) : r.weekDone + 1,
-              currentStreak: r.doneToday ? r.currentStreak : r.currentStreak + 1,
+              // Unchecking today has to walk the streak back too, otherwise the
+              // count keeps climbing every time it is toggled off and on.
+              currentStreak: r.doneToday
+                ? Math.max(0, r.currentStreak - 1)
+                : r.currentStreak + 1,
               last7: r.last7.map((d, i) =>
                 i === r.last7.length - 1 ? { ...d, done: !r.doneToday } : d,
               ),
@@ -309,22 +321,11 @@ export function RhythmBoard({ initialRhythms }: RhythmBoardProps) {
       try {
         await toggleToday(practiceId);
       } catch (err) {
-        setRhythms((prev) =>
-          prev.map((r) =>
-            r.id === practiceId
-              ? {
-                  ...r,
-                  doneToday: !r.doneToday,
-                  weekDone: r.doneToday ? Math.max(0, r.weekDone - 1) : r.weekDone + 1,
-                  currentStreak: r.doneToday ? r.currentStreak : Math.max(0, r.currentStreak - 1),
-                  last7: r.last7.map((d, i) =>
-                    i === r.last7.length - 1 ? { ...d, done: !r.doneToday } : d,
-                  ),
-                }
-              : r,
-          ),
-        );
+        if (before) {
+          setRhythms((prev) => prev.map((r) => (r.id === practiceId ? before : r)));
+        }
         console.error('toggleToday failed', err);
+        setNote('Could not save that just now. Please try again.');
       }
     });
   }
@@ -366,7 +367,7 @@ export function RhythmBoard({ initialRhythms }: RhythmBoardProps) {
         setRhythms((prev) => prev.map((r) => (r.id === tempId ? real : r)));
       } catch (err) {
         setRhythms((prev) => prev.filter((r) => r.id !== tempId));
-        alert('Could not save rhythm. Please try again.');
+        setNote('Could not save that rhythm. Please try again.');
         console.error(err);
       }
     });
@@ -380,7 +381,7 @@ export function RhythmBoard({ initialRhythms }: RhythmBoardProps) {
 
     const removed = rhythms.find((r) => r.id === practiceId);
     if (removed?.presetKey) {
-      alert('Core rhythms are part of every account and cannot be removed.');
+      setNote('Core rhythms are part of every account, so they stay.');
       return;
     }
 
@@ -391,7 +392,7 @@ export function RhythmBoard({ initialRhythms }: RhythmBoardProps) {
         await archivePractice(practiceId);
       } catch (err) {
         if (removed) setRhythms((prev) => [...prev, removed]);
-        alert('Could not remove rhythm. Please try again.');
+        setNote('Could not remove that rhythm. Please try again.');
         console.error(err);
       }
     });
@@ -399,6 +400,8 @@ export function RhythmBoard({ initialRhythms }: RhythmBoardProps) {
 
   return (
     <div>
+      <SaveNote message={note} />
+
       {/* Summary bar */}
       <div className="mb-8 flex flex-col gap-1">
         {totalDoneToday > 0 && (

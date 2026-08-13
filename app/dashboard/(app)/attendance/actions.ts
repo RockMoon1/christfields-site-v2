@@ -105,17 +105,27 @@ export async function getMyAttendance(weeks = 6): Promise<MyAttendanceWeek[]> {
       return blank();
     }
 
-    const byAnchor = new Map(
-      ((data as { gathering_date: string; checked_in: boolean; confirmed: boolean }[] | null) ?? []).map(
-        (r) => [r.gathering_date.slice(0, 10), r] as const,
-      ),
-    );
+    // A member can have a row per org for the same week (under Iron & Ember
+    // they belong to the main community AND a small group), so merge rather
+    // than letting whichever row arrived last win: present anywhere that week
+    // means present, confirmed anywhere means confirmed.
+    const byAnchor = new Map<string, { checkedIn: boolean; confirmed: boolean }>();
+    for (const r of (data as
+      | { gathering_date: string; checked_in: boolean; confirmed: boolean }[]
+      | null) ?? []) {
+      const key = r.gathering_date.slice(0, 10);
+      const prev = byAnchor.get(key);
+      byAnchor.set(key, {
+        checkedIn: Boolean(prev?.checkedIn) || Boolean(r.checked_in),
+        confirmed: Boolean(prev?.confirmed) || Boolean(r.confirmed),
+      });
+    }
 
     return anchors.map((weekAnchor) => {
       const row = byAnchor.get(weekAnchor);
       return {
         weekAnchor,
-        checkedIn: Boolean(row?.checked_in),
+        checkedIn: Boolean(row?.checkedIn),
         confirmed: Boolean(row?.confirmed),
       };
     });

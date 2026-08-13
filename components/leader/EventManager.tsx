@@ -100,7 +100,7 @@ export function EventManager({
           New event
         </p>
         <p className="mb-5 text-sm text-silver">
-          This shows up as an animated banner on every member of {orgName}.
+          This shows up as an animated banner on every member's dashboard in {orgName}.
         </p>
 
         <label className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.2em] text-muted">

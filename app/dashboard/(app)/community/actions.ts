@@ -26,7 +26,13 @@ async function requireUser(): Promise<string> {
    View type: CommunityPrayer + per-viewer flags
    ============================================================ */
 
-export interface CommunityPrayerView extends CommunityPrayer {
+/**
+ * A wall post as other members may see it. clerk_user_id is deliberately
+ * omitted: this payload is sent to every signed-in browser, and nothing in the
+ * UI needs to know who authored a post beyond the display name they chose and
+ * the `mine` flag computed here on the server.
+ */
+export interface CommunityPrayerView extends Omit<CommunityPrayer, 'clerk_user_id'> {
   /** True when the current user has already tapped "I prayed for this". */
   prayedByMe: boolean;
   /** True when the row belongs to the current user. */
@@ -83,15 +89,31 @@ export async function getCommunity(): Promise<{
       ),
     );
 
-    const views: CommunityPrayerView[] = prayers.map((p) => ({
-      ...p,
-      prayedByMe: prayedSet.has(p.id),
-      mine: p.clerk_user_id === userId,
-    }));
+    const views: CommunityPrayerView[] = prayers.map((p) => {
+      // Explicit field list rather than a spread: a spread would ship every
+      // author's clerk_user_id to every member's browser.
+      const { clerk_user_id, ...safe } = p;
+      return {
+        ...safe,
+        prayedByMe: prayedSet.has(p.id),
+        mine: clerk_user_id === userId,
+      };
+    });
 
-    const totalPrayed = views.reduce((sum, p) => sum + (p.pray_count ?? 0), 0);
+    // The wall shows the latest 60, but "we have prayed for one another N
+    // times" is a claim about the whole community, so count across every row
+    // rather than just the page we loaded.
+    const { count: interceptionCount } = await sb
+      .from('community_intercessions')
+      .select('id', { count: 'exact', head: true });
+    const { count: requestCount } = await sb
+      .from('community_prayers')
+      .select('id', { count: 'exact', head: true });
 
-    return { prayers: views, totalPrayed, totalRequests: views.length };
+    const totalPrayed =
+      interceptionCount ?? views.reduce((sum, p) => sum + (p.pray_count ?? 0), 0);
+
+    return { prayers: views, totalPrayed, totalRequests: requestCount ?? views.length };
   } catch (err) {
     console.error('getCommunity: unexpected failure', err);
     return empty;

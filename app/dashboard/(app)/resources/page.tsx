@@ -42,7 +42,7 @@ export default async function ResourcesPage() {
           What you see here changes based on where you are in each area. When you are
           struggling, this is where to start. When you are growing, this is what to ask
           of yourself. When you are ready to lead, this is how to bring others along.
-          Reflect at the bottom of each card — only you see what you write.
+          Reflect at the bottom of each card. Only you see what you write.
         </p>
       </header>
 

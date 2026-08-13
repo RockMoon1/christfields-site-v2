@@ -30,7 +30,6 @@ export function CommunityWall({ initial, totalPrayed: _totalPrayed }: CommunityW
     const tempId = `temp-${Date.now()}`;
     const optimistic: CommunityPrayerView = {
       id: tempId,
-      clerk_user_id: '',
       author_name: 'You',
       title,
       body,
@@ -325,8 +324,9 @@ function PrayerCard({ prayer, onPray, onAnswered, onDelete, isPending }: PrayerC
 
       {/* Actions row */}
       <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-border-sub pt-4">
-        {/* Pray button */}
-        {!prayer.answered && (
+        {/* Pray button. Not shown on your own request: praying for yourself
+            here would inflate your own count and the community-wide total. */}
+        {!prayer.answered && !prayer.mine && (
           <button
             type="button"
             onClick={() => onPray(prayer.id)}

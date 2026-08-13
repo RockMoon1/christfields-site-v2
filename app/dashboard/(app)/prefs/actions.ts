@@ -20,12 +20,15 @@ async function requireUser(): Promise<string> {
 export async function markWelcomeSeen(): Promise<void> {
   const userId = await requireUser();
   const sb = getSupabase();
-  await sb
+  const { error } = await sb
     .from('dashboard_prefs')
     .upsert(
       { clerk_user_id: userId, welcome_seen: true, updated_at: new Date().toISOString() },
       { onConflict: 'clerk_user_id' },
     );
+  // supabase-js returns errors rather than throwing. Unchecked, a failed write
+  // here means the one-time welcome greets the member again on every visit.
+  if (error) console.error('markWelcomeSeen failed', { code: error.code });
   revalidatePath('/dashboard');
 }
 
@@ -33,12 +36,13 @@ export async function markWelcomeSeen(): Promise<void> {
 export async function setRevealAll(value: boolean): Promise<void> {
   const userId = await requireUser();
   const sb = getSupabase();
-  await sb
+  const { error } = await sb
     .from('dashboard_prefs')
     .upsert(
       { clerk_user_id: userId, reveal_all: Boolean(value), updated_at: new Date().toISOString() },
       { onConflict: 'clerk_user_id' },
     );
+  if (error) console.error('setRevealAll failed', { code: error.code });
   revalidatePath('/dashboard', 'layout');
 }
 
@@ -60,9 +64,11 @@ export async function markStageSeen(stage: JourneyStage): Promise<void> {
   const seen = (current.data?.journey_seen_stage as JourneyStage | undefined) ?? 'seed';
   if (stageRank(stage) <= stageRank(seen)) return; // already at or past this stage
 
-  await sb
+  const { error } = await sb
     .from('dashboard_prefs')
     .update({ journey_seen_stage: stage, updated_at: new Date().toISOString() })
     .eq('clerk_user_id', userId);
+  // Unchecked, a failure replays the stage-crossing celebration every load.
+  if (error) console.error('markStageSeen failed', { code: error.code });
   revalidatePath('/dashboard', 'layout');
 }

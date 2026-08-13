@@ -316,7 +316,9 @@ export default async function DashboardHome() {
       {/* Seed only: a calm, honest note that this space is meant to be small at
           first and unfolds as you walk. Keeps newcomers from feeling there is a
           mountain of work, and frames the simplicity as intentional. */}
-      {seed && (
+      {/* Not shown to a member who turned on "show me everything": the full nav
+          is sitting right there, so calling it the whole space would be false. */}
+      {seed && !view.revealAll && (
         <section className="mt-5 rounded-md border border-border-sub bg-black-3/60 p-6 md:mt-8">
           <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-gold">
             This is the whole space, for now

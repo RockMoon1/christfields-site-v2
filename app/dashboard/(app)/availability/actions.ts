@@ -200,12 +200,17 @@ async function syncFeed(userId: string, url: string, tz: string): Promise<{ ok: 
   const result = await fetchBusySlots(url, tz, fromMs, toMs);
 
   const sb = getSupabase();
-  await sb.from('calendar_busy').delete().eq('clerk_user_id', userId);
-  if (result.ok && result.slots.length > 0) {
-    const { error } = await sb
-      .from('calendar_busy')
-      .insert(result.slots.map((s) => ({ clerk_user_id: userId, on_date: s.date, slot: s.slot })));
-    if (error) console.error('syncFeed: busy insert failed', error);
+  // Only replace what is stored once the fetch actually succeeded. Deleting
+  // first meant one timed-out provider wiped the member's busy blocks and put
+  // nothing back, so their leader saw them as free all week.
+  if (result.ok) {
+    await sb.from('calendar_busy').delete().eq('clerk_user_id', userId);
+    if (result.slots.length > 0) {
+      const { error } = await sb
+        .from('calendar_busy')
+        .insert(result.slots.map((s) => ({ clerk_user_id: userId, on_date: s.date, slot: s.slot })));
+      if (error) console.error('syncFeed: busy insert failed', error);
+    }
   }
 
   await sb

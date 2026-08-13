@@ -7,6 +7,10 @@ import type { SectionDepth, SectionKey } from '@/lib/dashboard/journey';
 
 const titleMap: Record<string, string> = {
   '/dashboard': 'Overview',
+  '/dashboard/today': 'Today',
+  '/dashboard/availability': 'Availability',
+  '/dashboard/foundation': 'Foundation',
+  '/dashboard/scripture/context': 'Scripture',
   '/dashboard/rhythms': 'Rhythms',
   '/dashboard/prayer': 'Prayer',
   '/dashboard/reflect': 'Reflect',

@@ -87,7 +87,9 @@ export async function addVerse(input: {
 
   const reference = input.reference.trim().slice(0, 100);
   const verse_text = input.verseText.trim().slice(0, 1000);
-  const translation = input.translation.trim().slice(0, 20) || 'ESV';
+  // WEB is what the verified lookup returns, so an unlabelled verse should not
+  // claim to be ESV text the member may never have pasted.
+  const translation = input.translation.trim().slice(0, 20) || 'WEB';
 
   if (!reference) throw new Error('Reference is required');
   if (!verse_text) throw new Error('Verse text is required');

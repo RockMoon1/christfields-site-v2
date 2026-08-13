@@ -360,7 +360,7 @@ function MemberDrilldown({ detail }: { detail: MemberDetail }) {
         {detail.prayer.shared.length > 0 && (
           <div className="mt-4">
             <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.22em] text-muted">
-              Shared with the group
+              Shared on the community wall
             </p>
             <p className="mb-3 text-[10px] text-muted/70 italic">
               These are the only prayers visible. {detail.name.split(' ')[0]} chose to share them.
