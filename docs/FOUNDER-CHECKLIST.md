@@ -36,6 +36,15 @@ Check items off by editing this file, or ask any Claude session to update it.
 - [ ] **Probely console.** Mark the four triaged findings per
   `SECURITY-SCAN-TRIAGE.md` (3 false positive, 1 accepted risk), re-run the scan.
 
+## Run in Supabase
+
+- [ ] **Migration 013** (`db/migrations/013_reflect_one_per_day.sql`): one
+  gratitude entry and one examen per member per day. Without it, a double tap
+  can create two rows for the same day and that day's entry then stops loading
+  for the member. Safe to run top to bottom; it clears any existing duplicates
+  first, keeping the newest. The code already handles both states, so there is
+  no rush and nothing breaks until you run it.
+
 ## Verify once (quick checks)
 
 - [x] **Supabase migration 012** (`db/migrations/012_submissions.sql`): DONE,
@@ -43,6 +52,37 @@ Check items off by editing this file, or ask any Claude session to update it.
   durable.
 - [ ] **hstspreload.org**: check christfields2717.com is submitted (the header
   is already sent; only the external submission is unverified).
+
+## Decisions waiting on you (from the dashboard audit, 2026-08-10)
+
+- [ ] **Verse of the day translation.** `lib/dashboard/content.ts` holds 20
+  hand-typed verses labelled ESV. The ESV is copyrighted; Crossway's gratis
+  policy covers this many verses but requires a visible attribution notice,
+  which the dashboard does not carry. Meanwhile the repo built `lib/bible`
+  precisely so verse text comes from a verified source (public-domain WEB),
+  and memory verses already use it. Options: serve the daily verse through
+  lib/bible (no licensing question, consistent), or keep ESV and add the
+  required notice. Recommend the former.
+- [ ] **Pages reachable before they are revealed.** Rhythms, Prayer, and
+  Reflect are hidden from the nav at early stages but still load if the URL is
+  typed. Options: redirect to Today, show a gentle "not yet" page, or leave it
+  (a URL is not a secret, and "show me everything" exists). Low stakes either
+  way; needs a call so the intent is written down.
+- [ ] **The vanity-metric inventory** (this is the long-standing decision 2).
+  Exact member-facing surfaces, if you decide to strip them: rhythm streaks
+  (`RhythmCard.tsx:195`), Progress self-scores and targets
+  (`ProgressBoard.tsx:411`), overview stat tiles (`page.tsx:284`), weekly
+  counts (`streaks.ts:73`), Scripture review counts (`MemoryVerses.tsx:144`),
+  community "N praying" tallies (`CommunityWall.tsx:361`), event "N going"
+  (`EventBanner.tsx:231`). Leader-side equivalents live in
+  `MembersBoard.tsx:325`.
+- [ ] **Leader analytics are attendance-blind** (`lib/faithflow/analytics.ts`).
+  "Quiet for N days" counts app activity only, so a member who shows up in
+  person every week but rarely opens the app reads as struggling. Worth
+  deciding, given the whole model says the gathering is what counts.
+- [ ] **Leaders can see a member's full memory-verse list**, including verse
+  text and review counts, with remove/reset controls
+  (`MembersBoard.tsx:396`). Consistent with "signals not words", or too far?
 
 ## Deliberately deferred (on purpose, not forgotten)
 
