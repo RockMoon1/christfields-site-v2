@@ -28,7 +28,16 @@ export async function POST(req: NextRequest) {
   const mainOrgId = process.env.MAIN_COMMUNITY_ORG_ID;
   if (!mainOrgId || !process.env.CLERK_WEBHOOK_SIGNING_SECRET) {
     // Not configured yet: refuse rather than silently accept unverifiable posts.
-    return NextResponse.json({ ok: false, error: 'Not configured' }, { status: 503 });
+    // Name which variable is missing (never its value) so setup is not a
+    // guessing game. Clerk only ever sees this while the endpoint is unwired.
+    const missing = [
+      mainOrgId ? null : 'MAIN_COMMUNITY_ORG_ID',
+      process.env.CLERK_WEBHOOK_SIGNING_SECRET ? null : 'CLERK_WEBHOOK_SIGNING_SECRET',
+    ].filter(Boolean);
+    return NextResponse.json(
+      { ok: false, error: 'Not configured', missing },
+      { status: 503 },
+    );
   }
 
   let evt;
