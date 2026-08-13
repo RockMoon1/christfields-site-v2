@@ -9,7 +9,8 @@ import {
   type Reflection,
   type ThoughtRecord,
 } from '@/lib/supabase';
-import { todayUTC } from '@/lib/dashboard/streaks';
+import { dayKeyInZone, zonedDayRangeUTC } from '@/lib/dashboard/timezone';
+import { getMemberTimeZone } from '@/lib/dashboard/timezone-server';
 
 /**
  * Server actions for the Reflect feature.
@@ -47,15 +48,18 @@ export async function getTodayReflect(): Promise<TodayReflect> {
     if (!userId) return safe;
 
     const sb = getSupabase();
-    const today = todayUTC();
+    const tz = await getMemberTimeZone();
+    const today = dayKeyInZone(tz);
 
-    // Most recent mood check-in where checked_at is today (UTC date prefix match).
+    // Most recent mood check-in from the member's own day. checked_at is an
+    // instant, so the window is the real start and end of their local day.
+    const { start, end } = zonedDayRangeUTC(tz, today);
     const { data: moodRow } = await sb
       .from('mood_checkins')
       .select('*')
       .eq('clerk_user_id', userId)
-      .gte('checked_at', today + 'T00:00:00.000Z')
-      .lt('checked_at', today + 'T23:59:59.999Z')
+      .gte('checked_at', start)
+      .lt('checked_at', end)
       .order('checked_at', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -84,8 +88,10 @@ export async function getTodayReflect(): Promise<TodayReflect> {
       .order('checked_at', { ascending: false })
       .limit(30);
 
+    // Label each point with the member's own day, not the UTC one, so an
+    // evening check-in is not plotted as the following day.
     const recentMoods = ((moodHistory as Pick<MoodCheckin, 'checked_at' | 'mood'>[] | null) ?? [])
-      .map((r) => ({ date: r.checked_at.slice(0, 10), mood: r.mood }))
+      .map((r) => ({ date: dayKeyInZone(tz, new Date(r.checked_at)), mood: r.mood }))
       .reverse();
 
     return {
@@ -122,6 +128,7 @@ export async function saveMood(input: {
 
   revalidatePath('/dashboard/reflect');
   revalidatePath('/dashboard');
+  revalidatePath('/dashboard/today');
 }
 
 /* ============================================================
@@ -135,7 +142,8 @@ export async function saveGratitude(input: {
 }): Promise<void> {
   const userId = await requireUser();
   const sb = getSupabase();
-  const today = todayUTC();
+  const tz = await getMemberTimeZone();
+  const today = dayKeyInZone(tz);
 
   const itemOne = input.itemOne.trim().slice(0, 300);
   const itemTwo = input.itemTwo.trim().slice(0, 300);
@@ -171,6 +179,7 @@ export async function saveGratitude(input: {
 
   revalidatePath('/dashboard/reflect');
   revalidatePath('/dashboard');
+  revalidatePath('/dashboard/today');
 }
 
 /* ============================================================
@@ -184,7 +193,8 @@ export async function saveExamen(input: {
 }): Promise<void> {
   const userId = await requireUser();
   const sb = getSupabase();
-  const today = todayUTC();
+  const tz = await getMemberTimeZone();
+  const today = dayKeyInZone(tz);
 
   // All three fields share the textarea's 1000-character limit. A lower cap
   // here silently ate the end of a member's own words.
@@ -220,6 +230,7 @@ export async function saveExamen(input: {
 
   revalidatePath('/dashboard/reflect');
   revalidatePath('/dashboard');
+  revalidatePath('/dashboard/today');
 }
 
 /* ============================================================
@@ -236,7 +247,8 @@ export async function saveThoughtRecord(input: {
   if (!input.thought.trim()) throw new Error('Thought is required');
 
   const sb = getSupabase();
-  const today = todayUTC();
+  const tz = await getMemberTimeZone();
+  const today = dayKeyInZone(tz);
 
   const { error } = await sb.from('thought_records').insert({
     clerk_user_id: userId,
@@ -250,6 +262,7 @@ export async function saveThoughtRecord(input: {
 
   revalidatePath('/dashboard/reflect');
   revalidatePath('/dashboard');
+  revalidatePath('/dashboard/today');
 }
 
 /* ============================================================

@@ -2,6 +2,7 @@ import { cache } from 'react';
 import { auth } from '@clerk/nextjs/server';
 import { getSupabase, type DashboardPrefs } from '@/lib/supabase';
 import { weekCompletions } from '@/lib/dashboard/streaks';
+import { getMemberToday } from '@/lib/dashboard/timezone-server';
 import {
   computeJourney,
   withRevealAll,
@@ -142,8 +143,11 @@ async function gatherSignals(userId: string, startedAtISO: string): Promise<Jour
     list.push(l.done_on);
     logsByPractice.set(l.practice_id, list);
   }
+  // The member's own week, so an evening practice counts for the day it was kept.
+  const memberToday = await getMemberToday();
   let rhythmsKeptThisWeek = 0;
-  for (const id of dailyIds) rhythmsKeptThisWeek += weekCompletions(logsByPractice.get(id) ?? []);
+  for (const id of dailyIds)
+    rhythmsKeptThisWeek += weekCompletions(logsByPractice.get(id) ?? [], memberToday);
 
   // Distinct confirmed in-person weeks.
   const attendanceRows = (attendanceRes.data as { gathering_date: string }[] | null) ?? [];

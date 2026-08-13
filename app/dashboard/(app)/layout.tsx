@@ -4,6 +4,7 @@ import { TopBar } from '@/components/dashboard/TopBar';
 import { MobileTabBar } from '@/components/dashboard/MobileTabBar';
 import { WelcomeOverlay } from '@/components/dashboard/WelcomeOverlay';
 import { StageCrossing } from '@/components/dashboard/StageCrossing';
+import { TimeZoneSync } from '@/components/dashboard/TimeZoneSync';
 import { isLeaderRole } from '@/lib/faithflow/roles';
 import { getJourney } from '@/lib/dashboard/journey-data';
 
@@ -39,6 +40,10 @@ export default async function DashboardLayout({
       </div>
 
       <MobileTabBar sections={journey.sections} revealAll={journey.revealAll} />
+
+      {/* Tells the server which calendar day the member is actually in, so an
+          evening examen is filed under this evening and not tomorrow. */}
+      <TimeZoneSync />
 
       {!journey.welcomeSeen && <WelcomeOverlay firstName={firstName} />}
       {journey.welcomeSeen && <StageCrossing stage={journey.crossedInto} />}

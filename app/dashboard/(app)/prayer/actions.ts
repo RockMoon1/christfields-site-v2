@@ -89,6 +89,7 @@ export async function addPrayer(input: {
 
   revalidatePath('/dashboard/prayer');
   revalidatePath('/dashboard');
+  revalidatePath('/dashboard/today');
 
   return data as PrayerRequest;
 }
@@ -130,6 +131,7 @@ export async function updatePrayer(
 
   revalidatePath('/dashboard/prayer');
   revalidatePath('/dashboard');
+  revalidatePath('/dashboard/today');
 }
 
 /** Mark a prayer request as answered, with an optional note on how God moved. */
@@ -161,6 +163,7 @@ export async function markAnswered(id: string, answeredNote: string) {
 
   revalidatePath('/dashboard/prayer');
   revalidatePath('/dashboard');
+  revalidatePath('/dashboard/today');
 }
 
 /** Move an answered request back to open so you can keep praying. */
@@ -192,6 +195,7 @@ export async function reopenPrayer(id: string) {
 
   revalidatePath('/dashboard/prayer');
   revalidatePath('/dashboard');
+  revalidatePath('/dashboard/today');
 }
 
 /** Permanently remove a prayer request. */
@@ -219,6 +223,7 @@ export async function deletePrayer(id: string) {
 
   revalidatePath('/dashboard/prayer');
   revalidatePath('/dashboard');
+  revalidatePath('/dashboard/today');
 }
 
 /**

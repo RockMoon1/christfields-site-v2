@@ -1,16 +1,38 @@
 /**
  * Faithfulness helpers. Deliberately forgiving: we measure return and rhythm,
- * not a fragile consecutive chain. All dates are UTC YYYY-MM-DD strings to
- * match Supabase's `current_date` defaults on done_on.
+ * not a fragile consecutive chain.
+ *
+ * Every function works on day KEYS (YYYY-MM-DD strings), never on a raw Date,
+ * because "today" depends on where the member is standing. Computing the day
+ * in UTC meant a member in Colorado who did their examen at 9pm had it filed
+ * under tomorrow, saw yesterday as missed, and found today already ticked off
+ * the next morning. Callers pass the member's own day key (see
+ * lib/dashboard/timezone.ts); the UTC default keeps leader-side analytics,
+ * where there is no single member to localize to, behaving exactly as before.
+ *
+ * Arithmetic walks these keys in UTC space on purpose: they are date-only
+ * values, so calendar math on them is exact and never touched by DST.
  */
 
 const MS_DAY = 86_400_000;
 
-/** Today as a UTC YYYY-MM-DD string (matches done_on defaults). */
+/** Today as a UTC YYYY-MM-DD string. The fallback when no zone is known. */
 export function todayUTC(d: Date = new Date()): string {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
     .toISOString()
     .slice(0, 10);
+}
+
+/** Step a YYYY-MM-DD key by whole days. */
+function shiftKey(key: string, days: number): string {
+  return new Date(new Date(`${key}T00:00:00Z`).getTime() + days * MS_DAY)
+    .toISOString()
+    .slice(0, 10);
+}
+
+/** The day of the week for a key, 0 = Sunday. */
+function weekdayOfKey(key: string): number {
+  return new Date(`${key}T00:00:00Z`).getUTCDay();
 }
 
 /** Normalize a list of date-ish strings to a unique set of YYYY-MM-DD. */
@@ -23,50 +45,41 @@ export function totalDays(dates: string[]): number {
   return uniqueDays(dates).size;
 }
 
-/** True if the practice was completed today (UTC). */
-export function doneToday(dates: string[], ref: Date = new Date()): boolean {
-  return uniqueDays(dates).has(todayUTC(ref));
+/** True if the practice was completed on the member's today. */
+export function doneToday(dates: string[], today: string = todayUTC()): boolean {
+  return uniqueDays(dates).has(today);
 }
 
 /**
  * Current run of consecutive days, but forgiving: if today is not done yet,
  * we anchor on yesterday so an unfinished today never "breaks" the run.
  */
-export function currentStreak(dates: string[], ref: Date = new Date()): number {
+export function currentStreak(dates: string[], today: string = todayUTC()): number {
   const days = uniqueDays(dates);
-  let cursor = new Date(Date.UTC(ref.getUTCFullYear(), ref.getUTCMonth(), ref.getUTCDate()));
-  if (!days.has(cursor.toISOString().slice(0, 10))) {
-    cursor = new Date(cursor.getTime() - MS_DAY); // start from yesterday
-  }
+  let cursor = days.has(today) ? today : shiftKey(today, -1);
   let streak = 0;
-  while (days.has(cursor.toISOString().slice(0, 10))) {
+  while (days.has(cursor)) {
     streak += 1;
-    cursor = new Date(cursor.getTime() - MS_DAY);
+    cursor = shiftKey(cursor, -1);
   }
   return streak;
 }
 
-/** YYYY-MM-DD strings for the current week, Sunday through Saturday (UTC). */
-export function currentWeekDays(ref: Date = new Date()): string[] {
-  const r = new Date(Date.UTC(ref.getUTCFullYear(), ref.getUTCMonth(), ref.getUTCDate()));
-  const weekStart = new Date(r.getTime() - r.getUTCDay() * MS_DAY);
-  return Array.from({ length: 7 }, (_, i) =>
-    new Date(weekStart.getTime() + i * MS_DAY).toISOString().slice(0, 10),
-  );
+/** YYYY-MM-DD strings for the member's current week, Sunday through Saturday. */
+export function currentWeekDays(today: string = todayUTC()): string[] {
+  const weekStart = shiftKey(today, -weekdayOfKey(today));
+  return Array.from({ length: 7 }, (_, i) => shiftKey(weekStart, i));
 }
 
 /** How many days this week the practice was done (0-7). */
-export function weekCompletions(dates: string[], ref: Date = new Date()): number {
+export function weekCompletions(dates: string[], today: string = todayUTC()): number {
   const days = uniqueDays(dates);
-  return currentWeekDays(ref).filter((d) => days.has(d)).length;
+  return currentWeekDays(today).filter((d) => days.has(d)).length;
 }
 
 /** The last N calendar days as YYYY-MM-DD (oldest first). Good for week strips. */
-export function lastNDays(n: number, ref: Date = new Date()): string[] {
-  const r = new Date(Date.UTC(ref.getUTCFullYear(), ref.getUTCMonth(), ref.getUTCDate()));
-  return Array.from({ length: n }, (_, i) =>
-    new Date(r.getTime() - (n - 1 - i) * MS_DAY).toISOString().slice(0, 10),
-  );
+export function lastNDays(n: number, today: string = todayUTC()): string[] {
+  return Array.from({ length: n }, (_, i) => shiftKey(today, -(n - 1 - i)));
 }
 
 /** A short, grace-filled line describing this week's rhythm. Never shaming. */

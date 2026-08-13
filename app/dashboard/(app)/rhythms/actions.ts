@@ -10,8 +10,8 @@ import {
   weekCompletions,
   totalDays,
   lastNDays,
-  todayUTC,
 } from '@/lib/dashboard/streaks';
+import { getMemberToday } from '@/lib/dashboard/timezone-server';
 
 /**
  * Server actions for the Rhythms feature.
@@ -240,7 +240,8 @@ export async function getRhythms(): Promise<RhythmWithStatus[]> {
       byPractice.set(log.practice_id, dates);
     }
 
-    const last7Dates = lastNDays(7);
+    const today = await getMemberToday();
+    const last7Dates = lastNDays(7, today);
 
     return (practices as Practice[]).map((p) => {
       const dates = byPractice.get(p.id) || [];
@@ -256,9 +257,9 @@ export async function getRhythms(): Promise<RhythmWithStatus[]> {
         scripture: p.scripture || '',
         anchor: p.anchor || '',
         presetKey: p.preset_key,
-        doneToday: doneToday(dates),
-        currentStreak: currentStreak(dates),
-        weekDone: weekCompletions(dates),
+        doneToday: doneToday(dates, today),
+        currentStreak: currentStreak(dates, today),
+        weekDone: weekCompletions(dates, today),
         totalDays: totalDays(dates),
         last7: last7Dates.map((date) => ({ date, done: doneSet.has(date) })),
       };
@@ -286,7 +287,7 @@ export async function toggleToday(practiceId: string): Promise<{ doneToday: bool
   if (ownerErr) throw ownerErr;
   if (!practice) throw new Error('Practice not found');
 
-  const today = todayUTC();
+  const today = await getMemberToday();
 
   const { data: existing } = await sb
     .from('practice_logs')
@@ -306,6 +307,7 @@ export async function toggleToday(practiceId: string): Promise<{ doneToday: bool
 
     revalidatePath('/dashboard/rhythms');
     revalidatePath('/dashboard');
+  revalidatePath('/dashboard/today');
     return { doneToday: false };
   } else {
     const { error } = await sb.from('practice_logs').insert({
@@ -318,6 +320,7 @@ export async function toggleToday(practiceId: string): Promise<{ doneToday: bool
 
     revalidatePath('/dashboard/rhythms');
     revalidatePath('/dashboard');
+  revalidatePath('/dashboard/today');
     return { doneToday: true };
   }
 }
@@ -378,9 +381,10 @@ export async function createPractice(input: {
 
   revalidatePath('/dashboard/rhythms');
   revalidatePath('/dashboard');
+  revalidatePath('/dashboard/today');
 
   const p = data as Practice;
-  const last7Dates = lastNDays(7);
+  const last7Dates = lastNDays(7, await getMemberToday());
   return {
     id: p.id,
     name: p.name,
@@ -445,6 +449,7 @@ export async function updatePractice(
 
   revalidatePath('/dashboard/rhythms');
   revalidatePath('/dashboard');
+  revalidatePath('/dashboard/today');
 }
 
 /** Soft-archive a practice (custom only). Presets are protected. */
@@ -473,4 +478,5 @@ export async function archivePractice(id: string) {
 
   revalidatePath('/dashboard/rhythms');
   revalidatePath('/dashboard');
+  revalidatePath('/dashboard/today');
 }
