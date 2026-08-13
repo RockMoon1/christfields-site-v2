@@ -3,7 +3,8 @@
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 import { getSupabase } from '@/lib/supabase';
-import { weekAnchorUTC } from '@/lib/dashboard/journey';
+import { weekAnchorFromDayKey } from '@/lib/dashboard/journey';
+import { getMemberToday } from '@/lib/dashboard/timezone-server';
 
 /**
  * Member side of in-person attendance: a simple weekly "I was there." A leader
@@ -55,7 +56,7 @@ export async function checkInThisWeek(): Promise<{ ok: boolean; reason?: string 
   if (!groupId) return { ok: false, reason: 'no-group' };
 
   const sb = getSupabase();
-  const gatheringDate = weekAnchorUTC();
+  const gatheringDate = weekAnchorFromDayKey(await getMemberToday());
 
   const { error } = await sb.from('group_attendance').upsert(
     {
@@ -82,9 +83,13 @@ export async function getMyAttendance(weeks = 6): Promise<MyAttendanceWeek[]> {
   // even if auth or the database is momentarily unavailable. This function runs
   // on the dashboard home, so it must degrade gracefully rather than throw and
   // take the whole page down.
+  // Anchored on the member's own week, so a Saturday evening gathering does
+  // not land in a different week from the leader's confirmation of it.
+  const thisWeek = weekAnchorFromDayKey(await getMemberToday());
+  const weekStartMs = new Date(`${thisWeek}T00:00:00Z`).getTime();
   const anchors: string[] = [];
   for (let i = 0; i < weeks; i += 1) {
-    anchors.push(weekAnchorUTC(new Date(Date.now() - i * 7 * 86_400_000)));
+    anchors.push(new Date(weekStartMs - i * 7 * 86_400_000).toISOString().slice(0, 10));
   }
   const blank = (): MyAttendanceWeek[] =>
     anchors.map((weekAnchor) => ({ weekAnchor, checkedIn: false, confirmed: false }));

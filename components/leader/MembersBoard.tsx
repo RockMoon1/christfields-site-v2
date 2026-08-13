@@ -7,6 +7,7 @@ import { getMemberDetail } from '@/app/dashboard/(leader)/leader/actions';
 import type { MemberSummary, MemberDetail, AreaStatus, GuidanceCard, Trend } from '@/lib/faithflow/types';
 import { bibleUrl } from '@/lib/faithflow/guidance';
 import { removeMemberVerse, resetMemberVerse } from '@/lib/faithflow/shepherd-actions';
+import { ConfirmAction } from '@/components/dashboard/ConfirmAction';
 
 /* ============================================================
    Props
@@ -435,13 +436,16 @@ function MemberDrilldown({ detail }: { detail: MemberDetail }) {
                   >
                     Send back to learning
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleRemove(v.id)}
+                  {/* Taking a verse off someone else's list is not undoable,
+                      so it asks first. */}
+                  <ConfirmAction
+                    onConfirm={() => handleRemove(v.id)}
+                    label={`Remove ${v.reference} from their list`}
+                    confirmLabel="Remove"
                     className="rounded-sm border border-border-sub px-3 py-1 text-[10px] uppercase tracking-[0.12em] text-silver transition-colors hover:border-red-400/50 hover:text-red-400"
                   >
                     Remove
-                  </button>
+                  </ConfirmAction>
                 </div>
               </div>
             ))}

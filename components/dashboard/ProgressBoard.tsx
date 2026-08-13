@@ -10,6 +10,7 @@ import {
   logScore,
   type AreaWithEntries,
 } from '@/app/dashboard/(app)/progress/actions';
+import { SaveNote } from './SaveNote';
 
 interface ProgressBoardProps {
   initialAreas: AreaWithEntries[];
@@ -23,6 +24,9 @@ interface ProgressBoardProps {
 export function ProgressBoard({ initialAreas }: ProgressBoardProps) {
   const [areas, setAreas] = useState<AreaWithEntries[]>(initialAreas);
   const [showAdd, setShowAdd] = useState(false);
+  // Inline instead of alert(): a native dialog is jarring here, and the rest
+  // of the dashboard already says these things quietly.
+  const [note, setNote] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleAdd(input: {
@@ -54,7 +58,7 @@ export function ProgressBoard({ initialAreas }: ProgressBoardProps) {
         setAreas((prev) => prev.map((a) => (a.id === tempId ? realArea : a)));
       } catch (err) {
         setAreas((prev) => prev.filter((a) => a.id !== tempId));
-        alert('Could not save area. Please try again.');
+        setNote('Could not save that area. Please try again.');
         console.error(err);
       }
     });
@@ -62,7 +66,7 @@ export function ProgressBoard({ initialAreas }: ProgressBoardProps) {
 
   function handleLog(areaId: string, score: number, note: string) {
     if (areaId.startsWith('temp-')) {
-      alert('Hold on a second, that area is still being saved.');
+      setNote('Still saving that one. Give it a second and try again.');
       return;
     }
 
@@ -84,7 +88,7 @@ export function ProgressBoard({ initialAreas }: ProgressBoardProps) {
             a.id === areaId ? { ...a, entries: a.entries.slice(0, -1) } : a,
           ),
         );
-        alert('Could not save score. Please try again.');
+        setNote('Could not save that score. Please try again.');
         console.error(err);
       }
     });
@@ -98,7 +102,7 @@ export function ProgressBoard({ initialAreas }: ProgressBoardProps) {
 
     const removed = areas.find((a) => a.id === areaId);
     if (removed?.presetKey) {
-      alert('Preset areas are part of every account and cannot be removed.');
+      setNote('Preset areas are part of every account, so they stay.');
       return;
     }
 
@@ -109,7 +113,7 @@ export function ProgressBoard({ initialAreas }: ProgressBoardProps) {
         await deleteArea(areaId);
       } catch (err) {
         if (removed) setAreas((prev) => [...prev, removed]);
-        alert('Could not remove area. Please try again.');
+        setNote('Could not remove that area. Please try again.');
         console.error(err);
       }
     });
@@ -120,6 +124,8 @@ export function ProgressBoard({ initialAreas }: ProgressBoardProps) {
 
   return (
     <div>
+      <SaveNote message={note} />
+
       {presence && (
         <motion.div layout className="mb-6">
           <AreaCard

@@ -54,12 +54,10 @@ export default async function DashboardHome() {
   const { sections } = view;
   const seed = view.journey.stage === 'seed';
 
-  const now = new Date();
-  const memberSince = user?.createdAt ? new Date(user.createdAt) : now;
-  const daysSinceJoin = Math.max(
-    1,
-    Math.floor((now.getTime() - memberSince.getTime()) / (1000 * 60 * 60 * 24)),
-  );
+  // From the journey clock, not the Clerk account date. An account created
+  // before this dashboard existed would otherwise show a number here that
+  // disagrees with every other signal on the page.
+  const daysSinceJoin = Math.max(1, view.journey.signals.daysSinceStart);
 
   // Each area's latest score decides how many of its colored raindrops fall
   // on the globe: the member's progress literally waters the seed.

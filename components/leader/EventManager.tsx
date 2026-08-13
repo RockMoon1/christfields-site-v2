@@ -10,6 +10,7 @@ import {
   deleteEvent,
   type LeaderEvent,
 } from '@/app/dashboard/(leader)/leader/events/actions';
+import { ConfirmAction } from '@/components/dashboard/ConfirmAction';
 
 /**
  * Leader tool to create events and see who is coming. The type picker
@@ -242,15 +243,15 @@ export function EventManager({
                         {ev.location ? ` · ${ev.location}` : ''}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(ev.id)}
-                      disabled={pending}
-                      className="shrink-0 rounded-full p-2 text-muted transition-colors hover:bg-black-2 hover:text-silver disabled:opacity-50"
-                      aria-label={`Delete ${ev.title}`}
+                    {/* Deleting an event takes everyone's RSVPs with it, so it
+                        asks first rather than acting on one tap. */}
+                    <ConfirmAction
+                      onConfirm={() => handleDelete(ev.id)}
+                      label={`Delete ${ev.title}`}
+                      className="shrink-0 rounded-full p-2 text-muted transition-colors hover:bg-black-2 hover:text-silver"
                     >
                       <TrashIcon />
-                    </button>
+                    </ConfirmAction>
                   </div>
                   <div className="mt-3 flex items-center gap-4 border-t border-border-sub/60 pt-3 text-xs">
                     <span className="inline-flex items-center gap-1.5 text-emerald-bright">

@@ -353,6 +353,23 @@ export function weekAnchorUTC(ref: Date = new Date()): string {
 }
 
 /**
+ * The week anchor for a LOCAL day key (YYYY-MM-DD), which is what attendance
+ * should use.
+ *
+ * Deriving the week from UTC put the boundary at Saturday 6pm in Colorado, so
+ * a Saturday evening gathering straddled two weeks: a member checking in at
+ * 5:55pm and their leader confirming at 6:05pm wrote two different rows, and
+ * the confirmation never matched the check-in. Working from the member's own
+ * calendar day keeps a single gathering inside a single week.
+ */
+export function weekAnchorFromDayKey(dayKey: string): string {
+  const d = new Date(`${dayKey}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return weekAnchorUTC();
+  const sunday = new Date(d.getTime() - d.getUTCDay() * 86_400_000);
+  return sunday.toISOString().slice(0, 10);
+}
+
+/**
  * The serializable view handed to the UI. Plain data only, safe to pass from a
  * server component into the client JourneyProvider.
  */

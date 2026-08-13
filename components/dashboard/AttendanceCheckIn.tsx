@@ -97,7 +97,12 @@ export function AttendanceCheckIn({ initial }: { initial: MyAttendanceWeek[] }) 
       )}
       </div>
 
-      {/* Recent weeks, oldest to newest. Quiet dots, no scores. */}
+      {/* Recent weeks, oldest to newest. Quiet dots, no scores.
+          Only shown once there is at least one real week to show: a brand new
+          member was being greeted by six hollow dots reading "no gathering
+          logged", which quietly implies weeks they missed before they had
+          even joined. */}
+      {weeks.some((w) => w.checkedIn || w.confirmed) && (
       <div className="mt-5 flex items-center gap-2">
         {weeks
           .slice()
@@ -122,6 +127,7 @@ export function AttendanceCheckIn({ initial }: { initial: MyAttendanceWeek[] }) 
           ))}
         <span className="ml-2 text-[11px] text-muted">recent weeks</span>
       </div>
+      )}
 
       {note && (
         <motion.p

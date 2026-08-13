@@ -193,7 +193,7 @@ export function MoodCheckinCard({ initialMood, recentMoods }: MoodCheckinCardPro
       {recentMoods.length > 1 && (
         <div>
           <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.18em] text-muted">
-            Last 30 days
+            Recent check-ins
           </p>
           <MoodSparkline data={recentMoods} />
         </div>

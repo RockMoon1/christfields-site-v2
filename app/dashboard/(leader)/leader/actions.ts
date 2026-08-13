@@ -5,7 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { getLeaderContext } from '@/lib/faithflow/leader-access';
 import { computeGroup, computeMemberDetail } from '@/lib/faithflow/analytics';
 import { getSupabase } from '@/lib/supabase';
-import { weekAnchorUTC } from '@/lib/dashboard/journey';
+import { weekAnchorUTC, weekAnchorFromDayKey } from '@/lib/dashboard/journey';
+import { getMemberToday } from '@/lib/dashboard/timezone-server';
 import type {
   AttendanceBoardResult,
   AttendanceMemberRow,
@@ -15,13 +16,16 @@ import type {
 
 const WEEK_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Recent week anchors (Sundays, UTC), newest first, for the week switcher. */
-function recentWeekAnchors(count = 6): string[] {
-  const out: string[] = [];
-  for (let i = 0; i < count; i += 1) {
-    out.push(weekAnchorUTC(new Date(Date.now() - i * 7 * 86_400_000)));
-  }
-  return out;
+/**
+ * Recent week anchors (Sundays), newest first, for the week switcher. Derived
+ * from the leader's own calendar week so the list matches the weeks their
+ * members are checking into (see weekAnchorFromDayKey).
+ */
+function recentWeekAnchors(thisWeek: string, count = 6): string[] {
+  const startMs = new Date(`${thisWeek}T00:00:00Z`).getTime();
+  return Array.from({ length: count }, (_, i) =>
+    new Date(startMs - i * 7 * 86_400_000).toISOString().slice(0, 10),
+  );
 }
 
 /**
@@ -62,7 +66,8 @@ export async function getAttendanceBoard(weekAnchor?: string): Promise<Attendanc
     return { state: 'no-members', org: { id: ctx.orgId, name: ctx.orgName } };
   }
 
-  const anchor = weekAnchor && WEEK_RE.test(weekAnchor) ? weekAnchor : weekAnchorUTC();
+  const thisWeek = weekAnchorFromDayKey(await getMemberToday());
+  const anchor = weekAnchor && WEEK_RE.test(weekAnchor) ? weekAnchor : thisWeek;
   const sb = getSupabase();
 
   const { data, error } = await sb
@@ -100,7 +105,7 @@ export async function getAttendanceBoard(weekAnchor?: string): Promise<Attendanc
     org: { id: ctx.orgId, name: ctx.orgName },
     weekAnchor: anchor,
     rows,
-    recentWeeks: recentWeekAnchors(),
+    recentWeeks: recentWeekAnchors(thisWeek),
     confirmedCount: rows.filter((r) => r.confirmed).length,
   };
 }
@@ -122,7 +127,7 @@ export async function setMemberAttendance(
   const parsed = new Date(`${weekAnchor}T00:00:00Z`);
   if (Number.isNaN(parsed.getTime())) return { ok: false };
   const snapped = weekAnchorUTC(parsed);
-  if (snapped > weekAnchorUTC()) return { ok: false };
+  if (snapped > weekAnchorFromDayKey(await getMemberToday())) return { ok: false };
 
   const ctx = await getLeaderContext();
   if (!ctx) return { ok: false };
