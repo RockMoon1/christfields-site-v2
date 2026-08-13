@@ -30,6 +30,16 @@ function clamp(n: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, Math.round(n)));
 }
 
+/**
+ * Postgres unique-violation. Two quick submits can both see "no row yet" and
+ * both try to insert; once migration 013 adds the one-per-day index the loser
+ * gets this code, and the right answer is to update the row that won rather
+ * than to fail in the member's face.
+ */
+function isDuplicateRow(error: { code?: string } | null): boolean {
+  return error?.code === '23505';
+}
+
 /* ============================================================
    Read: load everything needed for today's Reflect page.
    ============================================================ */
@@ -174,7 +184,17 @@ export async function saveGratitude(input: {
       item_two: itemTwo,
       item_three: itemThree,
     });
-    if (error) throw error;
+    if (isDuplicateRow(error)) {
+      // Another submit landed first. Fold this one into it.
+      const { error: updateErr } = await sb
+        .from('gratitude_entries')
+        .update({ item_one: itemOne, item_two: itemTwo, item_three: itemThree })
+        .eq('clerk_user_id', userId)
+        .eq('entry_date', today);
+      if (updateErr) throw updateErr;
+    } else if (error) {
+      throw error;
+    }
   }
 
   revalidatePath('/dashboard/reflect');
@@ -225,7 +245,17 @@ export async function saveExamen(input: {
       desolation,
       intention,
     });
-    if (error) throw error;
+    if (isDuplicateRow(error)) {
+      // Another submit landed first. Fold this one into it.
+      const { error: updateErr } = await sb
+        .from('reflections')
+        .update({ consolation, desolation, intention })
+        .eq('clerk_user_id', userId)
+        .eq('entry_date', today);
+      if (updateErr) throw updateErr;
+    } else if (error) {
+      throw error;
+    }
   }
 
   revalidatePath('/dashboard/reflect');
