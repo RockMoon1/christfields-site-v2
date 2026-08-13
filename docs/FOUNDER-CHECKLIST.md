@@ -89,6 +89,41 @@ each is a small, self-contained change.
   community "N praying" tallies (`CommunityWall.tsx:361`), event "N going"
   (`EventBanner.tsx:231`), leader-side equivalents (`MembersBoard.tsx:325`).
 
+## Leader readiness assessment — before you send the link to anyone
+
+The page is built, audited, and counciled. These are the parts only you can do,
+and the first two are hard gates.
+
+- [ ] **A screening vendor, before you accept anyone aged 14-17.** The whole
+  reason a fourteen-year-old can lead here is that they serve under a *screened*
+  adult, and that word currently has nothing behind it. It is the load-bearing
+  sentence in the email their parent receives. Until a real background check
+  exists, the honest move is to take adult applicants only. `c_screening` asks
+  people to consent to a process that does not yet exist.
+- [ ] **A Colorado attorney on one question:** the form promises answers are
+  private to the Table, and it will eventually surface abuse. Under Colorado
+  reporting law you may not be free to keep that promise, and this creates a
+  written, dated record. The page now names the limit out loud, which is the
+  right posture, but a lawyer should read the exact wording. Everything else in
+  `docs/LEADER-ASSESSMENT.md` §7 can wait; this one cannot.
+- [ ] **Appendix A, the Statement of Faith.** Covenant Section 1 requires
+  agreement with a document that does not exist. The eight creedal items in
+  `DOCTRINE` already are your statement of faith — one evening to write them up
+  properly, and the covenant stops referencing a blank page.
+- [ ] **Decide what a "no" sounds like.** A fifteen-year-old can spend half an
+  hour telling you what they are struggling with, not be ready, and currently
+  hear nothing back. Nothing automates a kind decline. Decide now what you will
+  say, so you are not composing it for the first time while someone waits.
+- [ ] **Write down how you delete someone's answers.** The page promises it in
+  three places. At n=12 a manual delete is fine, but a promise with no written
+  procedure behind it is one you will eventually fail to keep.
+- [ ] **When you change a question, bump `assessment_version`** (migration 017).
+  Ids stay stable, wording drifts, and answers to different questions cannot be
+  compared later.
+- [ ] **Set `outcome` by hand at twelve months** for anyone who leads. It is the
+  only column that can ever tell you whether a decision was a good one, and it
+  is the difference between a credential and a certificate.
+
 ## Deliberately deferred (on purpose, not forgotten)
 
 - CSP nonce migration and RLS Phase B (own tested passes; see `SECURITY.md`).

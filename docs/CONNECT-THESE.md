@@ -67,6 +67,30 @@ The second line records which answers an under-18 applicant chose to share with
 their parent. Both features work without it; you would just lose the record of
 the choice.
 
+### 1d. Migration 017 — provenance and retention  ⬅ NEW
+
+Two columns and a retention note. Cheap now, **impossible to backfill later**.
+Nothing in the app reads them yet, so this is safe whenever.
+
+```sql
+alter table leader_assessments
+  add column if not exists assessment_version text not null default '2026-08-13';
+
+alter table leader_assessments
+  add column if not exists outcome text;
+```
+
+`assessment_version` stamps which version of the questions someone answered —
+the ids are stable but the wording is not, so without it the responses quietly
+stop being comparable and there is no way to tell when. `outcome` is the one you
+set by hand at twelve months: did they actually lead, and how did it go. The
+existing `status` column records what you *decided*; nothing records what
+*happened*, and a record of decisions can never tell you which decisions were
+right. That is the difference between a credential and a certificate.
+
+The full file also sets a retention period (three years, or service plus three)
+as a table comment, which the covenant review asked for.
+
 ---
 
 ## 2. Netlify → Environment variables

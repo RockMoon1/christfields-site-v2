@@ -241,12 +241,32 @@ immediately, before anyone reviews anything. They are told what their child has
 stepped toward, what leading involves, that a co-signature will be needed, and
 that they can reply to stop it.
 
-**Each written answer carries a switch, defaulted to shared.** Under every walk
-and scenario answer, an under-18 applicant sees "Your parent will see this."
-Leave it on and that answer is in the guardian's email. Turn it off and it is
-not. The founder's own copy shows a **kept from parent** marker on anything held
+**That email contains none of the answers, and this is the most important
+decision on the page.** It was originally sent with them. A council caught what
+that meant: the mail leaves in the same second a young person presses send,
+before a human has read a word, and it told the parent *"if anything made us
+think they were not safe, we would be calling you."* Nothing had been read. If
+the parent is the reason a fifteen-year-old is struggling, her account of it
+arrived in that house instantly, unreviewed, with a false assurance attached.
+
+It also created the exact incentive the form should not create. A frightened
+young person, told on screen that their answers go straight home, has a
+one-click escape on the same screen: "18 or older." That defeats the guardian
+notice, the minor-oversight commitment, and the reply-to protection all at once.
+Every safeguard for minors hangs on a self-declared radio button, so the form
+must never make lying about it the safer option.
+
+**Each written answer still carries a switch, defaulted to shared.** Under every
+walk and scenario answer, an under-18 applicant sees "Your parent may see this."
+The switch decides what a person here may pass on **after reading it**. The
+founder's own email carries a ready-to-forward block of exactly what the young
+person left switched on, plus a **kept from parent** marker on anything held
 back, because that choice is itself worth noticing and is usually the thing to
 ask about gently in person.
+
+The parent is not left guessing: they are told their child wrote answers, that
+they chose question by question what may be shown, that nothing is attached
+because nobody has read it yet, and that what they chose to share will follow.
 
 Why default-on rather than default-off: the trust runs both directions. A parent
 of a fifteen-year-old asking to lead should be able to see what they wrote, and
@@ -276,9 +296,34 @@ sanitised answer. Both the form and the guardian email now say the true thing:
 we will not sit on it, we will get help, and depending on what it is that may
 mean the parents and may mean the people whose job it is to keep them safe.
 
-That promise is **operational, not automated**. Nothing in the code detects
-risk. A human reading the answers is the only thing that makes it true. Keep it
-true.
+That promise is **operational, not automated**, and it always will be. But the
+code now does one blunt thing to help: a keyword scan over what the applicant
+wrote *about their own life* (never the scenarios, which are about other people
+by design) prepends **READ TODAY** to the subject and a red banner to the body.
+It is deliberately crude. A false positive costs reading a good application
+sooner; a missed one costs exactly what it cost before. It is not triage and it
+is not a substitute for reading them all. See `URGENT_TERMS` in
+`app/leaders/readiness/actions.ts`.
+
+A failed or rate-limited guardian notice now says so in the founder's email,
+loudly, rather than in a `console.warn` nobody reads. `GUARDIAN_RATE_LIMIT` can
+no longer sit below the per-applicant limit — it did, which meant a teenager
+fixing a typo twice would silently switch off their own parent's notification
+while still seeing "Thank you."
+
+## 7d. The draft
+
+Half an hour and twelve essay boxes lived in React state in one tab, with no
+warning. A phone call, a dead battery, or a stray back-swipe took all of it,
+including the answer about what someone is struggling with. That is a far more
+likely way to hurt an applicant than anything in the scenarios.
+
+Written answers now save to `localStorage` as they type and restore on return.
+**Only the essays** — never name, email, phone, church, or guardian details — so
+a draft on a shared family computer is not a readable dossier and can never be
+the thing that tells a parent their child applied. It is erased the moment the
+form is sent, the applicant is told it exists, and there is a button to erase it
+on demand.
 
 **Reply-to.** The founder notification used to set reply-to to the applicant's
 own address, so the one-tap reply to a fifteen-year-old was a private adult-to-
