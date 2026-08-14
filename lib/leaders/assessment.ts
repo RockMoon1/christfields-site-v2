@@ -26,6 +26,26 @@ export interface Scripture {
   text: string;
 }
 
+/**
+ * Whether a seventeen-year-old may apply yet.
+ *
+ * FALSE until a real background-check vendor exists.
+ *
+ * This is not about whether the founder would accept a minor. The guardian
+ * notice leaves automatically the second a minor presses send, and it tells
+ * that parent their child would serve "always under a screened adult, meaning a
+ * background check and references, renewed." Until screening is real, that is a
+ * promise about a child's safety that we cannot keep, made to their parent, by
+ * a machine, before any human has seen the application. `c_screening` has the
+ * same problem: it asks people to consent to a process that does not exist.
+ *
+ * The seventeen floor itself is unchanged and correct (see docs). The door is
+ * shut, not moved.
+ *
+ * TO OPEN IT: set this to true. Nothing else needs to change.
+ */
+export const MINOR_APPLICATIONS_OPEN = false;
+
 /* ============================================================
    Part 1: the gates.
    Answered "no", the assessment ends there. Nobody should spend

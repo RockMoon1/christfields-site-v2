@@ -94,12 +94,23 @@ each is a small, self-contained change.
 The page is built, audited, and counciled. These are the parts only you can do,
 and the first two are hard gates.
 
-- [ ] **A screening vendor, before you accept a seventeen-year-old.** The whole
-  reason anyone under 18 can lead here is that they serve under a *screened*
-  adult, and that word currently has nothing behind it. It is the load-bearing
-  sentence in the email their parent receives. Until a real background check
-  exists, the honest move is to take adult applicants only. `c_screening` asks
-  people to consent to a process that does not yet exist.
+- [ ] **A screening vendor. The under-18 door is CLOSED until you have one.**
+  Not because you would accept a minor carelessly, but because the guardian
+  notice leaves automatically the second a minor presses send, and it tells that
+  parent their child would serve "always under a screened adult, meaning a
+  background check and references, renewed." That is a promise about a child's
+  safety, made to their parent, by a machine, before you have seen anything —
+  and today nothing behind it can keep that promise. `c_screening` has the same
+  problem: it asks for consent to a process that does not exist.
+
+  So the form currently offers "18 or older" and "17 or younger", and the second
+  one stops it kindly, saying plainly that we will not tell a parent their child
+  is covered by something we have not built. The seventeen floor itself is
+  unchanged and correct; the door is shut, not moved.
+
+  **To open it, once screening is real:** set `MINOR_APPLICATIONS_OPEN = true`
+  in `lib/leaders/assessment.ts`. One line, nothing else. The 17 band comes
+  back on its own.
 - [ ] **A Colorado attorney on one question:** the form promises answers are
   private to the Table, and it will eventually surface abuse. Under Colorado
   reporting law you may not be free to keep that promise, and this creates a

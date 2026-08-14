@@ -12,6 +12,7 @@ import {
   WALK,
   SCENARIOS,
   SHAREABLE_IDS,
+  MINOR_APPLICATIONS_OPEN,
   type AssessmentSubmission,
 } from '@/lib/leaders/assessment';
 
@@ -145,6 +146,18 @@ export async function submitLeaderAssessment(
     const isMinor = input?.isMinor === true;
     const guardianName = clean(input?.guardianName, 200);
     const guardianEmail = clean(input?.guardianEmail, 254);
+
+    // The under-18 path is shut until screening is real. Enforced here as well
+    // as in the form, because the client is not where a safeguarding gate lives:
+    // the whole reason the door is closed is that submitting mails a promise to
+    // a parent that nothing behind it can currently keep.
+    if (isMinor && !MINOR_APPLICATIONS_OPEN) {
+      return {
+        ok: false,
+        error:
+          'We are not open to applicants under 18 yet. Come and be part of Iron and Ember, and ask us again soon.',
+      };
+    }
 
     // Covenant Section 13: a leader under 18 cannot proceed without a guardian.
     if (isMinor && (!guardianName || !EMAIL_RE.test(guardianEmail))) {

@@ -13,6 +13,7 @@ import {
   SCENARIOS,
   CRISIS_LINE,
   CRISIS_LINE_IDS,
+  MINOR_APPLICATIONS_OPEN,
   type Scripture,
 } from '@/lib/leaders/assessment';
 
@@ -533,9 +534,9 @@ export function ReadinessForm() {
               <div className="mt-6 rounded-sm border border-border-sub bg-black-3 p-5">
                 <p className="text-sm text-ivory">How old are you?</p>
                 <p className="mt-1 text-xs leading-relaxed text-silver">
-                  Seventeen-year-olds lead here, always under a screened adult — meaning a
-                  background check and references, renewed. It just means a parent or guardian
-                  signs the covenant alongside you.
+                  {MINOR_APPLICATIONS_OPEN
+                    ? 'Seventeen-year-olds lead here, always under a screened adult — meaning a background check and references, renewed. It just means a parent or guardian signs the covenant alongside you.'
+                    : 'Leading here starts at seventeen, but that door is closed for the moment while we finish setting up proper background checks for the adults a young leader would serve under. We are not going to tell a parent their child is covered by something we have not built yet.'}
                 </p>
                 {/* The one question on this form somebody has a reason to lie
                     about, and every protection for a young person hangs on it.
@@ -545,11 +546,17 @@ export function ReadinessForm() {
                   after you, and every protection you are owed is built on it.
                 </p>
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                  {([
-                    { label: '18 or older', band: 'adult' },
-                    { label: '17', band: 'seventeen' },
-                    { label: '16 or younger', band: 'younger' },
-                  ] as const).map((o) => (
+                  {(MINOR_APPLICATIONS_OPEN
+                    ? ([
+                        { label: '18 or older', band: 'adult' },
+                        { label: '17', band: 'seventeen' },
+                        { label: '16 or younger', band: 'younger' },
+                      ] as const)
+                    : ([
+                        { label: '18 or older', band: 'adult' },
+                        { label: '17 or younger', band: 'younger' },
+                      ] as const)
+                  ).map((o) => (
                     <button
                       key={o.band}
                       type="button"
@@ -871,10 +878,25 @@ export function ReadinessForm() {
               {stopReason === 'age' ? (
                 <>
                   <p className="mx-auto mb-5 max-w-md text-sm leading-relaxed text-ivory-dim">
-                    Leading a group here starts at seventeen, and there is a real reason for it.
-                    A leader carries other people, sometimes on the worst night they have had in
-                    years, and that is a weight we are not willing to hand to someone younger. It
-                    is not a judgment about you. It is about what we would be asking of you.
+                    {MINOR_APPLICATIONS_OPEN ? (
+                      <>
+                        Leading a group here starts at seventeen, and there is a real reason for
+                        it. A leader carries other people, sometimes on the worst night they have
+                        had in years, and that is a weight we are not willing to hand to someone
+                        younger. It is not a judgment about you. It is about what we would be
+                        asking of you.
+                      </>
+                    ) : (
+                      <>
+                        Leading a group here starts at seventeen, and it is not open to anyone
+                        under eighteen at all just yet. A young leader always serves under an
+                        adult we have background-checked, and we have not finished putting that
+                        in place. We are not willing to tell your parents you are covered by
+                        something that does not exist yet. If you are not seventeen anyway, it is
+                        simply not time, and that is about the weight we would be handing you,
+                        not about you.
+                      </>
+                    )}
                   </p>
                   <p className="mx-auto mb-6 max-w-md text-sm leading-relaxed text-silver">
                     Nothing you typed has been kept. Come and be part of Iron and Ember in the

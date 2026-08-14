@@ -200,6 +200,13 @@ Flagged honestly. I am not a lawyer and this needs one.
    older", "17", and "16 or younger", and the last ends the form before a single
    personal question is asked and stores nothing.**
 
+   **The under-18 path is currently switched off** by
+   `MINOR_APPLICATIONS_OPEN = false` in `lib/leaders/assessment.ts`, enforced in
+   both the form and the server action, because the guardian notice promises a
+   screened adult and screening does not exist yet. While it is off the bands
+   are "18 or older" and "17 or younger". Set the constant to `true` the day a
+   background-check vendor is live; nothing else changes.
+
    Seventeen is a founder decision about maturity, not a legal line, made
    2026-08-13: leading here means carrying other people on the worst night they
    have had in years, and sixteen is too young for that weight. It also puts the
