@@ -240,6 +240,8 @@ export function leaderAssessmentHtml(v: {
   commitments: Record<string, boolean>;
   walk: Record<string, string>;
   scenarios: Record<string, string>;
+  /** id -> the question as it was asked, so nothing renders as a raw id. */
+  questionText: Record<string, string>;
   /** Under-18 only: which written answers the applicant sent to their guardian. */
   visibility?: Record<string, boolean>;
 }): string {
@@ -249,13 +251,17 @@ export function leaderAssessmentHtml(v: {
    */
   const kept = (id: string) =>
     v.isMinor && v.visibility && v.visibility[id] === false
-      ? '<span style="margin-left:8px;padding:1px 6px;background:#f8eeed;color:#a4463f;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;">kept from parent</span>'
+      ? '<span style="display:inline-block;margin-left:8px;padding:2px 7px;background:#f8eeed;color:#a4463f;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;">kept from parent</span>'
       : '';
 
   const yn = (b: boolean) =>
     b
-      ? '<span style="color:#2d6a4f;font-weight:600;">Yes</span>'
-      : '<span style="color:#a4463f;font-weight:600;">No</span>';
+      ? '<span style="color:#2d6a4f;font-weight:700;">Yes</span>'
+      : '<span style="color:#a4463f;font-weight:700;">No</span>';
+
+  /** Section heading. Bigger than a label wants to be, because this is read on a phone. */
+  const head = (title: string) =>
+    `<p style="margin:34px 0 10px 0;padding-bottom:6px;border-bottom:2px solid #ece7d8;font-size:13px;letter-spacing:0.16em;text-transform:uppercase;color:#a8842c;font-weight:700;">${escapeHtml(title)}</p>`;
 
   /**
    * `labels` turns the stored ids into the questions as they were asked. Without
@@ -264,30 +270,38 @@ export function leaderAssessmentHtml(v: {
    * the single most important signal on the form hiding in the least readable
    * place in the artifact.
    */
+  /**
+   * One question per row, stacked rather than columned. A two-column table
+   * squeezes a long question into a thin ribbon on a phone; stacking gives the
+   * question the full width and puts the answer under it where it is obvious.
+   */
   const boolBlock = (
     title: string,
     map: Record<string, boolean>,
     labels?: Record<string, { question: string; nonNegotiable?: boolean }>,
   ) => `
-    <p style="margin:20px 0 6px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#a8842c;font-weight:600;">${escapeHtml(title)}</p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-      ${Object.entries(map)
-        .map(([k, val]) => {
-          const meta = labels?.[k];
-          const flag = meta?.nonNegotiable && !val;
-          return `<tr><td style="padding:6px 10px 6px 0;font-size:13px;line-height:1.5;color:${flag ? '#a4463f' : '#4a544e'};${flag ? 'font-weight:600;background:#f8eeed;' : ''}">${escapeHtml(meta?.question ?? k)}</td><td style="padding:6px 0;font-size:13px;text-align:right;vertical-align:top;${flag ? 'background:#f8eeed;' : ''}">${yn(val)}</td></tr>`;
-        })
-        .join('')}
-    </table>`;
+    ${head(title)}
+    ${Object.entries(map)
+      .map(([k, val]) => {
+        const meta = labels?.[k];
+        const flag = meta?.nonNegotiable && !val;
+        return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 4px 0;${flag ? 'background:#f8eeed;' : ''}">
+            <tr><td style="padding:${flag ? '10px 12px' : '8px 0'};">
+              <span style="font-size:15px;line-height:1.55;color:${flag ? '#a4463f' : '#3f4a44'};${flag ? 'font-weight:600;' : ''}">${escapeHtml(meta?.question ?? k)}</span>
+              <span style="display:block;margin-top:3px;font-size:15px;">${yn(val)}</span>
+            </td></tr>
+          </table>`;
+      })
+      .join('')}`;
 
   const textBlock = (title: string, map: Record<string, string>) => `
-    <p style="margin:22px 0 6px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#a8842c;font-weight:600;">${escapeHtml(title)}</p>
+    ${head(title)}
     ${Object.entries(map)
       .map(
         ([k, val]) =>
-          `<div style="margin:0 0 14px 0;padding:10px 12px;background:#f6f7f5;border-left:3px solid #e4c97a;">
-             <p style="margin:0 0 4px 0;font-size:11px;color:#8a9a92;">${escapeHtml(k)}${kept(k)}</p>
-             <p style="margin:0;font-size:14px;line-height:1.55;color:#2b332e;">${escapeHtml(val || '(left blank)').replace(/\n/g, '<br>')}</p>
+          `<div style="margin:0 0 18px 0;padding:14px 16px;background:#f6f7f5;border-left:4px solid #e4c97a;">
+             <p style="margin:0 0 8px 0;font-size:14px;line-height:1.5;color:#6b7873;">${escapeHtml(v.questionText[k] ?? k)}${kept(k)}</p>
+             <p style="margin:0;font-size:17px;line-height:1.7;color:#222924;">${escapeHtml(val || '(left blank)').replace(/\n/g, '<br>')}</p>
            </div>`,
       )
       .join('')}`;
@@ -296,38 +310,44 @@ export function leaderAssessmentHtml(v: {
 <html lang="en">
   <head>
     <meta charset="utf-8">
+    <!-- Without this a phone renders the mail at desktop width and scales it
+         down to fit, which is why it arrived unreadably small and went fuzzy
+         when you pinched in. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
     <title>Leader readiness</title>
   </head>
-  <body style="margin:0;padding:0;background-color:#eef0ec;color:#2b332e;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#eef0ec"><tr><td align="center" style="padding:32px 20px;">
-      <table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="max-width:640px;width:100%;background-color:#ffffff;border:1px solid #e3e7e1;border-radius:6px;">
-        <tr><td style="height:3px;background:linear-gradient(to right, #e4c97a, #c9a548);font-size:0;line-height:0;">&nbsp;</td></tr>
-        <tr><td style="padding:24px 36px 28px 36px;">
-          <p style="margin:0 0 4px 0;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#a8842c;font-weight:600;">Leader readiness</p>
-          <h1 style="margin:0 0 6px 0;font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:26px;color:#1a221d;">${escapeHtml(v.name)}</h1>
-          <p style="margin:0 0 18px 0;font-size:14px;color:#4a544e;">
-            <a href="mailto:${escapeHtml(v.email)}" style="color:#a8842c;text-decoration:none;">${escapeHtml(v.email)}</a>
-            ${v.phone ? ` &middot; ${escapeHtml(v.phone)}` : ''}<br>
-            Church: ${escapeHtml(v.church)}
-            ${
-              v.isMinor
-                ? `<br><strong style="color:#a4463f;">Under 18.</strong> Guardian: ${escapeHtml(v.guardianName)}${v.guardianEmail ? ` &lt;${escapeHtml(v.guardianEmail)}&gt;` : ''}. The covenant needs a guardian co-signature (Section 13), and this leader serves under a screened adult (Section 14).`
-                : ''
-            }
-          </p>
+  <body style="margin:0;padding:0;background-color:#eef0ec;color:#222924;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-text-size-adjust:100%;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#eef0ec"><tr><td align="center" style="padding:20px 10px;">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="max-width:600px;width:100%;background-color:#ffffff;border:1px solid #e3e7e1;border-radius:6px;">
+        <tr><td style="height:4px;background:linear-gradient(to right, #e4c97a, #c9a548);font-size:0;line-height:0;">&nbsp;</td></tr>
+        <tr><td style="padding:26px 22px 32px 22px;">
+          <p style="margin:0 0 6px 0;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#a8842c;font-weight:700;">Leader readiness</p>
+          <h1 style="margin:0 0 14px 0;font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:30px;line-height:1.2;color:#1a221d;">${escapeHtml(v.name)}</h1>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 20px 0;background:#f6f7f5;">
+            <tr><td style="padding:14px 16px;font-size:16px;line-height:1.7;color:#3f4a44;">
+              ${v.phone ? `<a href="tel:${escapeHtml(v.phone.replace(/[^\d+]/g, ''))}" style="color:#a8842c;text-decoration:none;font-weight:600;">${escapeHtml(v.phone)}</a><br>` : ''}
+              <a href="mailto:${escapeHtml(v.email)}" style="color:#a8842c;text-decoration:none;">${escapeHtml(v.email)}</a><br>
+              <span style="color:#6b7873;">Church:</span> ${escapeHtml(v.church)}
+              ${
+                v.isMinor
+                  ? `<br><br><strong style="color:#a4463f;">Under 18.</strong> Guardian: ${escapeHtml(v.guardianName)}${v.guardianEmail ? `<br><a href="mailto:${escapeHtml(v.guardianEmail)}" style="color:#a8842c;text-decoration:none;">${escapeHtml(v.guardianEmail)}</a>` : ''}<br><span style="font-size:14px;color:#6b7873;">The covenant needs a guardian co-signature (Section 13), and this leader serves under a screened adult (Section 14).</span>`
+                  : ''
+              }
+            </td></tr>
+          </table>
           ${
             v.urgent.length
-              ? `<p style="margin:0 0 10px 0;padding:14px 16px;background:#a4463f;font-size:15px;line-height:1.6;color:#ffffff;">
+              ? `<p style="margin:0 0 14px 0;padding:18px 20px;background:#a4463f;font-size:18px;line-height:1.6;color:#ffffff;">
                    <strong>Read this one today.</strong><br>
-                   What they wrote about their own life contains: ${v.urgent.map((t) => escapeHtml(t)).join(', ')}.<br>
-                   <span style="font-size:13px;opacity:0.9;">A keyword match, not a judgment. It may be nothing. Open it and decide, rather than find out on Tuesday.</span>
+                   <span style="font-size:16px;">What they wrote about their own life contains: ${v.urgent.map((t) => escapeHtml(t)).join(', ')}.</span><br>
+                   <span style="font-size:15px;line-height:1.6;opacity:0.92;">A keyword match, not a judgment. It may be nothing. Open it and decide, rather than find out on Tuesday.</span>
                  </p>`
               : ''
           }
           ${
             v.guardianStatus === 'failed' || v.guardianStatus === 'suppressed'
-              ? `<p style="margin:0 0 10px 0;padding:12px 14px;background:#f8eeed;border-left:4px solid #a4463f;font-size:14px;line-height:1.6;color:#2b332e;">
+              ? `<p style="margin:0 0 14px 0;padding:16px 18px;background:#f8eeed;border-left:5px solid #a4463f;font-size:16px;line-height:1.65;color:#222924;">
                    <strong style="color:#a4463f;">The guardian was not emailed.</strong>
                    ${v.guardianStatus === 'suppressed' ? 'A rate limit suppressed it, which usually means a resubmission.' : 'The send failed.'}
                    Contact ${escapeHtml(v.guardianName || 'them')} yourself today.
@@ -336,13 +356,13 @@ export function leaderAssessmentHtml(v: {
           }
           ${
             v.declined.length
-              ? `<p style="margin:0 0 4px 0;padding:12px 14px;background:#f8eeed;border-left:4px solid #a4463f;font-size:14px;line-height:1.6;color:#2b332e;">
+              ? `<p style="margin:0 0 14px 0;padding:16px 18px;background:#f8eeed;border-left:5px solid #a4463f;font-size:16px;line-height:1.65;color:#222924;">
                    <strong style="color:#a4463f;">Answered no to ${v.declined.length === 1 ? 'a non-negotiable' : `${v.declined.length} non-negotiables`}.</strong><br>
-                   ${v.declined.map((q) => escapeHtml(q)).join('<br>')}
+                   ${v.declined.map((q) => escapeHtml(q)).join('<br><br>')}
                  </p>`
               : ''
           }
-          <p style="margin:0 0 4px 0;padding:10px 12px;background:${v.gatePassed ? '#eef5f0' : '#f8eeed'};font-size:14px;color:#2b332e;">
+          <p style="margin:0;padding:14px 16px;background:${v.gatePassed ? '#eef5f0' : '#f8eeed'};font-size:16px;line-height:1.6;color:#222924;">
             Gates and doctrine: ${v.gatePassed ? '<strong style="color:#2d6a4f;">all affirmed</strong>' : '<strong style="color:#a4463f;">not all affirmed</strong>'}
           </p>
           ${boolBlock('Gates', v.gates)}
@@ -358,9 +378,9 @@ export function leaderAssessmentHtml(v: {
           ${textBlock('Scenarios', v.scenarios)}
           ${
             v.isMinor
-              ? `<div style="margin:26px 0 0 0;padding:16px 18px;background:#eef5f0;border:1px solid #cfe0d5;">
-                   <p style="margin:0 0 8px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#2d6a4f;font-weight:600;">Ready to send ${escapeHtml(v.guardianName || 'their guardian')}, once you have read it</p>
-                   <p style="margin:0 0 12px 0;font-size:13px;line-height:1.6;color:#4a544e;">
+              ? `<div style="margin:34px 0 0 0;padding:18px 20px;background:#eef5f0;border:1px solid #cfe0d5;">
+                   <p style="margin:0 0 10px 0;font-size:13px;letter-spacing:0.16em;text-transform:uppercase;color:#2d6a4f;font-weight:700;">Ready to send ${escapeHtml(v.guardianName || 'their guardian')}, once you have read it</p>
+                   <p style="margin:0 0 16px 0;font-size:15px;line-height:1.65;color:#3f4a44;">
                      ${escapeHtml(v.guardianName || 'The guardian')} has already been told ${escapeHtml(v.name)} applied, and that
                      the answers come from a person after we have read them. This is exactly what
                      ${escapeHtml(v.name)} chose to let them see${v.withheldCount > 0 ? `, with ${v.withheldCount} held back` : ''}. Nothing below has been sent yet.
@@ -369,18 +389,18 @@ export function leaderAssessmentHtml(v: {
                      v.forwardable.length
                        ? v.forwardable
                            .map(
-                             (s) => `<div style="margin:0 0 12px 0;padding:10px 12px;background:#ffffff;border-left:3px solid #2d6a4f;">
-                                <p style="margin:0 0 4px 0;font-size:11px;color:#8a9a92;">${escapeHtml(s.prompt)}</p>
-                                <p style="margin:0;font-size:14px;line-height:1.55;color:#2b332e;">${escapeHtml(s.answer).replace(/\n/g, '<br>')}</p>
+                             (s) => `<div style="margin:0 0 14px 0;padding:14px 16px;background:#ffffff;border-left:4px solid #2d6a4f;">
+                                <p style="margin:0 0 8px 0;font-size:14px;line-height:1.5;color:#6b7873;">${escapeHtml(s.prompt)}</p>
+                                <p style="margin:0;font-size:17px;line-height:1.7;color:#222924;">${escapeHtml(s.answer).replace(/\n/g, '<br>')}</p>
                               </div>`,
                            )
                            .join('')
-                       : `<p style="margin:0;font-size:14px;color:#4a544e;">They kept every answer back. Worth a gentle conversation in person, not an email.</p>`
+                       : `<p style="margin:0;font-size:16px;line-height:1.65;color:#3f4a44;">They kept every answer back. Worth a gentle conversation in person, not an email.</p>`
                    }
                  </div>`
               : ''
           }
-          <p style="margin:22px 0 0 0;font-size:12px;line-height:1.6;color:#8a9a92;">
+          <p style="margin:30px 0 0 0;padding-top:18px;border-top:1px solid #e3e7e1;font-size:15px;line-height:1.65;color:#6b7873;">
             ${
               v.isMinor
                 ? `Under 18. Replies go to ${escapeHtml(v.guardianName || 'their guardian')}, not to ${escapeHtml(v.name)}. Do not open a private one-to-one thread with this applicant &mdash; Covenant Section 14, and the commitment they just made on this form.`

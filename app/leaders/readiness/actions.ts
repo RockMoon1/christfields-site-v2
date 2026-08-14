@@ -155,6 +155,11 @@ export async function submitLeaderAssessment(
       return { ok: false, error: 'Please fill in your name, email, and church.' };
     }
 
+    // Required: what comes next is a phone call, not an email thread.
+    if (phone.replace(/\D/g, '').length < 10) {
+      return { ok: false, error: 'Please add a phone number we can reach you on.' };
+    }
+
     // Keyed on the network first, because every other key here is a field the
     // caller chooses and can rotate freely.
     const ip = await clientIp();
@@ -377,6 +382,9 @@ export async function submitLeaderAssessment(
         commitments,
         walk,
         scenarios,
+        // So the email reads as questions and answers rather than as a table of
+        // snake_case ids next to paragraphs.
+        questionText: Object.fromEntries(SHAREABLE_IDS.map((id) => [id, promptFor(id)])),
         visibility: isMinor ? visibility : undefined,
       }),
       text: [

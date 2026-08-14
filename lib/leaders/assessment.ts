@@ -553,12 +553,12 @@ export interface ScenarioQuestion {
 
 export const SCENARIOS: ScenarioQuestion[] = [
   {
-    id: 's_airpods',
-    title: 'The one having a bad night',
+    id: 's_bad_night',
+    title: 'The one making it hard for everyone',
     situation:
-      'A student in your group is being difficult all evening. Short with people, dismissive, refusing to join in. Partway through you find out he lost his AirPods earlier that day. You also know enough about his home to know nobody ever taught him what to do with frustration, and that this is how it comes out.',
+      'Someone in your group is off all evening. Snide comments at other people’s expense, the kind that get a laugh the first time and land badly by the third. One of the quieter people in the room has not spoken since the second one. Later you find out he got passed over for something at work that morning, and you know enough about how he was raised to know that nobody ever taught him what to do with that except hand it to someone smaller.',
     ask:
-      'Walk us through your evening, step by step. What do you do in the moment, what do you not do, and what happens after everyone leaves?',
+      'Walk us through your evening, step by step. What do you do in the moment, what do you not do, and what happens after everyone leaves? Say what you would do about the quiet one as well.',
     scripture: {
       ref: 'James 1:19',
       text: '“Let every man be swift to hear, slow to speak, and slow to anger.”',
@@ -569,7 +569,7 @@ export const SCENARIOS: ScenarioQuestion[] = [
     id: 's_disclosure',
     title: 'Something you were not ready for',
     situation:
-      'After the group, one of your people stays behind. They tell you something heavy, and they start with “please do not tell anyone.” As they talk, it becomes clear they are thinking about hurting themselves. They are fifteen.',
+      'After the group, one of your people stays behind. They tell you something heavy, and they start with “please do not tell anyone.” As they talk, it becomes clear they are thinking about hurting themselves. They are seventeen, so legally still a minor.',
     ask:
       'What do you say to them in that moment, and what do you do in the next hour? Be specific about who you contact.',
     askMinor:

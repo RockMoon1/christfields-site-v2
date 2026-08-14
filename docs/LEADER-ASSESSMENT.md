@@ -27,7 +27,7 @@ even then the person is pointed back toward the community rather than dismissed.
 |---|---|---|---|
 | Gates | Yes/No | 3 | A "no" ends the assessment immediately |
 | Doctrine | Checkboxes | 8 | The fourth gate. "I cannot affirm all of these" ends it the same way |
-| About | Fields | 4 + age | Three age bands; 13-or-younger ends it and stores nothing |
+| About | Fields | 4 + age | All four required, phone included; 16-or-younger ends it and stores nothing |
 | Commitments | Yes/No | 19, or 20 under 18 | All must be answered; five are "not negotiable" |
 | The walk | Free text | 5 | Short floors only — "nobody, honestly" has to be a valid answer |
 | Scenarios | Free text | 7 | Behavioral; minimum lengths |
@@ -136,17 +136,19 @@ reaches it only through the service-role key.
 
 Not a score. These are the patterns worth noticing.
 
-**The AirPods scenario.** Looking for: separating the behavior from the person;
-addressing it privately rather than in front of the group; curiosity before
-correction; following up afterward. Concerning: public shaming, treating it as
-defiance to be won, ignoring it entirely, or making the evening about their own
-authority.
+**The bad-night scenario** (`s_bad_night`). Looking for: separating the behavior
+from the person; addressing it privately rather than in front of the group;
+curiosity before correction; following up afterward. **And whether they mention
+the quiet one at all** — the snide comments landed on somebody, and a leader who
+only manages the loud person has left the person who was actually hurt sitting
+there. Concerning: public shaming, treating it as defiance to be won, ignoring
+it entirely, or making the evening about their own authority.
 
 **The disclosure scenario.** This one is close to disqualifying if handled
 badly. Looking for: staying with them, not promising secrecy, naming that they
 will need to involve others, contacting the Table and a parent, and knowing
-that a fifteen-year-old talking about self-harm is an immediate escalation, not
-a pastoral chat. Concerning: promising to keep it secret, handling it alone,
+that a seventeen-year-old talking about self-harm is an immediate escalation,
+not a pastoral chat. Concerning: promising to keep it secret, handling it alone,
 "praying about it" as the entire plan.
 
 **The boundary scenario.** Looking for: warmth toward the person AND holding
@@ -194,14 +196,18 @@ Flagged honestly. I am not a lawyer and this needs one.
    that is special-category data; US law is looser but this is still sensitive.
    Check retention, access, and deletion-on-request handling.
 2. **Minors submitting.** The covenant permits leaders under 18, so minors will
-   submit this form. **The age question now has a floor: 13 or younger ends the
-   form before a single personal question is asked and stores nothing.** That
-   keeps this clear of COPPA and consistent with `app/privacy/page.tsx`, which
-   states the services are for 13 and older — a form collecting free text from
-   an eleven-year-old contradicted the site's own published policy. Fourteen is
-   a judgment call, not a legal line: it is a year clear of the COPPA threshold
-   and it matches a covenant written around a minor serving under a screened
-   adult rather than around a child. **Founder decision if you want it lower.**
+   submit this form — but only seventeen-year-olds. **The age bands are "18 or
+   older", "17", and "16 or younger", and the last ends the form before a single
+   personal question is asked and stores nothing.**
+
+   Seventeen is a founder decision about maturity, not a legal line, made
+   2026-08-13: leading here means carrying other people on the worst night they
+   have had in years, and sixteen is too young for that weight. It also puts the
+   form four years clear of COPPA and well clear of `app/privacy/page.tsx`,
+   which states the services are for 13 and older. The practical effect is that
+   the only minors in the dataset are within a year of legal adulthood and
+   always have a co-signing guardian.
+
    The guardian is emailed automatically and immediately on submission
    (`guardianNoticeHtml`), and the applicant is told so before they answer
    anything personal. Still worth review: that address is self-reported and
@@ -210,8 +216,8 @@ Flagged honestly. I am not a lawyer and this needs one.
    proofing here and there probably cannot be without making the form hostile;
    the in-person covenant walkthrough is the real check.
 3. **The self-harm scenario.** It asks an applicant who may themselves be
-   fifteen to describe handling a fifteen-year-old's self-harm disclosure, and
-   two steps earlier asks them to name their own current struggle. **988 is now
+   seventeen to describe handling a seventeen-year-old's self-harm disclosure,
+   and two steps earlier asks them to name their own struggle. **988 is now
    offered under both of those questions and again on the closing screen**
    (`CRISIS_LINE`); it shipped without any crisis resource at all, which was the
    worst thing this audit found. Still worth a second opinion on whether the

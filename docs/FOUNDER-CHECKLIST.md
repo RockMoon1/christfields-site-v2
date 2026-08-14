@@ -94,8 +94,8 @@ each is a small, self-contained change.
 The page is built, audited, and counciled. These are the parts only you can do,
 and the first two are hard gates.
 
-- [ ] **A screening vendor, before you accept anyone aged 14-17.** The whole
-  reason a fourteen-year-old can lead here is that they serve under a *screened*
+- [ ] **A screening vendor, before you accept a seventeen-year-old.** The whole
+  reason anyone under 18 can lead here is that they serve under a *screened*
   adult, and that word currently has nothing behind it. It is the load-bearing
   sentence in the email their parent receives. Until a real background check
   exists, the honest move is to take adult applicants only. `c_screening` asks

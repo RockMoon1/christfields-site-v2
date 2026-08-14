@@ -236,12 +236,14 @@ export function ReadinessForm() {
   const [phone, setPhone] = useState('');
   const [church, setChurch] = useState('');
   // The covenant allows leaders under 18 (Section 14), serving under a screened
-  // adult, and it needs a parent or guardian co-signature (Section 13). Below
-  // fourteen the form stops and stores nothing: the privacy policy says this
-  // site does not knowingly collect from under-13s, and a covenant written
-  // around a minor serving under a screened adult does not envision a child.
-  const [ageBand, setAgeBand] = useState<'adult' | 'teen' | 'child' | null>(null);
-  const isMinor = ageBand === 'teen';
+  // adult, and it needs a parent or guardian co-signature (Section 13).
+  //
+  // The floor is seventeen, and that is a founder decision about maturity
+  // rather than a legal line: leading here means carrying other people on their
+  // hardest nights, and sixteen is too young for that weight. Below seventeen
+  // the form stops before a single personal question and stores nothing.
+  const [ageBand, setAgeBand] = useState<'adult' | 'seventeen' | 'younger' | null>(null);
+  const isMinor = ageBand === 'seventeen';
   const [guardianName, setGuardianName] = useState('');
   const [guardianEmail, setGuardianEmail] = useState('');
 
@@ -316,8 +318,14 @@ export function ReadinessForm() {
     (isMinor &&
       guardianName.trim().length > 1 &&
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guardianEmail));
+  // Phone is required. Whatever comes next here is a conversation, and a
+  // conversation starts with a call, not an email thread.
   const aboutDone =
-    name.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && church.trim() && guardianDone;
+    name.trim() &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) &&
+    church.trim() &&
+    phone.replace(/\D/g, '').length >= 10 &&
+    guardianDone;
 
   function submit() {
     setError('');
@@ -491,12 +499,16 @@ export function ReadinessForm() {
         {/* ---------------- About ---------------- */}
         {phase === 'about' && (
           <motion.div key="about" exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.35, ease: EASE }}>
-            <StepShell eyebrow="Who you are" title="Tell us where to find you.">
+            <StepShell
+              eyebrow="Who you are"
+              title="Tell us where to find you."
+              lede="All four, including the phone number. Whatever happens next is a conversation, and we would rather ring you than start an email thread."
+            >
               <div className="flex flex-col gap-4">
                 {[
                   { id: 'ln', label: 'Your name', value: name, set: setName, type: 'text', ac: 'name' },
                   { id: 'le', label: 'Email', value: email, set: setEmail, type: 'email', ac: 'email' },
-                  { id: 'lp', label: 'Phone (optional)', value: phone, set: setPhone, type: 'tel', ac: 'tel' },
+                  { id: 'lp', label: 'Phone', value: phone, set: setPhone, type: 'tel', ac: 'tel' },
                   { id: 'lc', label: 'The church you attend and serve at', value: church, set: setChurch, type: 'text', ac: 'organization' },
                 ].map((f) => (
                   <div key={f.id}>
@@ -521,9 +533,9 @@ export function ReadinessForm() {
               <div className="mt-6 rounded-sm border border-border-sub bg-black-3 p-5">
                 <p className="text-sm text-ivory">How old are you?</p>
                 <p className="mt-1 text-xs leading-relaxed text-silver">
-                  Leaders under 18 serve here, always under a screened adult — meaning a background
-                  check and references, renewed. It just means a parent or guardian signs the
-                  covenant alongside you.
+                  Seventeen-year-olds lead here, always under a screened adult — meaning a
+                  background check and references, renewed. It just means a parent or guardian
+                  signs the covenant alongside you.
                 </p>
                 {/* The one question on this form somebody has a reason to lie
                     about, and every protection for a young person hangs on it.
@@ -535,17 +547,17 @@ export function ReadinessForm() {
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                   {([
                     { label: '18 or older', band: 'adult' },
-                    { label: '14 to 17', band: 'teen' },
-                    { label: '13 or younger', band: 'child' },
+                    { label: '17', band: 'seventeen' },
+                    { label: '16 or younger', band: 'younger' },
                   ] as const).map((o) => (
                     <button
                       key={o.band}
                       type="button"
                       onClick={() => {
                         setAgeBand(o.band);
-                        // Nothing is collected from a child here. The form ends
+                        // Nothing is collected below the floor. The form ends
                         // before a single personal question is asked.
-                        if (o.band === 'child') stop('age');
+                        if (o.band === 'younger') stop('age');
                       }}
                       aria-pressed={ageBand === o.band}
                       className={cn(
@@ -859,13 +871,15 @@ export function ReadinessForm() {
               {stopReason === 'age' ? (
                 <>
                   <p className="mx-auto mb-5 max-w-md text-sm leading-relaxed text-ivory-dim">
-                    Leading a group here starts at fourteen, and there is a real reason for it:
-                    a leader carries other people, sometimes on their hardest nights, and that is
-                    a weight we are not willing to hand to someone younger.
+                    Leading a group here starts at seventeen, and there is a real reason for it.
+                    A leader carries other people, sometimes on the worst night they have had in
+                    years, and that is a weight we are not willing to hand to someone younger. It
+                    is not a judgment about you. It is about what we would be asking of you.
                   </p>
                   <p className="mx-auto mb-6 max-w-md text-sm leading-relaxed text-silver">
                     Nothing you typed has been kept. Come and be part of Iron and Ember in the
-                    meantime, and if you want to be here, ask a parent to reach out to us.
+                    meantime, because that is where leaders come from here anyway, and ask us
+                    again when you get there.
                   </p>
                 </>
               ) : (
