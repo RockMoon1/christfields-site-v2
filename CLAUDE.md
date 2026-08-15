@@ -25,4 +25,7 @@ The Christ Fields company platform — the "front of house" for the whole ecosys
 ## Working rules
 - **Verify in the browser** before claiming done.
 - **Commit/push only when the founder asks.**
+- **`docs/private/` is LOCAL-ONLY** (gitignored): real legal/business documents.
+  Never commit or copy them anywhere, never quote their contents in committed
+  files, and **never run `git clean -x`** in this repo (it would delete them).
 - GraceFlow + LearnFlow are NOT here and are NOT to be rebuilt here — they live at `B:\graceflow`.

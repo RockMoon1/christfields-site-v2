@@ -48,3 +48,7 @@ next-env.d.ts.bak
 
 # Leftover .tmp files from agent edits on locked drives
 *.tmp.*
+
+# LOCAL-ONLY legal/business documents. Never committed, never pushed.
+# See docs/private/README.md (also ignored). Do NOT remove this rule.
+docs/private/
