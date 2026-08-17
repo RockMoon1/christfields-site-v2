@@ -10,10 +10,13 @@
 
 ## What this is
 The Christ Fields company platform — the "front of house" for the whole ecosystem.
-- **FaithFlow** — `app/faithflow`, `app/faithflow-resources`, `components/sections/faithflow`, `lib/faithflow`, MDX in `content/`
-- **ScholarFlow** — `app/scholarflow-resources`, `components/sections/ScholarFlowFeature.tsx`, `components/motion/ScholarFlowPreview.tsx`
-- **Journal** — `app/journal`, `components/journal`, `content/journal/*.mdx`
-- **Dashboard / leader (Iron & Ember)** — `app/dashboard`, `components/dashboard`, `components/leader`
+- **FaithFlow** — `app/faithflow`, `app/faithflow-resources`, `components/sections/faithflow`, `lib/faithflow`; page copy in `lib/content/faithflow.ts`
+- **ScholarFlow** — `app/scholarflow`, `app/scholarflow-resources`, `components/sections/scholarflow`, `components/motion/ScholarFlowPreview.tsx`; page copy in `lib/content/scholarflow.ts`
+- **Journal** — `app/journal`, `components/journal`, `content/journal/*.mdx` (the only MDX in the repo)
+- **Dashboard (Iron & Ember)** — `app/dashboard`, `components/dashboard`, `components/leader`, `lib/dashboard`
+- **Leader readiness flow** — `app/leaders`, `components/leaders`, `lib/leaders`. ⚠️ `components/leader` (singular, dashboard) and `components/leaders` (plural, readiness) are different areas.
+- **API routes** — `app/api/{submit,clerk-webhook}`
+- **Data & infra** — `db/` (schema.sql + migrations), `lib/bible`, `lib/security`, `scripts/generate-icons.mjs`
 - Shared: `components/{Nav,Footer,Logo,Container,Reveal}.tsx`, `components/motion`, `app/layout.tsx`, `app/globals.css`
 
 ## Stack & deploy
