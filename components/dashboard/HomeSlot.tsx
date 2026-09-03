@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { HomeSlotCard } from '@/app/dashboard/(app)/events/actions';
 import { dismissHomeCard, type HomeCardKind } from '@/app/dashboard/(app)/settings/actions';
 import { InstallAppCard } from './InstallAppCard';
+import { PushPrimerCard } from './PushSetup';
 
 /**
  * Home carries one ask at a time. The server picks the card (hello, a
@@ -103,8 +104,8 @@ export function HomeSlot({ card, firstName }: { card: HomeSlotCard; firstName: s
     );
   }
 
-  // Phone alerts arrive with the notification pipeline (Phase 2).
-  return null;
+  // Phone alerts. The card decides for itself whether this device can even do it.
+  return <PushPrimerCard onDone={() => dismiss('push')} onDismiss={() => dismiss('push')} />;
 }
 
 function Card({ children }: { children: React.ReactNode }) {

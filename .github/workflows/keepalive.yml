@@ -1,0 +1,29 @@
+name: keepalive
+
+# Backstop for two free-tier sleep rules:
+#  - Supabase pauses a project after about a week with no traffic. The hourly
+#    Netlify tick normally keeps it awake; this touches the database weekly
+#    in case that stops (the feed route runs one small query, no secret needed).
+#  - If CRON_SECRET is set as a repository secret, also run the tick itself.
+# GitHub disables scheduled workflows after 60 days without repo activity, so
+# the founder checklist has a monthly "is keepalive still green?" line.
+
+on:
+  schedule:
+    - cron: '17 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Touch the database through the public feed route
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' https://christfields2717.com/api/ics/feed/keepalive-ping)
+          echo "feed route answered $code (404 is expected; the query still ran)"
+      - name: Run the hourly tick if the secret is available
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then echo "CRON_SECRET not set as a repo secret; skipping"; exit 0; fi
+          curl -s -X POST -H "authorization: Bearer $CRON_SECRET" https://christfields2717.com/api/cron/tick

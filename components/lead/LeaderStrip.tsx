@@ -5,7 +5,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import type { LeaderEventView, RosterName } from '@/app/dashboard/(app)/lead/actions';
-import { cancelEvent, markAttendance, markEveryoneCame, postThanks } from '@/app/dashboard/(app)/lead/actions';
+import { cancelEvent, markAttendance, markEveryoneCame, postThanks, nudgeEvent } from '@/app/dashboard/(app)/lead/actions';
 import { noteLines } from '@/lib/dashboard/prompts';
 import { Face } from '@/components/dashboard/GoingFaces';
 
@@ -22,6 +22,7 @@ export function LeaderStrip({ view, whenText }: { view: LeaderEventView; whenTex
   const [cancelling, setCancelling] = useState(false);
   const [reason, setReason] = useState('');
   const [thanks, setThanks] = useState(view.thanksNote);
+  const [nudge, setNudge] = useState<{ done: boolean; line: string }>({ done: view.nudged, line: '' });
   const [attendance, setAttendance] = useState<Map<string, boolean>>(
     () => new Map([...view.going, ...view.maybe, ...view.silent, ...view.cant].filter((p) => p.present !== null).map((p) => [p.userId, p.present as boolean])),
   );
@@ -79,6 +80,36 @@ export function LeaderStrip({ view, whenText }: { view: LeaderEventView; whenTex
           {openList.length === 0 ? 'Nobody.' : openList.map((p) => p.name).join(', ')}
         </p>
       )}
+
+      {view.canNudge && !nudge.done && (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() =>
+            startTransition(async () => {
+              const res = await nudgeEvent(view.event.id).catch(() => null);
+              if (!res || !res.ok) {
+                setNudge({ done: false, line: 'Could not send that. Try again in a minute.' });
+                return;
+              }
+              const reached = res.pushed + res.emailed;
+              setNudge({
+                done: true,
+                line: res.already
+                  ? 'Already nudged for this one.'
+                  : reached === 0
+                    ? 'Nobody could be reached right now. Paste the share text into the group chat.'
+                    : `Asked ${reached} ${reached === 1 ? 'person' : 'people'}${res.quiet ? `; ${res.quiet} will hear in the morning` : ''}.`,
+              });
+            })
+          }
+          className="mt-3 inline-flex min-h-[44px] items-center rounded-sm border border-gold/45 px-4 text-[11px] font-medium uppercase tracking-[0.1em] text-gold hover:bg-gold hover:text-black disabled:opacity-60"
+        >
+          Nudge the {view.silent.length} who have not answered
+        </button>
+      )}
+      {nudge.line && <p className="mt-2 text-sm text-ivory-dim">{nudge.line}</p>}
+      {nudge.done && !nudge.line && view.canNudge && <p className="mt-2 text-xs text-muted">Nudged once already. Once is the limit.</p>}
 
       {firstTimers.length > 0 && (
         <p className="mt-3 rounded-sm border-l-2 border-gold/60 bg-black-2/60 px-4 py-2 text-sm text-ivory-dim">

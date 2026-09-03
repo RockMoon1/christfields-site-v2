@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getYou } from './actions';
 import { EmailToggle, CopyLink } from '@/components/dashboard/YouCards';
+import { PushSettingsCard } from '@/components/dashboard/PushSetup';
 import { InstallAppCard } from '@/components/dashboard/InstallAppCard';
 import { FeedbackCard } from '@/components/dashboard/FeedbackCard';
 
@@ -18,11 +19,14 @@ export default async function YouPage() {
         <h2 className="font-display text-4xl font-light text-ivory">Your settings.</h2>
       </header>
 
+      <PushSettingsCard />
+
       <section className="mb-6 rounded-sm border border-border-sub bg-black-3 p-6">
         <h3 className="font-display text-xl font-light text-ivory">Email me about plans</h3>
         <p className="mt-1 text-sm leading-relaxed text-silver">
-          New plans, changes, cancellations, and a reminder the day before. Turning this off stops all our
-          emails, including cancellations. You will still see everything on Home.
+          New plans, changes, cancellations, and a reminder the day before. If your phone alerts are working, we
+          skip the email for new posts. Turning this off stops all our emails, including cancellations. You will
+          still see everything on Home.
         </p>
         <div className="mt-4">
           <EmailToggle initial={you.emailReminders} />

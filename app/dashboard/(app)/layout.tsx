@@ -2,6 +2,7 @@ import { Sidebar } from '@/components/dashboard/Sidebar';
 import { TopBar } from '@/components/dashboard/TopBar';
 import { MobileTabBar } from '@/components/dashboard/MobileTabBar';
 import { TimeZoneSync } from '@/components/dashboard/TimeZoneSync';
+import { PushSync } from '@/components/dashboard/PushSetup';
 import { isLeaderAnywhere } from '@/lib/groups/membership';
 
 // The dashboard is per-user and dynamic (Clerk auth and Supabase on every
@@ -28,6 +29,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </div>
       <MobileTabBar isLeader={isLeader} />
       <TimeZoneSync />
+      <PushSync />
     </div>
   );
 }

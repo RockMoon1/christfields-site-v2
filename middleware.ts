@@ -42,9 +42,12 @@ export default async function middleware(req: NextRequest, event: NextFetchEvent
 }
 
 /**
- * Scope middleware to /dashboard/* (the authenticated app). The public marketing
- * site (home, journal, faithflow) stays independent of Clerk.
+ * Scope middleware to /dashboard/* (the authenticated app) plus the two API
+ * routes that read the session (a signed-in .ics download, saving a push
+ * subscription). The public marketing site stays independent of Clerk, and so
+ * do the routes that must work with no session: the subscribe feed, the push
+ * ack from a service worker, the cron tick, and /r one-tap answers.
  */
 export const config = {
-  matcher: ['/dashboard/:path*', '/api/ics/event/:path*'],
+  matcher: ['/dashboard/:path*', '/api/ics/event/:path*', '/api/push/subscribe'],
 };

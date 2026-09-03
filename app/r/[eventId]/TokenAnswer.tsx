@@ -23,8 +23,12 @@ export function TokenAnswer({ eventId }: { eventId: string }) {
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
-    const m = /(?:^|[#&])t=([^&]+)/.exec(window.location.hash);
+    const hash = window.location.hash;
+    const m = /(?:^|[#&])t=([^&]+)/.exec(hash);
     const token = m ? decodeURIComponent(m[1]) : '';
+    // Email buttons carry the answer too, so one tap from the inbox records it.
+    const sm = /(?:^|[#&])s=(going|maybe|not_going)(?:&|$)/.exec(hash);
+    const preset = (sm ? sm[1] : null) as EventRsvpStatus | null;
     if (!token) {
       setView('invalid');
       return;
@@ -38,6 +42,25 @@ export function TokenAnswer({ eventId }: { eventId: string }) {
         setView(v);
         setStatus(v.myStatus);
         setPlan(v.myPlan);
+        if (preset && v.event.status === 'scheduled' && v.myStatus !== preset) {
+          setStatus(preset);
+          setAnswered(true);
+          rsvpByToken(token, eventId, preset)
+            .then((res) => {
+              if (!res.ok) {
+                setStatus(v.myStatus);
+                setAnswered(false);
+              } else if (res.faces) {
+                setView({ ...v, faces: res.faces });
+              }
+            })
+            .catch(() => {
+              setStatus(v.myStatus);
+              setAnswered(false);
+            });
+        } else if (preset && v.myStatus === preset) {
+          setAnswered(true);
+        }
       })
       .catch(() => setView('invalid'));
   }, [eventId]);

@@ -106,6 +106,40 @@ effect on a fresh build.
 `NVIDIA_API_KEY` has been unused since the verse AI was removed in June. Safe
 to delete whenever.
 
+### 2d. The schedule manager (Phase 1)  ✅ DONE 2026-09-03
+
+`NEXT_PUBLIC_APP_URL`, `APP_TOKEN_SECRET`, `CALENDAR_TOKEN_KEY`, `CRON_SECRET`.
+The three secrets are random strings generated on the founder's computer, not
+issued by any service. Values live only in `.env.local` and the local-only
+sheet `docs/private/NETLIFY-ENV-2026-09.md`.
+
+### 2e. Phone alerts (Phase 2)  ⬅ ADD BEFORE THE PHASE 2 DEPLOY
+
+Three more rows, same way, values on the same private sheet:
+
+| Key (top box) | Value (bottom box) |
+|---|---|
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | the long string on the sheet |
+| `VAPID_PRIVATE_KEY` | the long string on the sheet |
+| `VAPID_SUBJECT` | `mailto:proverbs@christfields2717.com` |
+
+These are the keys a phone uses to trust that a push came from us. Also
+generated locally; nothing to sign up for. Until they are set, the app shows
+"Phone alerts are not switched on for this site yet" and emails still work.
+
+### 2f. The hourly tick (nothing to click)
+
+`netlify/functions/tick.mts` is a Netlify Scheduled Function. After the deploy
+it appears under **Functions** in the Netlify site and runs once an hour on its
+own, using `CRON_SECRET` from the environment. It sends the day-before and
+two-hour reminders, the 7am leader brief, refreshes pasted calendar links, and
+keeps Supabase awake. To watch it: Functions → tick → recent logs.
+
+Optional backstop: GitHub → the repo → Settings → Secrets and variables →
+Actions → **New repository secret**, name `CRON_SECRET`, value the same string.
+Then `.github/workflows/keepalive.yml` can also run the tick weekly. Without it
+the workflow still pings the database, which is what matters.
+
 ---
 
 ## 3. Clerk → the Iron & Ember wiring
@@ -143,6 +177,8 @@ env vars are set and a deploy has finished, it should answer `400` instead
 - **The five questions** (`B:\graceflow\GO-LIVE-WEEK.md`, step 3). Ask Iron &
   Ember, write the answers down verbatim. This is what unlocks the
   strip-the-metrics decision, which is deliberately parked until then.
-- **The YouVersion note.** Fully drafted in `docs/youversion-application.md`.
 - **Probely.** Mark the four triaged findings, re-run the scan.
 - **hstspreload.org.** Check christfields2717.com is submitted.
+- **Once a month: is keepalive still green?** GitHub → Actions → keepalive.
+  GitHub switches scheduled workflows off after 60 days with no pushes; one
+  click on "Run workflow" turns it back on.

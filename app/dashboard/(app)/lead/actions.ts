@@ -16,6 +16,9 @@ import { isEventType, type EventType } from '@/lib/dashboard/events';
 import { weeklyOccurrences, MAX_SERIES_WEEKS } from '@/lib/schedule/series';
 import { getGroupAvailability, type GroupAvailability } from '@/lib/schedule/group-availability';
 import { recordChange } from '@/lib/notify/activity';
+import { fanOutChange, nudgeSilent, type NudgeResult } from '@/lib/notify/fanout';
+import { anyDelivery } from '@/lib/notify/deliveries';
+import { dedupeKey } from '@/lib/notify/rules';
 import { whenInWords } from '@/lib/dashboard/format';
 import { toMemberEvent, type MemberEvent } from '@/lib/schedule/public-event';
 import { appUrl } from '@/lib/dashboard/prefs';
@@ -152,7 +155,8 @@ export async function createEvent(input: PostInput): Promise<{ ok: boolean; erro
     if (input.notify) {
       const when = whenInWords(rows[0].starts_at, tz);
       const summary = weeks > 1 ? `${title}, weekly from ${when}` : `${title}, ${when}`;
-      await recordChange(sb, { orgId: ctx.orgId, eventId: firstId, kind: 'created', summary, createdBy: userId });
+      const changeId = await recordChange(sb, { orgId: ctx.orgId, eventId: firstId, kind: 'created', summary, createdBy: userId });
+      await fanOutChange(changeId);
     }
 
     revalidatePath('/dashboard');
@@ -247,13 +251,14 @@ export async function updateEvent(eventId: string, input: EditInput): Promise<{ 
       const parts: string[] = [];
       if (timeMoved) parts.push(`Moved to ${whenInWords(start.toISOString(), event.tz)}`);
       if (placeMoved) parts.push(location ? `Now at ${location}` : 'Place changed');
-      await recordChange(sb, {
+      const changeId = await recordChange(sb, {
         orgId: event.org_id,
         eventId,
         kind: 'changed',
         summary: `${title}: ${parts.join('. ')}`,
         createdBy: userId,
       });
+      await fanOutChange(changeId);
     }
 
     revalidatePath('/dashboard');
@@ -286,13 +291,14 @@ export async function cancelEvent(eventId: string, reason: string): Promise<{ ok
       .eq('id', eventId)
       .eq('org_id', event.org_id);
     if (error) return { ok: false };
-    await recordChange(sb, {
+    const changeId = await recordChange(sb, {
       orgId: event.org_id,
       eventId,
       kind: 'cancelled',
       summary: `${event.title} is called off${cleanReason ? `: ${cleanReason.slice(0, 120)}` : ''}`,
       createdBy: userId,
     });
+    await fanOutChange(changeId);
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/lead');
     revalidatePath(`/dashboard/e/${eventId}`);
@@ -337,6 +343,9 @@ export interface LeaderEventView {
   markedCount: number;
   skippedEmails: number;
   shareText: string;
+  /** Nudge is once per event and only for one-offs. */
+  canNudge: boolean;
+  nudged: boolean;
 }
 
 export async function getLeaderEvent(eventId: string): Promise<LeaderEventView | null> {
@@ -345,7 +354,7 @@ export async function getLeaderEvent(eventId: string): Promise<LeaderEventView |
     if (!ctx) return null;
     const { event, orgName, members } = ctx;
     const sb = getSupabase();
-    const [rsvpRes, attRes, slotRes, skippedRes] = await Promise.all([
+    const [rsvpRes, attRes, slotRes, skippedRes, nudged] = await Promise.all([
       sb.from('event_rsvps').select('*').eq('event_id', eventId),
       sb.from('event_attendance').select('*').eq('event_id', eventId),
       sb.from('event_slots').select('*').eq('event_id', eventId).order('created_at', { ascending: true }),
@@ -353,7 +362,9 @@ export async function getLeaderEvent(eventId: string): Promise<LeaderEventView |
         .from('notification_deliveries')
         .select('id', { count: 'exact', head: true })
         .like('dedupe_key', `${eventId}:%`)
+        .eq('channel', 'email')
         .eq('status', 'skipped_budget'),
+      anyDelivery(sb, dedupeKey(eventId, 'nudge')),
     ]);
     const rsvps = (rsvpRes.data as EventRsvpRow[] | null) ?? [];
     const attendance = new Map<string, boolean>(
@@ -415,6 +426,8 @@ export async function getLeaderEvent(eventId: string): Promise<LeaderEventView |
       markedCount: attendance.size,
       skippedEmails: skippedRes.count ?? 0,
       shareText,
+      canNudge: event.status === 'scheduled' && !event.series_id && startMs > now && silent.length > 0,
+      nudged,
     };
   } catch (err) {
     console.error('getLeaderEvent failed', err);
@@ -553,12 +566,28 @@ export async function postThanks(eventId: string, note: string): Promise<{ ok: b
       .update({ thanks_note: text, updated_at: new Date().toISOString() })
       .eq('id', eventId);
     if (error) return { ok: false };
-    await recordChange(sb, { orgId: ctx.event.org_id, eventId, kind: 'thanks', summary: text, createdBy: ctx.userId });
+    const changeId = await recordChange(sb, { orgId: ctx.event.org_id, eventId, kind: 'thanks', summary: text, createdBy: ctx.userId });
+    await fanOutChange(changeId);
     revalidatePath('/dashboard');
     revalidatePath(`/dashboard/e/${eventId}`);
     return { ok: true };
   } catch {
     return { ok: false };
+  }
+}
+
+/** Ask the people who have not answered. Once per event, one-offs only. */
+export async function nudgeEvent(eventId: string): Promise<NudgeResult> {
+  const none: NudgeResult = { ok: false, pushed: 0, emailed: 0, skippedBudget: 0, quiet: 0 };
+  try {
+    const ctx = await leaderOfEvent(eventId);
+    if (!ctx) return none;
+    const res = await nudgeSilent(eventId, ctx.userId);
+    revalidatePath(`/dashboard/e/${eventId}`);
+    return res;
+  } catch (err) {
+    console.error('nudgeEvent failed', err);
+    return none;
   }
 }
 

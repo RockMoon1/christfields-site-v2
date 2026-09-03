@@ -5,10 +5,15 @@
   publish = ".next"
 
 # Forms email through Resend via the app/api/submit route handler, which the
-# Next.js runtime deploys as a function. No manual Netlify Functions are used.
+# Next.js runtime deploys as a function. The one hand-written Netlify Function
+# is netlify/functions/tick.mts: a Scheduled Function (@hourly) that POSTs to
+# /api/cron/tick with CRON_SECRET so reminders go out and Supabase stays awake.
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+[functions]
+  directory = "netlify/functions"
 
 # ── Security Headers ──────────────────────────────────────────────────────────
 #
