@@ -1,7 +1,9 @@
 'use client';
 
 import { motion } from 'motion/react';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { isAppPath } from '@/components/motion/MarketingFx';
 
 /**
  * Whether the gold sweep has already played in this browser session.
@@ -17,15 +19,15 @@ let sweepPlayed = false;
  * Next.js App Router template. Re-mounts on every route change.
  *
  * One job: sweep a soft gold gradient across the viewport on FIRST LOAD
- * only — an ignition, not wallpaper. It used to replay on every
- * navigation, stacking on the logo ignition and hero entrance and turning
- * the signature into noise after two clicks. Route changes now hand off
- * to component-level entrances (logo ignition, hero word stagger,
- * SectionHeader / Reveal section animations).
+ * only — an ignition, not wallpaper. The dashboard and the one-tap answer
+ * page skip it entirely; a person opening a link to say they are coming
+ * should see the buttons, not an animation.
  */
 export default function Template({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const app = isAppPath(pathname);
   // Captured once per mount with a pure initializer (Strict Mode safe).
-  const [showSweep] = useState(() => !sweepPlayed);
+  const [showSweep] = useState(() => !sweepPlayed && !app);
   // Unmount the fixed full-viewport layer once the sweep finishes.
   const [sweepDone, setSweepDone] = useState(false);
 

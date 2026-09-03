@@ -1,10 +1,12 @@
+import { dayKeyInZone } from './timezone';
+
 /**
  * Availability model. Time is bucketed into three coarse slots per day so
  * members can mark when they are usually free without fuss, and leaders can
  * plan around the group. Pure data + helpers, safe on server or client.
  *
  * Effective free/busy for a given date + slot: a specific-date override wins;
- * otherwise the member's usual weekly pattern decides.
+ * otherwise a connected calendar's busy block; otherwise the usual weekly pattern.
  */
 
 export type Slot = 'morning' | 'afternoon' | 'evening';
@@ -23,6 +25,13 @@ export const SLOT_HINT: Record<Slot, string> = {
   evening: '5 – 10pm',
 };
 
+/** A representative hour for each slot, used to prefill a time from a heatmap cell. */
+export const SLOT_DEFAULT_HOUR: Record<Slot, number> = {
+  morning: 9,
+  afternoon: 14,
+  evening: 19,
+};
+
 export const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export function isSlot(value: string): value is Slot {
@@ -30,7 +39,7 @@ export function isSlot(value: string): value is Slot {
 }
 
 export interface UpcomingDay {
-  iso: string; // YYYY-MM-DD (UTC)
+  iso: string; // YYYY-MM-DD, a calendar date in the requested zone
   weekday: number; // 0=Sun..6=Sat
   dayShort: string;
   dateLabel: string; // e.g. "May 30"
@@ -41,13 +50,20 @@ function pad(n: number): string {
 }
 
 /**
- * The next `count` days starting from today (UTC), each with an ISO date and
- * display labels. Computed in UTC so the server and client agree (no hydration
- * mismatch).
+ * The next `count` calendar days starting from today, each with an ISO date and
+ * display labels. `tz` decides which calendar day "today" is; without it the
+ * computation is in UTC (the old behaviour, still hydration-safe). Every caller
+ * that knows the member's or the group's zone should pass it, so a Colorado
+ * evening lands on the right row.
  */
-export function upcomingDays(count: number, fromMs: number = Date.now()): UpcomingDay[] {
+export function upcomingDays(count: number, fromMs: number = Date.now(), tz?: string): UpcomingDay[] {
   const base = new Date(fromMs);
-  const start = Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate());
+  const startKey = tz ? dayKeyInZone(tz, base) : base.toISOString().slice(0, 10);
+  const start = Date.UTC(
+    Number(startKey.slice(0, 4)),
+    Number(startKey.slice(5, 7)) - 1,
+    Number(startKey.slice(8, 10)),
+  );
   const out: UpcomingDay[] = [];
   for (let i = 0; i < count; i += 1) {
     const d = new Date(start + i * 86_400_000);
@@ -74,9 +90,6 @@ export function overrideKey(iso: string, slot: Slot): string {
  *  1. A specific-date override (true=free, false=busy) always wins.
  *  2. Otherwise a connected calendar's busy block makes the slot busy.
  *  3. Otherwise fall back to the usual weekly pattern.
- *
- * calendarBusy holds overrideKey-style "iso-slot" entries the member's calendar
- * marked busy. It is optional, so callers without a calendar pass nothing.
  */
 export function isFree(
   iso: string,

@@ -1,17 +1,20 @@
 'use client';
 
 import { ReactLenis } from 'lenis/react';
+import { usePathname } from 'next/navigation';
 import { type ReactNode } from 'react';
+import { isAppPath } from './MarketingFx';
 
 /**
- * Smooth-scroll provider. Wraps the entire app in a Lenis instance so every
- * scroll, anchor jump, and motion-driven animation feels weighted instead of
- * jumpy. This is the single biggest "this site feels expensive" upgrade.
+ * Smooth-scroll provider for the marketing site. Wraps the public pages in a
+ * Lenis instance so every scroll and anchor jump feels weighted.
  *
- * Settings tuned for a calm, deliberate feel that fits the brand. Faster
- * sites use shorter durations; we want this one to feel reverent.
+ * The dashboard and the one-tap answer page pass straight through: native
+ * momentum scrolling is what a utility app on a phone should have.
  */
 export function SmoothScroll({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  if (isAppPath(pathname)) return <>{children}</>;
   return (
     <ReactLenis
       root

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { FOUNDATION } from '@/lib/dashboard/foundations';
-import { bibleUrl } from '@/lib/faithflow/guidance';
+const bibleUrl = (ref: string) => `https://www.biblegateway.com/passage/?search=${encodeURIComponent(ref)}&version=ESV`;
 
 export const metadata = {
   title: 'What we stand for | Christ Fields',

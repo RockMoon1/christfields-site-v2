@@ -1,11 +1,11 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { JourneyStage } from '@/lib/dashboard/journey';
 
 /**
  * Server-side Supabase client. Uses the service-role key, which bypasses
  * Row Level Security. This is fine because we never expose this client to
  * the browser — every call goes through a Next.js server action or route
- * handler that has already authenticated the request with Clerk.
+ * handler that has already authenticated the request with Clerk and checked
+ * group membership through lib/groups/membership.ts.
  *
  * Required environment variables (set in Netlify → Environment variables):
  *   NEXT_PUBLIC_SUPABASE_URL       Your project URL (https://xxx.supabase.co)
@@ -33,195 +33,11 @@ export function getSupabase(): SupabaseClient {
 }
 
 /* ============================================================
-   TypeScript types matching db/schema.sql.
+   Schedule — matches db/migrations/005_events.sql + 018_schedule_manager.sql
    ============================================================ */
 
-export interface ProgressArea {
-  id: string;
-  clerk_user_id: string;
-  name: string;
-  description: string;
-  preset_key: string | null;
-  why_it_matters: string;
-  target_score: number | null;
-  color: string;
-  created_at: string;
-}
-
-export interface ProgressEntry {
-  id: string;
-  area_id: string;
-  score: number;
-  note: string;
-  logged_at: string;
-}
-
-export interface MemberNote {
-  id: string;
-  clerk_user_id: string;
-  author: string;
-  body: string;
-  created_at: string;
-}
-
-export interface AreaJournal {
-  id: string;
-  area_id: string;
-  clerk_user_id: string;
-  body: string;
-  created_at: string;
-}
-
-/* ============================================================
-   Dashboard v2 — matches db/dashboard-v2.sql.
-   ============================================================ */
-
-export type Cadence = 'daily' | 'weekly';
-
-export interface Practice {
-  id: string;
-  clerk_user_id: string;
-  name: string;
-  description: string;
-  icon: string;
-  color: string;
-  cadence: Cadence;
-  target_per_week: number;
-  scripture: string;
-  anchor: string;
-  preset_key: string | null;
-  sort_order: number;
-  archived: boolean;
-  created_at: string;
-}
-
-export interface PracticeLog {
-  id: string;
-  practice_id: string;
-  clerk_user_id: string;
-  done_on: string; // YYYY-MM-DD
-  note: string;
-  created_at: string;
-}
-
-export type PrayerStatus = 'open' | 'answered';
-
-export interface PrayerRequest {
-  id: string;
-  clerk_user_id: string;
-  title: string;
-  body: string;
-  category: string;
-  status: PrayerStatus;
-  answered_note: string;
-  answered_at: string | null;
-  shared: boolean;
-  created_at: string;
-}
-
-export interface GratitudeEntry {
-  id: string;
-  clerk_user_id: string;
-  entry_date: string; // YYYY-MM-DD
-  item_one: string;
-  item_two: string;
-  item_three: string;
-  created_at: string;
-}
-
-export interface MoodCheckin {
-  id: string;
-  clerk_user_id: string;
-  mood: number; // 1-5
-  label: string;
-  note: string;
-  checked_at: string;
-}
-
-export interface Reflection {
-  id: string;
-  clerk_user_id: string;
-  entry_date: string; // YYYY-MM-DD
-  consolation: string;
-  desolation: string;
-  intention: string;
-  created_at: string;
-}
-
-export interface ThoughtRecord {
-  id: string;
-  clerk_user_id: string;
-  entry_date: string; // YYYY-MM-DD
-  situation: string;
-  thought: string;
-  reframe: string;
-  scripture_ref: string;
-  created_at: string;
-}
-
-export type MemoryStatus = 'learning' | 'memorized';
-
-export interface MemoryVerse {
-  id: string;
-  clerk_user_id: string;
-  reference: string;
-  verse_text: string;
-  translation: string;
-  status: MemoryStatus;
-  reviews: number;
-  last_reviewed: string | null;
-  created_at: string;
-}
-
-export interface CommunityPrayer {
-  id: string;
-  clerk_user_id: string;
-  author_name: string;
-  title: string;
-  body: string;
-  pray_count: number;
-  answered: boolean;
-  created_at: string;
-}
-
-export interface CommunityIntercession {
-  id: string;
-  community_prayer_id: string;
-  clerk_user_id: string;
-  created_at: string;
-}
-
-/* ============================================================
-   Dashboard v3 — the "grows with you" journey.
-   Matches db/dashboard-v3.sql.
-   ============================================================ */
-
-export interface DashboardPrefs {
-  clerk_user_id: string;
-  reveal_all: boolean;
-  welcome_seen: boolean;
-  journey_seen_stage: JourneyStage;
-  journey_started_at: string;
-  updated_at: string;
-}
-
-export interface GroupAttendance {
-  id: string;
-  org_id: string;
-  clerk_user_id: string;
-  gathering_date: string; // YYYY-MM-DD week anchor (Sunday, UTC)
-  checked_in: boolean;
-  confirmed: boolean;
-  confirmed_by: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-/* ============================================================
-   Events — the animated banner + RSVP. Matches db/migrations/005_events.sql.
-   ============================================================ */
-
-export type EventRsvpStatus = 'going' | 'not_going';
+export type EventStatus = 'scheduled' | 'cancelled';
+export type EventRsvpStatus = 'going' | 'maybe' | 'not_going';
 
 export interface EventRow {
   id: string;
@@ -234,6 +50,18 @@ export interface EventRow {
   starts_at: string;
   ends_at: string | null;
   created_at: string;
+  status: EventStatus;
+  cancelled_at: string | null;
+  cancel_reason: string;
+  updated_at: string;
+  version: number;
+  tz: string;
+  series_id: string | null;
+  member_note: string;
+  leader_note: string;
+  thanks_note: string;
+  rides_enabled: boolean;
+  host_user_id: string | null;
 }
 
 export interface EventRsvpRow {
@@ -241,6 +69,90 @@ export interface EventRsvpRow {
   event_id: string;
   clerk_user_id: string;
   status: EventRsvpStatus;
+  updated_at: string;
+  plan: string;
+  display_name: string;
+  image_url: string;
+  first_time: boolean;
+}
+
+export interface EventAttendanceRow {
+  event_id: string;
+  clerk_user_id: string;
+  present: boolean;
+  marked_by: string;
+  marked_at: string;
+}
+
+export interface OrgMemberSeenRow {
+  org_id: string;
+  clerk_user_id: string;
+  first_seen_at: string;
+}
+
+export type SlotKind = 'bring' | 'ride';
+
+export interface EventSlotRow {
+  id: string;
+  event_id: string;
+  kind: SlotKind;
+  label: string;
+  capacity: number;
+  created_by: string;
+  created_at: string;
+}
+
+export interface EventSlotClaimRow {
+  slot_id: string;
+  clerk_user_id: string;
+  display_name: string;
+  qty: number;
+  created_at: string;
+}
+
+export type ChangeKind = 'created' | 'changed' | 'cancelled' | 'thanks';
+
+export interface EventChangeRow {
+  id: string;
+  org_id: string;
+  event_id: string;
+  kind: ChangeKind;
+  summary: string;
+  created_by: string;
+  created_at: string;
+}
+
+export interface NotificationDeliveryRow {
+  id: string;
+  dedupe_key: string;
+  clerk_user_id: string;
+  channel: 'push' | 'email' | 'broadcast';
+  status: 'pending' | 'sent' | 'failed' | 'skipped_budget' | 'skipped_quiet';
+  provider_id: string | null;
+  created_at: string;
+}
+
+export interface PushSubscriptionRow {
+  id: string;
+  clerk_user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  user_agent: string;
+  created_at: string;
+  last_ok_at: string | null;
+  fail_count: number;
+}
+
+export interface MemberPrefsRow {
+  clerk_user_id: string;
+  tz: string;
+  email_reminders: boolean;
+  hello_seen: boolean;
+  install_nudge_seen: boolean;
+  push_primer_seen: boolean;
+  free_nudge_seen: boolean;
+  feed_token: string | null;
   updated_at: string;
 }
 
@@ -267,7 +179,7 @@ export interface AvailabilityOverrideRow {
 }
 
 /* ============================================================
-   Calendar feed connect. Matches db/migrations/008_calendar_feeds.sql.
+   Calendar feed connect. Matches 008_calendar_feeds.sql + 018.
    ============================================================ */
 
 export type CalendarFeedStatus = 'pending' | 'ok' | 'error';
@@ -275,6 +187,7 @@ export type CalendarFeedStatus = 'pending' | 'ok' | 'error';
 export interface CalendarFeedRow {
   clerk_user_id: string;
   ics_url: string;
+  ics_url_enc: string | null;
   tz: string;
   status: CalendarFeedStatus;
   last_error: string | null;
@@ -283,10 +196,60 @@ export interface CalendarFeedRow {
   updated_at: string;
 }
 
+export type BusySource = 'ics' | 'google';
+
 export interface CalendarBusyRow {
   id: string;
   clerk_user_id: string;
   on_date: string; // YYYY-MM-DD
   slot: 'morning' | 'afternoon' | 'evening';
+  source: BusySource;
+  created_at: string;
+}
+
+/* ============================================================
+   Google Calendar (Phase 3). Matches 018.
+   ============================================================ */
+
+export interface GoogleConnectionRow {
+  clerk_user_id: string;
+  google_sub: string | null;
+  refresh_token_enc: string;
+  scopes: string[];
+  cf_calendar_id: string | null;
+  status: 'ok' | 'revoked' | 'error';
+  last_error: string | null;
+  last_freebusy_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CalendarPushRow {
+  event_id: string;
+  clerk_user_id: string;
+  google_event_id: string;
+  event_version: number;
+  pushed_at: string;
+}
+
+/* ============================================================
+   Community: the shared prayer wall (kept). Matches db/dashboard-v2.sql.
+   ============================================================ */
+
+export interface CommunityPrayer {
+  id: string;
+  clerk_user_id: string;
+  author_name: string;
+  title: string;
+  body: string;
+  pray_count: number;
+  answered: boolean;
+  created_at: string;
+}
+
+export interface CommunityIntercession {
+  id: string;
+  community_prayer_id: string;
+  clerk_user_id: string;
   created_at: string;
 }

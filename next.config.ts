@@ -68,6 +68,10 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }];
   },
+  async redirects() {
+    // The old desktop-first leader area moved into the member shell.
+    return [{ source: '/dashboard/leader/:path*', destination: '/dashboard/lead', permanent: false }];
+  },
   webpack: (config, { dev }) => {
     // The B: drive on Windows blocks webpack from renaming its filesystem
     // cache packs, which produces noisy EPERM warnings during dev. Use an

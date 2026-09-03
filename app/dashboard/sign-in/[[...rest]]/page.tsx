@@ -57,7 +57,7 @@ export default function SignInPage() {
         <SignIn
           path="/dashboard/sign-in"
           routing="path"
-          fallbackRedirectUrl="/dashboard/today"
+          fallbackRedirectUrl="/dashboard"
           appearance={{ elements: { footerAction: 'hidden' } }}
         />
       </div>

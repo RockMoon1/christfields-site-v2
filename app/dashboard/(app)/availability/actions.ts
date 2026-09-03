@@ -12,30 +12,33 @@ import {
 } from '@/lib/supabase';
 import { isSlot, type Slot } from '@/lib/dashboard/availability';
 import { validateIcsUrl, fetchBusySlots } from '@/lib/dashboard/ics';
+import { encryptText, decryptText, isEncryptionConfigured } from '@/lib/security/crypto';
 
 /**
- * Member-facing availability actions. Each member sets when they are usually
- * free (a weekly pattern), can override specific dates, and can connect a
- * private calendar link so busy times fill in automatically. Everything is
- * scoped to the signed-in user's Clerk id. Reads return safe defaults so the
- * page always renders.
+ * Member-facing availability actions. Each member taps when they are usually
+ * free (a weekly pattern) and can paste a private calendar link so busy times
+ * fill in automatically. Everything is scoped to the signed-in Clerk id.
+ *
+ * Privacy: only (date, slot) busy rows are ever stored, tagged source='ics' so
+ * they never collide with Google-derived rows; the private link is encrypted at
+ * rest when CALENDAR_TOKEN_KEY is configured; only its hostname reaches the browser.
  */
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DAY = 86_400_000;
-const SYNC_DAYS = 28; // window we read from the calendar feed
+const SYNC_DAYS = 28;
 
 export interface CalendarInfo {
   connected: boolean;
   status: CalendarFeedStatus | null;
-  host: string | null; // e.g. "calendar.google.com" — never the secret URL
+  host: string | null;
   lastSyncedAt: string | null;
   error: string | null;
   busy: { date: string; slot: Slot }[];
 }
 
 export interface MyAvailability {
-  weekly: string[]; // "weekday-slot" keys that are free
+  weekly: string[];
   overrides: { date: string; slot: Slot; available: boolean }[];
   calendar: CalendarInfo;
 }
@@ -45,8 +48,6 @@ async function requireUser(): Promise<string | null> {
   return userId ?? null;
 }
 
-/** Confirm a timezone string is a real IANA zone, else fall back to UTC. */
-/** True if this runtime recognizes the zone. */
 function isRealTz(tz: unknown): tz is string {
   if (typeof tz !== 'string' || !tz) return false;
   try {
@@ -64,6 +65,24 @@ function safeTz(tz: unknown): string {
 function startOfTodayUtcMs(): number {
   const now = new Date();
   return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+}
+
+type FeedLink = Pick<CalendarFeedRow, 'clerk_user_id' | 'ics_url' | 'ics_url_enc'>;
+
+/** The stored link from whichever column holds it; encrypts a legacy plaintext row on the way. */
+async function readFeedUrl(feed: FeedLink): Promise<string | null> {
+  if (feed.ics_url_enc) return decryptText(feed.ics_url_enc);
+  if (feed.ics_url) {
+    if (isEncryptionConfigured()) {
+      const sb = getSupabase();
+      await sb
+        .from('calendar_feeds')
+        .update({ ics_url_enc: encryptText(feed.ics_url), ics_url: '' })
+        .eq('clerk_user_id', feed.clerk_user_id);
+    }
+    return feed.ics_url;
+  }
+  return null;
 }
 
 export async function getMyAvailability(): Promise<MyAvailability> {
@@ -98,11 +117,14 @@ export async function getMyAvailability(): Promise<MyAvailability> {
     }));
 
     let host: string | null = null;
-    if (feed?.ics_url) {
-      try {
-        host = new URL(feed.ics_url).hostname;
-      } catch {
-        host = null;
+    if (feed) {
+      const url = await readFeedUrl(feed);
+      if (url) {
+        try {
+          host = new URL(url).hostname;
+        } catch {
+          host = null;
+        }
       }
     }
 
@@ -150,6 +172,7 @@ export async function setWeekly(weekday: number, slot: string, on: boolean): Pro
     }
 
     revalidatePath('/dashboard/availability');
+    revalidatePath('/dashboard');
     return { ok: true };
   } catch (err) {
     console.error('setWeekly failed', err);
@@ -157,6 +180,7 @@ export async function setWeekly(weekday: number, slot: string, on: boolean): Pro
   }
 }
 
+/** Kept for completeness; the member UI no longer shows the override grid. */
 export async function setOverride(
   date: string,
   slot: string,
@@ -185,7 +209,6 @@ export async function setOverride(
         );
       if (error) return { ok: false };
     }
-
     revalidatePath('/dashboard/availability');
     return { ok: true };
   } catch (err) {
@@ -198,22 +221,28 @@ export async function setOverride(
    Calendar feed connect / refresh / disconnect.
    ============================================================ */
 
-/** Fetch + parse the feed and replace this member's stored busy blocks. */
-async function syncFeed(userId: string, url: string, tz: string): Promise<{ ok: boolean; error?: string }> {
+/**
+ * Fetch + parse a feed and replace this member's ICS-derived busy rows. Only
+ * replaces once the fetch succeeded, so a timed-out provider never blanks a
+ * member's busy blocks. Google-derived rows (source='google') are untouched.
+ * Also used by the hourly tick, hence the explicit userId.
+ */
+export async function syncFeedForUser(
+  userId: string,
+  url: string,
+  tz: string,
+): Promise<{ ok: boolean; error?: string }> {
   const fromMs = startOfTodayUtcMs();
   const toMs = fromMs + SYNC_DAYS * DAY;
   const result = await fetchBusySlots(url, tz, fromMs, toMs);
 
   const sb = getSupabase();
-  // Only replace what is stored once the fetch actually succeeded. Deleting
-  // first meant one timed-out provider wiped the member's busy blocks and put
-  // nothing back, so their leader saw them as free all week.
   if (result.ok) {
-    await sb.from('calendar_busy').delete().eq('clerk_user_id', userId);
+    await sb.from('calendar_busy').delete().eq('clerk_user_id', userId).eq('source', 'ics');
     if (result.slots.length > 0) {
       const { error } = await sb
         .from('calendar_busy')
-        .insert(result.slots.map((s) => ({ clerk_user_id: userId, on_date: s.date, slot: s.slot })));
+        .insert(result.slots.map((s) => ({ clerk_user_id: userId, on_date: s.date, slot: s.slot, source: 'ics' })));
       if (error) console.error('syncFeed: busy insert failed', error);
     }
   }
@@ -229,7 +258,6 @@ async function syncFeed(userId: string, url: string, tz: string): Promise<{ ok: 
     })
     .eq('clerk_user_id', userId);
 
-  revalidatePath('/dashboard/availability');
   return { ok: result.ok, error: result.error };
 }
 
@@ -243,10 +271,12 @@ export async function connectCalendar(rawUrl: string, tz: string): Promise<{ ok:
 
     const zone = safeTz(tz);
     const sb = getSupabase();
+    const encrypted = isEncryptionConfigured();
     const { error } = await sb.from('calendar_feeds').upsert(
       {
         clerk_user_id: userId,
-        ics_url: checked.url,
+        ics_url: encrypted ? '' : checked.url,
+        ics_url_enc: encrypted ? encryptText(checked.url) : null,
         tz: zone,
         status: 'pending',
         last_error: null,
@@ -259,7 +289,9 @@ export async function connectCalendar(rawUrl: string, tz: string): Promise<{ ok:
       return { ok: false, error: 'Could not save the link. Please try again.' };
     }
 
-    return await syncFeed(userId, checked.url, zone);
+    const res = await syncFeedForUser(userId, checked.url, zone);
+    revalidatePath('/dashboard/availability');
+    return res;
   } catch (err) {
     console.error('connectCalendar failed', err);
     return { ok: false, error: 'Something went wrong connecting your calendar.' };
@@ -274,16 +306,17 @@ export async function refreshCalendar(tz: string): Promise<{ ok: boolean; error?
     const sb = getSupabase();
     const { data } = await sb
       .from('calendar_feeds')
-      .select('ics_url, tz')
+      .select('clerk_user_id, ics_url, ics_url_enc, tz')
       .eq('clerk_user_id', userId)
       .maybeSingle();
-    const feed = data as Pick<CalendarFeedRow, 'ics_url' | 'tz'> | null;
-    if (!feed?.ics_url) return { ok: false, error: 'No calendar connected.' };
+    const feed = data as (FeedLink & { tz: string }) | null;
+    if (!feed) return { ok: false, error: 'No calendar connected.' };
+    const url = await readFeedUrl(feed);
+    if (!url) return { ok: false, error: 'Could not read your calendar link. Connect it again.' };
 
-    // Keep the zone the feed was connected with unless the caller sends a real
-    // one. safeTz() alone always returns a string, so the previous `|| feed.tz`
-    // never ran and a garbage value silently re-bucketed every busy block to UTC.
-    return await syncFeed(userId, feed.ics_url, isRealTz(tz) ? tz : feed.tz);
+    const res = await syncFeedForUser(userId, url, isRealTz(tz) ? tz : feed.tz);
+    revalidatePath('/dashboard/availability');
+    return res;
   } catch (err) {
     console.error('refreshCalendar failed', err);
     return { ok: false, error: 'Could not refresh your calendar.' };
@@ -296,7 +329,7 @@ export async function disconnectCalendar(): Promise<{ ok: boolean }> {
     if (!userId) return { ok: false };
 
     const sb = getSupabase();
-    await sb.from('calendar_busy').delete().eq('clerk_user_id', userId);
+    await sb.from('calendar_busy').delete().eq('clerk_user_id', userId).eq('source', 'ics');
     await sb.from('calendar_feeds').delete().eq('clerk_user_id', userId);
 
     revalidatePath('/dashboard/availability');

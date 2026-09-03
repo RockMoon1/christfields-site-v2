@@ -13,37 +13,22 @@ Last updated 2026-08-10.
 **Where:** supabase.com/dashboard → your Christ Fields project → SQL Editor →
 paste → Run. Success looks like "Success. No rows returned."
 
-### 1a. Migration 013 — one gratitude and one examen per day  ⬅ NEW
+### 1a. Migration 018 — the schedule manager  ⬅ RUN BEFORE DEPLOYING THE REWRITE
 
-Without this, a double tap can write two rows for the same day, and that day's
-entry then stops loading for the member. The app already handles both states,
-so this is a hardening step, not a fix you have to rush.
+The dashboard rewrite (2026-09) reads new columns and tables. Paste the whole
+of `db/migrations/018_schedule_manager.sql` and run it once. It is additive and
+safe to re-run. It also turns on RLS for every surviving table, replacing 010.
 
-```sql
-delete from gratitude_entries a
-  using gratitude_entries b
- where a.clerk_user_id = b.clerk_user_id
-   and a.entry_date    = b.entry_date
-   and a.ctid          < b.ctid;
+**Do NOT run the old 013_reflect_one_per_day.sql.** Its tables are dropped by
+019 (below), so it would only index doomed tables.
 
-delete from reflections a
-  using reflections b
- where a.clerk_user_id = b.clerk_user_id
-   and a.entry_date    = b.entry_date
-   and a.ctid          < b.ctid;
+### 1b. Migration 019 — drop the teaching tables  ⬅ RUN LAST, BY HAND, A WEEK AFTER LAUNCH
 
-create unique index if not exists gratitude_entries_user_day_idx
-  on gratitude_entries (clerk_user_id, entry_date);
-
-create unique index if not exists reflections_user_day_idx
-  on reflections (clerk_user_id, entry_date);
-
-create index if not exists community_prayers_user_idx
-  on community_prayers (clerk_user_id, created_at desc);
-```
-
-The last line is a speed index: the community count runs on every dashboard
-load and that table was only indexed by date.
+`db/migrations/019_drop_teaching.sql` removes rhythms, prayer journal, reflect,
+scripture memory, progress, journey state and weekly attendance. It keeps the
+prayer wall. Irreversible; you approved it on 2026-09-02, and the file header
+quotes that. Run it only after the new dashboard has been live and checked for
+a week, and after `npm run check:tables` passes.
 
 *(Migration 012, the durable form submissions table, is already done.)*
 

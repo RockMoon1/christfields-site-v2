@@ -1,214 +1,92 @@
 import type { ReactNode } from 'react';
-import type { SectionKey } from '@/lib/dashboard/journey';
 
 export interface NavItem {
   href: string;
   label: string;
   hint: string;
   icon: ReactNode;
-  /**
-   * The journey section this item maps to. Items with a section are revealed
-   * progressively (unless the member has chosen "show me everything"). Items
-   * with no section (Overview, Settings) are always shown.
-   */
-  section?: SectionKey;
 }
 
 /**
- * Shared dashboard navigation list. Used by both the desktop Sidebar and
- * the mobile MobileNav drawer so the two stay in sync automatically.
+ * The whole navigation. Three places for a member, one more for a leader.
+ * Shared by the desktop Sidebar and the mobile tab bar so they never drift.
  */
 export const NAV_ITEMS: NavItem[] = [
   {
-    href: '/dashboard/today',
-    label: 'Today',
-    hint: 'Your calm daily front door. Today’s verse and the one next thing, with everything else a tap away.',
-    icon: <SunIcon />,
-  },
-  {
     href: '/dashboard',
-    label: 'Overview',
-    hint: 'The full picture. Today’s verse, your rhythms, prayers, and where things stand at a glance.',
-    icon: <DotIcon />,
-  },
-  {
-    href: '/dashboard/rhythms',
-    label: 'Rhythms',
-    hint: 'Your daily and weekly practices. Tap one to check it off and build gentle, lasting habits.',
-    icon: <FlameIcon />,
-    section: 'rhythms',
-  },
-  {
-    href: '/dashboard/prayer',
-    label: 'Prayer',
-    hint: 'Hold what you are praying about, and mark answers as God moves. Between you and him.',
-    icon: <PrayerIcon />,
-    section: 'prayer',
-  },
-  {
-    href: '/dashboard/reflect',
-    label: 'Reflect',
-    hint: 'A few honest minutes. Log your mood, name what you are thankful for, and review the day with God.',
-    icon: <MoonIcon />,
-    section: 'reflect',
-  },
-  {
-    href: '/dashboard/scripture',
-    label: 'Scripture',
-    hint: 'A verse to carry today, and the verses you are learning by heart.',
-    icon: <ScrollIcon />,
-    section: 'scripture',
-  },
-  {
-    href: '/dashboard/progress',
-    label: 'Progress',
-    hint: 'Track growth in the areas you care about, one honest score at a time.',
-    icon: <BarIcon />,
-    section: 'progress',
-  },
-  {
-    href: '/dashboard/resources',
-    label: 'Resources',
-    hint: 'Scripture, prompts, and next steps matched to where you are in each area.',
-    icon: <BookIcon />,
-    section: 'resources',
+    label: 'Home',
+    hint: 'What our group is doing next, who is in, and one tap to say if you are coming.',
+    icon: <HomeIcon />,
   },
   {
     href: '/dashboard/community',
-    label: 'Community',
-    hint: 'Carry each other. Share what you are walking through and stand with others in theirs.',
+    label: 'Prayer wall',
+    hint: 'Carry each other. Share what you are walking through and pray for one another by name.',
     icon: <PeopleIcon />,
-    section: 'community',
-  },
-  {
-    href: '/dashboard/availability',
-    label: 'Availability',
-    hint: 'Let your leaders know when you are usually free, so the group can gather at a time that works for everyone.',
-    icon: <CalendarIcon />,
   },
   {
     href: '/dashboard/settings',
-    label: 'Settings',
-    hint: 'Your account details and a quick guide to the dashboard.',
+    label: 'You',
+    hint: 'Reminders, your calendar, when you are usually free, and the app on your phone.',
     icon: <GearIcon />,
   },
 ];
+
+export const LEAD_ITEM: NavItem = {
+  href: '/dashboard/lead',
+  label: 'Lead',
+  hint: 'Post something, see who is coming, pick a time that works, mark who came.',
+  icon: <LeadIcon />,
+};
+
+/** Page titles for the top bar. Longest prefix wins. */
+export const TITLE_BY_PREFIX: [string, string][] = [
+  ['/dashboard/lead/post', 'Post something'],
+  ['/dashboard/lead/group', 'Your group'],
+  ['/dashboard/lead', 'Lead'],
+  ['/dashboard/e/', 'Event'],
+  ['/dashboard/community', 'Prayer wall'],
+  ['/dashboard/settings', 'You'],
+  ['/dashboard/availability', 'When you are free'],
+  ['/dashboard/foundation', 'What we stand for'],
+  ['/dashboard', 'Home'],
+];
+
+export function titleFor(pathname: string): string {
+  for (const [prefix, title] of TITLE_BY_PREFIX) {
+    if (pathname === prefix || pathname.startsWith(prefix.endsWith('/') ? prefix : `${prefix}/`)) return title;
+  }
+  return 'Christ Fields';
+}
 
 /* ============================================================
    Inline icons. Minimal 16x16 line icons, currentColor.
    ============================================================ */
 
-function SunIcon() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
-      <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.2" />
-      <path
-        d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function DotIcon() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
-      <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.2" />
-      <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="0.6" opacity="0.5" />
-    </svg>
-  );
-}
-
-function FlameIcon() {
+function HomeIcon() {
   return (
     <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
       <path
-        d="M8 1.5c2 2.5 1 4 .2 4.8C7 7.6 6 6.8 6 5.4 4.5 6.7 3.5 8.4 3.5 10a4.5 4.5 0 109 0c0-2.2-1.4-4.2-2.8-5.6-.6 1.2-1.7 1.6-1.7 1.6"
+        d="M2.5 7.5L8 3l5.5 4.5V13a.5.5 0 01-.5.5H3a.5.5 0 01-.5-.5V7.5z"
         stroke="currentColor"
         strokeWidth="1.2"
         strokeLinejoin="round"
       />
+      <path d="M6.5 13.5v-4h3v4" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
     </svg>
   );
 }
 
-function PrayerIcon() {
+export function CalendarIcon() {
   return (
     <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
-      <path
-        d="M8 2v5M8 7c0 2-1.5 3-3 3.5M8 7c0 2 1.5 3 3 3.5M5 10.5V13M11 10.5V13M5 13h6"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <rect x="2.5" y="3" width="11" height="10.5" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M2.5 6h11M5.5 1.5v3M10.5 1.5v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
     </svg>
   );
 }
 
-function MoonIcon() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
-      <path
-        d="M13 9.5A5.5 5.5 0 016.5 3a5.5 5.5 0 100 10A5.5 5.5 0 0013 9.5z"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function ScrollIcon() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
-      <path
-        d="M4 3h7a1.5 1.5 0 011.5 1.5v8a1 1 0 01-1 1H5a1.5 1.5 0 01-1.5-1.5V3z"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinejoin="round"
-      />
-      <path d="M3 3.5A1.5 1.5 0 014.5 2 1.5 1.5 0 016 3.5V5H3.5" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-      <path d="M6 6.5h4M6 9h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function BarIcon() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
-      <path
-        d="M2 12V8M6 12V4M10 12V6M14 12V2"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function BookIcon() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
-      <path
-        d="M2 3v10c1.5-1 4-1 6-1V2C6 2 3.5 2 2 3z"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M14 3v10c-1.5-1-4-1-6-1V2c2 0 4.5 0 6 1z"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function PeopleIcon() {
+export function PeopleIcon() {
   return (
     <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
       <circle cx="6" cy="5.5" r="2" stroke="currentColor" strokeWidth="1.2" />
@@ -218,16 +96,7 @@ function PeopleIcon() {
   );
 }
 
-function CalendarIcon() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
-      <rect x="2.5" y="3" width="11" height="10.5" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
-      <path d="M2.5 6h11M5.5 1.5v3M10.5 1.5v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function GearIcon() {
+export function GearIcon() {
   return (
     <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
       <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.2" />
@@ -237,6 +106,34 @@ function GearIcon() {
         strokeWidth="1.2"
         strokeLinecap="round"
       />
+    </svg>
+  );
+}
+
+function LeadIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className="h-full w-full">
+      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="8" cy="3.6" r="1.2" fill="currentColor" />
+      <circle cx="3.9" cy="10" r="1.2" fill="currentColor" />
+      <circle cx="12.1" cy="10" r="1.2" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function PinIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className="h-full w-full" aria-hidden>
+      <path d="M8 14s5-4 5-8A5 5 0 003 6c0 4 5 8 5 8z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      <circle cx="8" cy="6" r="1.6" stroke="currentColor" strokeWidth="1.2" />
+    </svg>
+  );
+}
+
+export function CheckIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className="h-full w-full" aria-hidden>
+      <path d="M3.5 8.5l3 3 6-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

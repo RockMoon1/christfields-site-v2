@@ -4,74 +4,35 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
-import { NAV_ITEMS } from './nav-data';
-import { isRevealed, type SectionDepth, type SectionKey } from '@/lib/dashboard/journey';
+import { NAV_ITEMS, LEAD_ITEM } from './nav-data';
 
 /**
- * Mobile bottom tab bar. App-style quick access to the member's unlocked
- * destinations, so the main places are one tap away with no scrolling. It grows
- * with the journey (same reveal rule as the sidebar) and stays calm: a small
- * set of anchors, never the whole menu. The hamburger in the top bar remains
- * the full menu (Settings, leader area, everything).
- *
+ * Mobile bottom tab bar. Three tabs for a member, four for a leader. Thumb
+ * reachable, safe-area aware, and the whole menu: there is no drawer.
  * Hidden on lg+ where the sidebar takes over.
  */
-
-// Short, warm labels for the bar. Community keeps its full name: the in-person
-// gathering is the heartbeat we point new members toward first, which is also
-// why it is pinned below rather than allowed to fall off the end.
-const TAB_LABEL: Partial<Record<string, string>> = {
-  '/dashboard/today': 'Today',
-};
-
-export function MobileTabBar({
-  sections,
-  revealAll = false,
-}: {
-  sections?: Record<SectionKey, SectionDepth>;
-  revealAll?: boolean;
-}) {
+export function MobileTabBar({ isLeader = false }: { isLeader?: boolean }) {
   const pathname = usePathname();
-
-  // Today is always first (the home); then the revealed sections in nav order.
-  // Settings and the full Overview live in the menu / behind Today. Cap at five
-  // so the bar stays thumb-friendly and uncluttered.
-  const candidates = NAV_ITEMS.filter((it) => {
-    if (it.href === '/dashboard/today') return true; // Today is the home, always
-    if (it.href === '/dashboard') return false; // the full Overview lives behind Today + the menu
-    if (it.href === '/dashboard/settings') return false; // lives in the menu
-    if (!it.section) return false;
-    return revealAll || !sections || isRevealed(sections[it.section]);
-  });
-
-  // Community is pinned like Today: the in-person gathering is the heartbeat we
-  // point new members toward, and it sits last in nav order, so a plain cap
-  // would drop it off the bar exactly as a member grows into more sections.
-  const community = candidates.find((it) => it.href === '/dashboard/community');
-  const rest = candidates.filter((it) => it !== community);
-  const revealedItems = community
-    ? [...rest.slice(0, 4), community]
-    : rest.slice(0, 5);
+  const items = isLeader ? [...NAV_ITEMS.slice(0, 2), LEAD_ITEM, NAV_ITEMS[2]] : NAV_ITEMS;
 
   return (
     <nav
-      aria-label="Quick navigation"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border-sub bg-black-2/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm lg:hidden"
+      aria-label="Main"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border-sub bg-black-2 pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       <ul className="mx-auto flex max-w-xl items-stretch justify-around px-1">
-        {revealedItems.map((item) => {
+        {items.map((item) => {
           const active =
             item.href === '/dashboard'
-              ? pathname === '/dashboard'
+              ? pathname === '/dashboard' || pathname.startsWith('/dashboard/e/')
               : pathname.startsWith(item.href);
-          const label = TAB_LABEL[item.href] ?? item.label;
           return (
             <li key={item.href} className="flex-1">
               <Link
                 href={item.href}
                 prefetch
                 aria-current={active ? 'page' : undefined}
-                className="group relative flex flex-col items-center gap-1 px-1 py-2.5"
+                className="group relative flex min-h-[56px] flex-col items-center justify-center gap-1 px-1 py-2"
               >
                 <span
                   className={cn(
@@ -83,11 +44,11 @@ export function MobileTabBar({
                 </span>
                 <span
                   className={cn(
-                    'text-[10px] font-medium tracking-[0.04em] transition-colors duration-200',
+                    'text-[11px] font-medium tracking-[0.04em] transition-colors duration-200',
                     active ? 'text-gold-lt' : 'text-muted',
                   )}
                 >
-                  {label}
+                  {item.label}
                 </span>
                 {active && (
                   <motion.span

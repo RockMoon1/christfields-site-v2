@@ -1,153 +1,474 @@
 'use server';
 
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
-import { getSupabase, type EventRow, type EventRsvpStatus } from '@/lib/supabase';
+import {
+  getSupabase,
+  type EventRow,
+  type EventRsvpRow,
+  type EventRsvpStatus,
+  type EventSlotRow,
+  type EventSlotClaimRow,
+  type EventChangeRow,
+} from '@/lib/supabase';
+import { getMyMemberships, assertMemberOf, ledOrgs } from '@/lib/groups/membership';
+import {
+  toMemberEvent,
+  toFaces,
+  type MemberEvent,
+  type RsvpFace,
+  type MemberSlot,
+} from '@/lib/schedule/public-event';
+import { ensureMemberPrefs } from '@/lib/dashboard/prefs';
+import { getMemberTimeZone } from '@/lib/dashboard/timezone-server';
 
 /**
- * Member-facing event actions.
+ * Member-facing schedule actions.
  *
- * A member sees events for every FaithFlow group (Clerk org) they belong to,
- * and can mark themselves going / not going. Authorization: the signed-in user
- * must belong to the event's org. Reads return safe defaults so the dashboard
- * always renders.
+ * A member sees events for every group (Clerk org) they belong to and answers
+ * with one of three states. Every read filters by the member's own org ids;
+ * every write re-checks membership of the event's org. Payloads are built
+ * through toMemberEvent() so leader-only fields never reach a browser. Reads
+ * return safe defaults so Home always renders.
  */
 
-export interface MemberEvent {
-  id: string;
-  orgId: string;
-  title: string;
-  description: string;
-  type: string;
-  location: string;
-  startsAt: string;
-  endsAt: string | null;
+const WEEKS_AHEAD = 6;
+const GRACE_MS = 12 * 60 * 60 * 1000;
+const FIRST_TIME_WINDOW_MS = 30 * 86_400_000;
+const CANCELLED_VISIBLE_MS = 48 * 60 * 60 * 1000;
+
+export interface FeedEvent extends MemberEvent {
   myStatus: EventRsvpStatus | null;
-  goingCount: number;
+  faces: RsvpFace[];
+  going: number;
+  maybe: number;
 }
 
-/** The Clerk org ids the signed-in user is a member of. */
-async function myOrgIds(userId: string): Promise<string[]> {
-  try {
-    const client = await clerkClient();
-    const res = await client.users.getOrganizationMembershipList({ userId, limit: 100 });
-    return res.data.map((m) => m.organization.id);
-  } catch (err) {
-    console.error('myOrgIds failed', err);
+export interface ChangedLine {
+  eventId: string;
+  title: string;
+  kind: 'changed' | 'cancelled';
+  summary: string;
+  at: string;
+}
+
+export type HomeSlotCard =
+  | { kind: 'hello'; orgName: string }
+  | { kind: 'recently'; eventId: string; title: string; thanks: string }
+  | { kind: 'free' }
+  | { kind: 'install' }
+  | { kind: 'push' };
+
+export interface HomeFeed {
+  tz: string;
+  firstName: string;
+  isLeader: boolean;
+  multiOrg: boolean;
+  changed: ChangedLine[];
+  next: FeedEvent | null;
+  later: FeedEvent[];
+  slot: HomeSlotCard | null;
+}
+
+const EMPTY_FEED: HomeFeed = {
+  tz: 'UTC',
+  firstName: 'friend',
+  isLeader: false,
+  multiOrg: false,
+  changed: [],
+  next: null,
+  later: [],
+  slot: null,
+};
+
+function orgNameMap(memberships: { orgId: string; orgName: string }[]): Map<string, string> {
+  return new Map(memberships.map((m) => [m.orgId, m.orgName]));
+}
+
+async function loadRsvps(eventIds: string[]): Promise<EventRsvpRow[]> {
+  if (eventIds.length === 0) return [];
+  const sb = getSupabase();
+  const { data, error } = await sb
+    .from('event_rsvps')
+    .select('*')
+    .in('event_id', eventIds)
+    .order('updated_at', { ascending: true });
+  if (error) {
+    console.error('loadRsvps failed', error);
     return [];
   }
+  return (data as EventRsvpRow[] | null) ?? [];
+}
+
+function decorate(row: EventRow, orgName: string, rsvps: EventRsvpRow[], userId: string): FeedEvent {
+  const mine = rsvps.filter((r) => r.event_id === row.id);
+  const faces = toFaces(mine);
+  return {
+    ...toMemberEvent(row, orgName),
+    myStatus: mine.find((r) => r.clerk_user_id === userId)?.status ?? null,
+    faces,
+    going: faces.filter((f) => f.status === 'going').length,
+    maybe: faces.filter((f) => f.status === 'maybe').length,
+  };
+}
+
+export async function getHomeFeed(): Promise<HomeFeed> {
+  try {
+    const { userId } = await auth();
+    if (!userId) return EMPTY_FEED;
+
+    const [memberships, prefs, user, tz] = await Promise.all([
+      getMyMemberships(),
+      ensureMemberPrefs(userId),
+      currentUser(),
+      getMemberTimeZone(),
+    ]);
+    const firstName = user?.firstName || user?.username || 'friend';
+    const isLeader = memberships.some((m) => m.isLeader);
+    const orgIds = memberships.map((m) => m.orgId);
+    if (orgIds.length === 0) return { ...EMPTY_FEED, tz, firstName, isLeader };
+
+    const names = orgNameMap(memberships);
+    const sb = getSupabase();
+    const now = Date.now();
+    const since = new Date(now - GRACE_MS).toISOString();
+    const until = new Date(now + WEEKS_AHEAD * 7 * 86_400_000).toISOString();
+    const weekAgo = new Date(now - 7 * 86_400_000).toISOString();
+
+    const [eventsRes, changesRes, myRsvpRes, weeklyRes] = await Promise.all([
+      sb
+        .from('events')
+        .select('*')
+        .in('org_id', orgIds)
+        .gte('starts_at', since)
+        .lte('starts_at', until)
+        .order('starts_at', { ascending: true })
+        .limit(60),
+      sb
+        .from('event_changes')
+        .select('*')
+        .in('org_id', orgIds)
+        .gte('created_at', weekAgo)
+        .order('created_at', { ascending: false })
+        .limit(20),
+      sb.from('event_rsvps').select('event_id', { count: 'exact', head: true }).eq('clerk_user_id', userId),
+      sb.from('availability_weekly').select('id', { count: 'exact', head: true }).eq('clerk_user_id', userId),
+    ]);
+
+    if (eventsRes.error) console.error('getHomeFeed: events failed', eventsRes.error);
+
+    const rows = ((eventsRes.data as EventRow[] | null) ?? []).filter((e) => {
+      if (e.status !== 'cancelled') return true;
+      const cancelledAt = e.cancelled_at ? Date.parse(e.cancelled_at) : 0;
+      return now - cancelledAt < CANCELLED_VISIBLE_MS;
+    });
+    const rsvps = await loadRsvps(rows.map((e) => e.id));
+    const events = rows.map((e) => decorate(e, names.get(e.org_id) ?? 'Our group', rsvps, userId));
+
+    const changes = (changesRes.data as EventChangeRow[] | null) ?? [];
+    const titleById = new Map(rows.map((e) => [e.id, e.title]));
+    const missingIds = changes.map((c) => c.event_id).filter((id) => !titleById.has(id));
+    if (missingIds.length > 0) {
+      const { data } = await sb.from('events').select('id, title').in('id', missingIds);
+      for (const e of (data as { id: string; title: string }[] | null) ?? []) titleById.set(e.id, e.title);
+    }
+    const changed: ChangedLine[] = changes
+      .filter((c) => c.kind === 'changed' || c.kind === 'cancelled')
+      .slice(0, 5)
+      .map((c) => ({
+        eventId: c.event_id,
+        title: titleById.get(c.event_id) ?? 'An event',
+        kind: c.kind as 'changed' | 'cancelled',
+        summary: c.summary,
+        at: c.created_at,
+      }));
+
+    const hasAnswered = (myRsvpRes.count ?? 0) > 0;
+    const hasAvailability = (weeklyRes.count ?? 0) > 0;
+    const thanks = changes.find((c) => c.kind === 'thanks');
+
+    let slot: HomeSlotCard | null = null;
+    if (!prefs.hello_seen) slot = { kind: 'hello', orgName: memberships[0]?.orgName ?? 'our group' };
+    else if (thanks) {
+      slot = {
+        kind: 'recently',
+        eventId: thanks.event_id,
+        title: titleById.get(thanks.event_id) ?? 'Last time',
+        thanks: thanks.summary,
+      };
+    } else if (!prefs.free_nudge_seen && hasAnswered && !hasAvailability) slot = { kind: 'free' };
+    else if (!prefs.install_nudge_seen && hasAnswered) slot = { kind: 'install' };
+    else if (!prefs.push_primer_seen && hasAnswered) slot = { kind: 'push' };
+
+    const upcoming = events.filter((e) => e.status === 'scheduled');
+    const cancelledRecent = events.filter((e) => e.status === 'cancelled');
+    const [next, ...later] = upcoming;
+
+    return {
+      tz,
+      firstName,
+      isLeader,
+      multiOrg: orgIds.length > 1,
+      changed,
+      next: next ?? null,
+      later: [...later, ...cancelledRecent],
+      slot,
+    };
+  } catch (err) {
+    console.error('getHomeFeed failed', err);
+    return EMPTY_FEED;
+  }
+}
+
+/* ============================================================
+   One event.
+   ============================================================ */
+
+export interface EventDetail extends FeedEvent {
+  slots: MemberSlot[];
+  myPlan: string;
+  canLead: boolean;
+  /** True within 24 hours of start: the plan question shows. */
+  withinDay: boolean;
+}
+
+async function loadSlots(eventId: string, userId: string): Promise<MemberSlot[]> {
+  const sb = getSupabase();
+  const { data: slotRows, error } = await sb
+    .from('event_slots')
+    .select('*')
+    .eq('event_id', eventId)
+    .order('created_at', { ascending: true });
+  if (error || !slotRows || slotRows.length === 0) return [];
+  const slots = slotRows as EventSlotRow[];
+  const { data: claimRows } = await sb
+    .from('event_slot_claims')
+    .select('*')
+    .in('slot_id', slots.map((s) => s.id));
+  const claims = (claimRows as EventSlotClaimRow[] | null) ?? [];
+  return slots.map((s) => {
+    const mine = claims.filter((c) => c.slot_id === s.id);
+    return {
+      id: s.id,
+      kind: s.kind,
+      label: s.label,
+      capacity: s.capacity,
+      claims: mine.map((c) => ({ displayName: c.display_name, qty: c.qty, mine: c.clerk_user_id === userId })),
+      taken: mine.reduce((n, c) => n + c.qty, 0),
+    };
+  });
+}
+
+export async function getEvent(id: string): Promise<EventDetail | null> {
+  try {
+    const { userId } = await auth();
+    if (!userId || !id) return null;
+    const sb = getSupabase();
+    const { data, error } = await sb.from('events').select('*').eq('id', id).maybeSingle();
+    if (error || !data) return null;
+    const row = data as EventRow;
+    if (!(await assertMemberOf(row.org_id))) return null;
+
+    const memberships = await getMyMemberships();
+    const orgName = memberships.find((m) => m.orgId === row.org_id)?.orgName ?? 'Our group';
+    const [rsvps, slots, led] = await Promise.all([loadRsvps([row.id]), loadSlots(row.id, userId), ledOrgs()]);
+    const base = decorate(row, orgName, rsvps, userId);
+    const startMs = new Date(row.starts_at).getTime();
+    return {
+      ...base,
+      slots,
+      myPlan: rsvps.find((r) => r.clerk_user_id === userId)?.plan ?? '',
+      canLead: led.some((o) => o.orgId === row.org_id),
+      withinDay: startMs - Date.now() < 24 * 60 * 60 * 1000,
+    };
+  } catch (err) {
+    console.error('getEvent failed', err);
+    return null;
+  }
+}
+
+/* ============================================================
+   Answers.
+   ============================================================ */
+
+function isRsvpStatus(v: string): v is EventRsvpStatus {
+  return v === 'going' || v === 'maybe' || v === 'not_going';
 }
 
 /**
- * Upcoming events for the member's groups, soonest first. Includes events that
- * started within the last 12 hours so something happening "now" still shows.
+ * The one-tap answer. Snapshots the first name and photo so faces render with
+ * zero Clerk calls, and sets the leader-only first-timer flag when this is a
+ * new member's first yes in that group.
  */
-export async function getMyEvents(): Promise<MemberEvent[]> {
+export async function setRsvp(eventId: string, status: string): Promise<{ ok: boolean; faces?: RsvpFace[] }> {
   try {
     const { userId } = await auth();
-    if (!userId) return [];
-
-    const orgIds = await myOrgIds(userId);
-    if (orgIds.length === 0) return [];
+    if (!userId || !isRsvpStatus(status)) return { ok: false };
 
     const sb = getSupabase();
-    const since = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+    const { data: ev } = await sb.from('events').select('id, org_id, status').eq('id', eventId).maybeSingle();
+    if (!ev) return { ok: false };
+    const event = ev as { id: string; org_id: string; status: string };
+    if (event.status !== 'scheduled') return { ok: false };
+    if (!(await assertMemberOf(event.org_id))) return { ok: false };
 
-    const { data, error } = await sb
-      .from('events')
-      .select('*')
-      .in('org_id', orgIds)
-      .gte('starts_at', since)
-      .order('starts_at', { ascending: true })
-      .limit(8);
+    const [user, memberships] = await Promise.all([currentUser(), getMyMemberships()]);
+    const displayName = user?.firstName || user?.username || 'Member';
+    const imageUrl = user?.imageUrl || '';
 
-    if (error) {
-      console.error('getMyEvents: failed to load events', error);
-      return [];
-    }
-    const events = (data as EventRow[] | null) ?? [];
-    if (events.length === 0) return [];
-
-    const ids = events.map((e) => e.id);
-    const { data: rsvpData, error: rsvpErr } = await sb
-      .from('event_rsvps')
-      .select('event_id, clerk_user_id, status')
-      .in('event_id', ids);
-
-    if (rsvpErr) console.error('getMyEvents: failed to load rsvps', rsvpErr);
-
-    const rsvps =
-      (rsvpData as { event_id: string; clerk_user_id: string; status: EventRsvpStatus }[] | null) ??
-      [];
-
-    const goingByEvent = new Map<string, number>();
-    const mineByEvent = new Map<string, EventRsvpStatus>();
-    for (const r of rsvps) {
-      if (r.status === 'going') {
-        goingByEvent.set(r.event_id, (goingByEvent.get(r.event_id) ?? 0) + 1);
+    let firstTime = false;
+    if (status !== 'not_going') {
+      const membership = memberships.find((m) => m.orgId === event.org_id);
+      const youngMembership = !!membership && Date.now() - membership.joinedAtMs < FIRST_TIME_WINDOW_MS;
+      if (youngMembership) {
+        const { data: seen } = await sb
+          .from('org_member_seen')
+          .select('clerk_user_id')
+          .eq('org_id', event.org_id)
+          .eq('clerk_user_id', userId)
+          .maybeSingle();
+        firstTime = !seen;
       }
-      if (r.clerk_user_id === userId) mineByEvent.set(r.event_id, r.status);
     }
-
-    return events.map((e) => ({
-      id: e.id,
-      orgId: e.org_id,
-      title: e.title,
-      description: e.description || '',
-      type: e.event_type,
-      location: e.location || '',
-      startsAt: e.starts_at,
-      endsAt: e.ends_at,
-      myStatus: mineByEvent.get(e.id) ?? null,
-      goingCount: goingByEvent.get(e.id) ?? 0,
-    }));
-  } catch (err) {
-    console.error('getMyEvents: unexpected failure', err);
-    return [];
-  }
-}
-
-/** Mark the signed-in member going / not going for an event in their group. */
-export async function setEventRsvp(
-  eventId: string,
-  status: EventRsvpStatus,
-): Promise<{ ok: boolean }> {
-  try {
-    const { userId } = await auth();
-    if (!userId) return { ok: false };
-    if (status !== 'going' && status !== 'not_going') return { ok: false };
-
-    const sb = getSupabase();
-
-    // The member may only RSVP to an event in an org they belong to.
-    const { data: ev, error: evErr } = await sb
-      .from('events')
-      .select('org_id')
-      .eq('id', eventId)
-      .maybeSingle();
-    if (evErr || !ev) return { ok: false };
-
-    const orgIds = await myOrgIds(userId);
-    if (!orgIds.includes((ev as { org_id: string }).org_id)) return { ok: false };
 
     const { error } = await sb.from('event_rsvps').upsert(
       {
         event_id: eventId,
         clerk_user_id: userId,
         status,
+        display_name: displayName.slice(0, 60),
+        image_url: imageUrl.slice(0, 500),
+        first_time: firstTime,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'event_id,clerk_user_id' },
     );
     if (error) {
-      console.error('setEventRsvp failed', error);
+      console.error('setRsvp failed', error);
       return { ok: false };
     }
 
     revalidatePath('/dashboard');
+    revalidatePath(`/dashboard/e/${eventId}`);
+    const faces = toFaces(await loadRsvps([eventId]));
+    return { ok: true, faces };
+  } catch (err) {
+    console.error('setRsvp failed', err);
+    return { ok: false };
+  }
+}
+
+const PLANS = new Set(['after_work', 'hour_before', 'unsure', '']);
+
+/** The one plan question. Private to the member; echoed back only to them. */
+export async function setPlan(eventId: string, plan: string): Promise<{ ok: boolean }> {
+  try {
+    const { userId } = await auth();
+    if (!userId || !PLANS.has(plan)) return { ok: false };
+    const sb = getSupabase();
+    const { error } = await sb
+      .from('event_rsvps')
+      .update({ plan, updated_at: new Date().toISOString() })
+      .eq('event_id', eventId)
+      .eq('clerk_user_id', userId);
+    return { ok: !error };
+  } catch {
+    return { ok: false };
+  }
+}
+
+/* ============================================================
+   Bring-something and rides.
+   ============================================================ */
+
+async function slotEvent(slotId: string): Promise<{ eventId: string; orgId: string; capacity: number } | null> {
+  const sb = getSupabase();
+  const { data } = await sb.from('event_slots').select('id, event_id, capacity').eq('id', slotId).maybeSingle();
+  if (!data) return null;
+  const slot = data as { event_id: string; capacity: number };
+  const { data: ev } = await sb.from('events').select('org_id, status').eq('id', slot.event_id).maybeSingle();
+  const event = ev as { org_id: string; status: string } | null;
+  if (!event || event.status !== 'scheduled') return null;
+  return { eventId: slot.event_id, orgId: event.org_id, capacity: slot.capacity };
+}
+
+export async function claimSlot(slotId: string, qty: number = 1): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const { userId } = await auth();
+    if (!userId) return { ok: false };
+    const info = await slotEvent(slotId);
+    if (!info || !(await assertMemberOf(info.orgId))) return { ok: false };
+    const n = Math.max(1, Math.min(6, Math.floor(qty) || 1));
+
+    const sb = getSupabase();
+    const { data: claims } = await sb.from('event_slot_claims').select('clerk_user_id, qty').eq('slot_id', slotId);
+    const taken = ((claims as { clerk_user_id: string; qty: number }[] | null) ?? [])
+      .filter((c) => c.clerk_user_id !== userId)
+      .reduce((s, c) => s + c.qty, 0);
+    if (taken + n > info.capacity) return { ok: false, error: 'That one is already taken.' };
+
+    const user = await currentUser();
+    const { error } = await sb.from('event_slot_claims').upsert(
+      {
+        slot_id: slotId,
+        clerk_user_id: userId,
+        display_name: (user?.firstName || user?.username || 'Member').slice(0, 60),
+        qty: n,
+      },
+      { onConflict: 'slot_id,clerk_user_id' },
+    );
+    if (error) return { ok: false, error: 'Could not save that. Try again.' };
+    revalidatePath(`/dashboard/e/${info.eventId}`);
     return { ok: true };
   } catch (err) {
-    console.error('setEventRsvp: unexpected failure', err);
+    console.error('claimSlot failed', err);
+    return { ok: false };
+  }
+}
+
+export async function unclaimSlot(slotId: string): Promise<{ ok: boolean }> {
+  try {
+    const { userId } = await auth();
+    if (!userId) return { ok: false };
+    const info = await slotEvent(slotId);
+    if (!info) return { ok: false };
+    const sb = getSupabase();
+    const { error } = await sb.from('event_slot_claims').delete().eq('slot_id', slotId).eq('clerk_user_id', userId);
+    revalidatePath(`/dashboard/e/${info.eventId}`);
+    return { ok: !error };
+  } catch {
+    return { ok: false };
+  }
+}
+
+/** A member offers a ride: a ride slot with N seats, labelled with their name. */
+export async function offerRide(eventId: string, seats: number, from: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const { userId } = await auth();
+    if (!userId) return { ok: false };
+    const sb = getSupabase();
+    const { data: ev } = await sb.from('events').select('org_id, status, rides_enabled').eq('id', eventId).maybeSingle();
+    const event = ev as { org_id: string; status: string; rides_enabled: boolean } | null;
+    if (!event || event.status !== 'scheduled' || !event.rides_enabled) return { ok: false };
+    if (!(await assertMemberOf(event.org_id))) return { ok: false };
+
+    const n = Math.max(1, Math.min(8, Math.floor(seats) || 1));
+    const user = await currentUser();
+    const who = user?.firstName || user?.username || 'A member';
+    const where = from.trim() ? ` from ${from.trim().slice(0, 60)}` : '';
+    const label = `${who} has ${n} ${n === 1 ? 'seat' : 'seats'}${where}`;
+    const { error } = await sb.from('event_slots').insert({
+      event_id: eventId,
+      kind: 'ride',
+      label,
+      capacity: n,
+      created_by: userId,
+    });
+    if (error) return { ok: false, error: 'Could not add your ride. Try again.' };
+    revalidatePath(`/dashboard/e/${eventId}`);
+    return { ok: true };
+  } catch (err) {
+    console.error('offerRide failed', err);
     return { ok: false };
   }
 }

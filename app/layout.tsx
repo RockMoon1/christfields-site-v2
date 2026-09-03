@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Cormorant_Garamond, Inter } from 'next/font/google';
-import { EmberCursor } from '@/components/motion/EmberCursor';
+import { MarketingFx } from '@/components/motion/MarketingFx';
 import { MotionProvider } from '@/components/motion/MotionProvider';
-import { ScrollProgress } from '@/components/motion/ScrollProgress';
 import { SmoothScroll } from '@/components/motion/SmoothScroll';
 import './globals.css';
 
@@ -62,6 +61,9 @@ export const viewport: Viewport = {
   themeColor: '#060908',
   width: 'device-width',
   initialScale: 1,
+  // Lets the installed iOS app draw under the status bar; the dashboard chrome
+  // pads with env(safe-area-inset-*) so nothing hides behind it.
+  viewportFit: 'cover',
 };
 
 /**
@@ -113,8 +115,8 @@ export default function RootLayout({
             >
               Skip to content
             </a>
-            <ScrollProgress />
-            <EmberCursor />
+            {/* Marketing-only effects; they skip /dashboard and /r on purpose. */}
+            <MarketingFx />
             {children}
           </SmoothScroll>
         </MotionProvider>

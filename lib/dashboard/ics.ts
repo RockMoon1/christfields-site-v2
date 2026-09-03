@@ -141,7 +141,7 @@ function utcIso(ms: number): string {
 }
 
 /** Local date (YYYY-MM-DD) and hour for an instant, in the given IANA timezone. */
-function localParts(ms: number, tz: string): { iso: string; hour: number } {
+export function localParts(ms: number, tz: string): { iso: string; hour: number } {
   try {
     const dtf = new Intl.DateTimeFormat('en-CA', {
       timeZone: tz,
@@ -161,7 +161,7 @@ function localParts(ms: number, tz: string): { iso: string; hour: number } {
   }
 }
 
-function slotForHour(hour: number): Slot | null {
+export function slotForHour(hour: number): Slot | null {
   if (hour >= 6 && hour < 12) return 'morning';
   if (hour >= 12 && hour < 17) return 'afternoon';
   if (hour >= 17 && hour < 22) return 'evening';

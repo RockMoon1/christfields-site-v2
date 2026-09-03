@@ -1,102 +1,70 @@
 /**
- * Event types and their visual themes.
+ * Event types and their colours, plus small date helpers.
  *
- * The "motif" drives the animated banner on the member dashboard, so every kind
- * of gathering has its own lighting and movement. Leaders pick the
- * type when they create an event; the banner reads the theme from here.
+ * Five plain words a new member understands. Leaders pick the type when they
+ * post; the colour marks the card and the type chip. No animated motifs any
+ * more: the dashboard is a schedule, not a light show.
  *
  * Pure data + helpers only. Safe to import on the server or the client.
  */
 
-export type EventType =
-  | 'gathering'
-  | 'worship'
-  | 'service'
-  | 'social'
-  | 'prayer'
-  | 'celebration';
-
-/** The animated background style the banner renders for a type. */
-export type EventMotif = 'embers' | 'aurora' | 'sunrise' | 'bokeh' | 'pulse' | 'confetti';
+export type EventType = 'gathering' | 'meal' | 'outing' | 'serve' | 'celebration';
 
 export interface EventTheme {
   key: EventType;
   label: string;
   /** A short line shown in the type picker. */
   tagline: string;
-  motif: EventMotif;
-  /** Primary accent (text, buttons, glow). */
+  /** Primary accent (text, borders, chips). */
   accent: string;
   /** Secondary accent, paired with the primary in gradients. */
   accent2: string;
-  /** Ambient glow color (rgba). */
-  glow: string;
 }
 
 export const EVENT_THEMES: Record<EventType, EventTheme> = {
   gathering: {
     key: 'gathering',
     label: 'Gathering',
-    tagline: 'The main meetup',
-    motif: 'embers',
+    tagline: 'The regular group',
     accent: '#c9a548',
     accent2: '#e4c97a',
-    glow: 'rgba(201,165,72,0.45)',
   },
-  worship: {
-    key: 'worship',
-    label: 'Worship night',
-    tagline: 'Sung praise, late and full',
-    motif: 'aurora',
-    accent: '#8f7ad0',
-    accent2: '#5b8db8',
-    glow: 'rgba(126,107,168,0.45)',
-  },
-  service: {
-    key: 'service',
-    label: 'Service',
-    tagline: 'Hands and feet, outreach',
-    motif: 'sunrise',
-    accent: '#e0903f',
-    accent2: '#e4c97a',
-    glow: 'rgba(196,123,60,0.45)',
-  },
-  social: {
-    key: 'social',
-    label: 'Social',
-    tagline: 'Food, fun, fellowship',
-    motif: 'bokeh',
+  meal: {
+    key: 'meal',
+    label: 'Meal',
+    tagline: 'Food together',
     accent: '#e09a78',
     accent2: '#e4c97a',
-    glow: 'rgba(217,140,106,0.4)',
   },
-  prayer: {
-    key: 'prayer',
-    label: 'Prayer',
-    tagline: 'Coming together to pray',
-    motif: 'pulse',
+  outing: {
+    key: 'outing',
+    label: 'Outing',
+    tagline: 'Climbing, hiking, out and about',
+    accent: '#5b8db8',
+    accent2: '#8f7ad0',
+  },
+  serve: {
+    key: 'serve',
+    label: 'Serve',
+    tagline: 'Hands and feet',
     accent: '#52b788',
     accent2: '#5b8db8',
-    glow: 'rgba(45,106,79,0.45)',
   },
   celebration: {
     key: 'celebration',
     label: 'Celebration',
-    tagline: 'Baptisms, milestones, joy',
-    motif: 'confetti',
+    tagline: 'Baptisms, birthdays, milestones',
     accent: '#e4c97a',
     accent2: '#c9a548',
-    glow: 'rgba(228,201,122,0.5)',
   },
 };
 
 /** Stable display order for pickers and lists. */
 export const EVENT_TYPE_LIST: EventTheme[] = [
   EVENT_THEMES.gathering,
-  EVENT_THEMES.worship,
-  EVENT_THEMES.service,
-  EVENT_THEMES.social,
-  EVENT_THEMES.prayer,
+  EVENT_THEMES.meal,
+  EVENT_THEMES.outing,
+  EVENT_THEMES.serve,
   EVENT_THEMES.celebration,
 ];
 
@@ -110,9 +78,9 @@ export function eventTheme(key: string): EventTheme {
 }
 
 /**
- * Friendly "when" label, e.g. "Fri, May 30 · 7:00 PM". Formatted in the
- * viewer's local time, so call it from client components (and pair the element
- * with suppressHydrationWarning, since the server renders in UTC).
+ * Friendly "when" label in the VIEWER's local time, e.g. "Fri, May 30 · 7:00 PM".
+ * Call it from client components (pair with suppressHydrationWarning, since the
+ * server renders in UTC). For server-rendered text use lib/dashboard/format.ts.
  */
 export function formatEventWhen(startsAtISO: string, endsAtISO?: string | null): string {
   const start = new Date(startsAtISO);
@@ -135,11 +103,11 @@ export function formatEventWhen(startsAtISO: string, endsAtISO?: string | null):
   return `${day} · ${time}`;
 }
 
-/** How soon the event is, e.g. "Today", "Tomorrow", "In 3 days", "Past". */
-export function eventCountdown(startsAtISO: string): string {
+/** How soon the event is, e.g. "Today", "Tomorrow", "In 3 days", "Happened". */
+export function eventCountdown(startsAtISO: string, nowMs: number = Date.now()): string {
   const start = new Date(startsAtISO).getTime();
   if (Number.isNaN(start)) return '';
-  const diffMs = start - Date.now();
+  const diffMs = start - nowMs;
   const dayMs = 86_400_000;
   if (diffMs < -dayMs) return 'Happened';
   if (diffMs < 0) return 'Happening now';
