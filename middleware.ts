@@ -46,5 +46,5 @@ export default async function middleware(req: NextRequest, event: NextFetchEvent
  * site (home, journal, faithflow) stays independent of Clerk.
  */
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: ['/dashboard/:path*', '/api/ics/event/:path*'],
 };

@@ -9,12 +9,13 @@ import { titleFor } from './nav-data';
 /**
  * Top bar. Logo and the page title on the left, the Clerk account button on
  * the right. No hamburger: the bottom tab bar is the whole menu on a phone.
+ * Leaders also find "Lead your group" inside the account menu.
  *
  * IMPORTANT: do NOT add backdrop-filter / backdrop-blur to the header below.
  * backdrop-filter on a sticky element traps fixed descendants (the Clerk
  * popovers). Use a solid background here.
  */
-export function TopBar() {
+export function TopBar({ isLeader = false }: { isLeader?: boolean }) {
   const pathname = usePathname();
   const title = titleFor(pathname);
 
@@ -41,8 +42,34 @@ export function TopBar() {
               userButtonPopoverFooter: 'hidden',
             },
           }}
-        />
+        >
+          {isLeader && (
+            <UserButton.MenuItems>
+              <UserButton.Link label="Lead your group" href="/dashboard/lead" labelIcon={<LeadMenuIcon />} />
+              <UserButton.Link label="Post something" href="/dashboard/lead/post" labelIcon={<PlusMenuIcon />} />
+            </UserButton.MenuItems>
+          )}
+        </UserButton>
       </div>
     </header>
+  );
+}
+
+function LeadMenuIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" width="16" height="16" aria-hidden>
+      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="8" cy="3.6" r="1.2" fill="currentColor" />
+      <circle cx="3.9" cy="10" r="1.2" fill="currentColor" />
+      <circle cx="12.1" cy="10" r="1.2" fill="currentColor" />
+    </svg>
+  );
+}
+
+function PlusMenuIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" width="16" height="16" aria-hidden>
+      <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
   );
 }
