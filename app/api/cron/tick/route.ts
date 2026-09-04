@@ -3,8 +3,12 @@ import { NextResponse } from 'next/server';
 import { getSupabase, type CalendarFeedRow } from '@/lib/supabase';
 import { remind24h, remind2h, leaderBriefs, leaderStartPush, prune, type TickReport } from '@/lib/notify/scheduled';
 import { syncFeedForUser } from '@/app/dashboard/(app)/availability/actions';
-import { decryptText } from '@/lib/security/crypto';
+import { decryptText, isEncryptionConfigured } from '@/lib/security/crypto';
 import { googleTick } from '@/lib/google/sync';
+import { isGoogleConfigured } from '@/lib/google/oauth';
+import { isPushConfigured } from '@/lib/notify/push';
+import { isEmailConfigured } from '@/lib/notify/email';
+import { isTokenConfigured } from '@/lib/notify/tokens';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -83,7 +87,15 @@ export async function POST(req: Request) {
   }
   report.remaining = deadline();
   report.ms = Date.now() - started;
-  return NextResponse.json(report);
+  // Which optional pieces this deploy can see. Booleans only, never values.
+  const env = {
+    push: isPushConfigured(),
+    email: isEmailConfigured(),
+    tokens: isTokenConfigured(),
+    encryption: isEncryptionConfigured(),
+    google: isGoogleConfigured(),
+  };
+  return NextResponse.json({ ...report, env });
 }
 
 export async function GET() {
