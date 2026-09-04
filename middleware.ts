@@ -49,5 +49,5 @@ export default async function middleware(req: NextRequest, event: NextFetchEvent
  * ack from a service worker, the cron tick, and /r one-tap answers.
  */
 export const config = {
-  matcher: ['/dashboard/:path*', '/api/ics/event/:path*', '/api/push/subscribe'],
+  matcher: ['/dashboard/:path*', '/api/ics/event/:path*', '/api/push/subscribe', '/api/google/:path*'],
 };

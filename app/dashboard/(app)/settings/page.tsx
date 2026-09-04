@@ -2,15 +2,17 @@ import Link from 'next/link';
 import { getYou } from './actions';
 import { EmailToggle, CopyLink } from '@/components/dashboard/YouCards';
 import { PushSettingsCard } from '@/components/dashboard/PushSetup';
+import { GoogleCards } from '@/components/dashboard/GoogleCards';
 import { InstallAppCard } from '@/components/dashboard/InstallAppCard';
 import { FeedbackCard } from '@/components/dashboard/FeedbackCard';
 
 /**
- * You. Four plain cards and a quiet footer. The words sync, org, dashboard and
- * availability never appear here.
+ * You. A few plain cards and a quiet footer. The words sync, org, dashboard and
+ * availability never appear here. The Google cards render only once the
+ * founder has set up the Google Cloud client.
  */
-export default async function YouPage() {
-  const you = await getYou();
+export default async function YouPage({ searchParams }: { searchParams: Promise<{ google?: string }> }) {
+  const [you, params] = await Promise.all([getYou(), searchParams]);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -33,8 +35,10 @@ export default async function YouPage() {
         </div>
       </section>
 
+      <GoogleCards google={you.google} notice={params.google} />
+
       <section className="mb-6 rounded-sm border border-border-sub bg-black-3 p-6">
-        <h3 className="font-display text-xl font-light text-ivory">Put our events on my calendar</h3>
+        <h3 className="font-display text-xl font-light text-ivory">{you.google.configured ? 'Or subscribe from any other calendar' : 'Put our events on my calendar'}</h3>
         <p className="mt-1 text-sm leading-relaxed text-silver">
           Subscribe once and every plan shows up in your own calendar app. Changes reach you by notification,
           not by calendar: Google can take hours to notice a change, and a called-off event shows as cancelled

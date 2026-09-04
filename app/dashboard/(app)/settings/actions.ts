@@ -2,9 +2,13 @@
 
 import { auth } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
-import { getSupabase } from '@/lib/supabase';
+import { getSupabase, type GoogleConnectionRow } from '@/lib/supabase';
 import { isValidTimeZone } from '@/lib/dashboard/timezone';
 import { ensureMemberPrefs, ensureFeedToken, appUrl } from '@/lib/dashboard/prefs';
+import { isGoogleConfigured, SCOPES } from '@/lib/google/oauth';
+import { disconnectGoogle as disconnectGoogleFor } from '@/lib/google/sync';
+import { isEncryptionConfigured } from '@/lib/security/crypto';
+import type { GoogleStatus } from '@/components/dashboard/GoogleCards';
 
 /**
  * The You screen and the flags behind Home's one slot card. Deliberately tiny:
@@ -15,27 +19,61 @@ export interface YouData {
   emailReminders: boolean;
   feedUrl: string | null;
   hasAvailability: boolean;
+  google: GoogleStatus;
+}
+
+const NO_GOOGLE: GoogleStatus = { configured: false, write: false, busy: false, status: null, lastError: null };
+
+/** Both halves must exist: the Google client, and the key that encrypts its token at rest. */
+function googleReady(): boolean {
+  return isGoogleConfigured() && isEncryptionConfigured();
 }
 
 export async function getYou(): Promise<YouData> {
-  const empty: YouData = { emailReminders: true, feedUrl: null, hasAvailability: false };
+  const empty: YouData = { emailReminders: true, feedUrl: null, hasAvailability: false, google: NO_GOOGLE };
   try {
     const { userId } = await auth();
     if (!userId) return empty;
     const sb = getSupabase();
-    const [prefs, token, weekly] = await Promise.all([
+    const [prefs, token, weekly, gRes] = await Promise.all([
       ensureMemberPrefs(userId),
       ensureFeedToken(userId),
       sb.from('availability_weekly').select('id', { count: 'exact', head: true }).eq('clerk_user_id', userId),
+      googleReady()
+        ? sb.from('google_connections').select('scopes, status, last_error').eq('clerk_user_id', userId).maybeSingle()
+        : Promise.resolve({ data: null }),
     ]);
+    const g = (gRes.data as Pick<GoogleConnectionRow, 'scopes' | 'status' | 'last_error'> | null) ?? null;
     return {
       emailReminders: prefs.email_reminders,
       feedUrl: token ? `${appUrl()}/api/ics/feed/${token}` : null,
       hasAvailability: (weekly.count ?? 0) > 0,
+      google: {
+        configured: googleReady(),
+        write: !!g?.scopes.includes(SCOPES.write),
+        busy: !!g?.scopes.includes(SCOPES.busy),
+        status: g?.status ?? null,
+        lastError: g?.last_error ?? null,
+      },
     };
   } catch (err) {
     console.error('getYou failed', err);
     return empty;
+  }
+}
+
+/** Remove our calendar from their Google, revoke our token, forget everything. */
+export async function disconnectGoogle(): Promise<{ ok: boolean; calendarRemoved: boolean | null }> {
+  try {
+    const { userId } = await auth();
+    if (!userId) return { ok: false, calendarRemoved: null };
+    const res = await disconnectGoogleFor(userId);
+    revalidatePath('/dashboard/settings');
+    revalidatePath('/dashboard/availability');
+    return res;
+  } catch (err) {
+    console.error('disconnectGoogle failed', err);
+    return { ok: false, calendarRemoved: null };
   }
 }
 

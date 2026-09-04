@@ -20,7 +20,7 @@ const navLinks = [
   { href: '/#join', label: 'Join the Journey', cta: true },
 ];
 
-const EFFECTIVE = 'June 17, 2026';
+const EFFECTIVE = 'September 3, 2026';
 
 /** Section heading. */
 function H({ children }: { children: React.ReactNode }) {
@@ -154,18 +154,67 @@ export default function PrivacyPage() {
             <li><strong className="text-ivory">Resend</strong> &mdash; sending the emails you request.</li>
             <li><strong className="text-ivory">NVIDIA</strong> &mdash; the AI model behind the Scripture companion.</li>
             <li><strong className="text-ivory">Netlify</strong> &mdash; website hosting and delivery.</li>
+            <li><strong className="text-ivory">Google Calendar</strong> &mdash; only if you connect it yourself (see 5a).</li>
+            <li><strong className="text-ivory">Apple, Google, and Mozilla push services</strong> &mdash; only if you turn on phone alerts.</li>
             <li><strong className="text-ivory">GoatCounter</strong> &mdash; optional, cookieless, privacy-friendly visit counting, only if we enable it.</li>
           </UL>
           <P>
-            <strong className="text-ivory">FaithFlow groups.</strong> If you join a FaithFlow group,
-            your group leader can see your overall trends (such as the direction of your mood, your
-            rhythm consistency, and areas that may need encouragement) and anything you explicitly
-            choose to share, like a shared prayer request. Your leader never sees your private journal
-            entries, your gratitude or examen notes, your mood notes, or any prayer you keep private.
+            <strong className="text-ivory">FaithFlow groups (the schedule).</strong> If you join a
+            FaithFlow group, the members of your group can see your first name and profile photo next
+            to the plans you say you are coming to or are not sure about. Only your leaders can see
+            when you say you cannot make it, whether you came, and the one-line plan you give before a
+            gathering. If you tell us which times you are usually free, your leader sees only
+            &ldquo;free&rdquo; or &ldquo;busy&rdquo; for a morning, afternoon, or evening, never what
+            you are doing. Prayers you post on the group wall are visible to your group.
+          </P>
+          <P>
+            <strong className="text-ivory">Phone alerts.</strong> If you turn on alerts, your browser
+            gives us an address for your device (a push subscription) so we can tell you when a leader
+            posts, changes, or calls off a plan, and remind you the day before. It contains no personal
+            details, it is tied to your account, and we delete it when it stops working or you turn
+            alerts off. Alerts are delivered through your browser maker&rsquo;s push service (Apple,
+            Google, or Mozilla).
+          </P>
+          <P>
+            <strong className="text-ivory">Calendar links you paste.</strong> If you paste a private
+            calendar link so your busy times fill in automatically, we store that link encrypted, read
+            it regularly (about twice a day), and keep only which mornings, afternoons, and evenings are
+            busy for the next four weeks. Event titles, places, and people are read and discarded and never stored.
           </P>
           <P>
             We may also disclose information if the law requires it, or to protect the safety and
             rights of people using our services.
+          </P>
+
+          <H>5a. Google Calendar</H>
+          <P>
+            You can choose to connect your Google Calendar in two separate ways, each with its own
+            permission screen from Google, and neither is required to use Christ Fields.
+          </P>
+          <UL>
+            <li>
+              <strong className="text-ivory">Put our events on your Google Calendar.</strong> With
+              the Google permission to manage calendars this app creates, we create one calendar named
+              &ldquo;Christ Fields&rdquo; in your Google account and place your group&rsquo;s plans on
+              it, updating them when a leader changes or calls something off. This permission does not
+              let us see any other calendar or event of yours.
+            </li>
+            <li>
+              <strong className="text-ivory">Help your leader pick a time.</strong> With the Google
+              permission to view your availability, we ask Google regularly (usually every hour) whether
+              you are free or busy over the next four weeks and keep only &ldquo;busy&rdquo; marks for a morning,
+              afternoon, or evening. Google never sends us titles, places, or attendees, and we store
+              none.
+            </li>
+          </UL>
+          <P>
+            We store the Google token that grants these permissions encrypted, use it only for the two
+            purposes above, and never sell, share, or use Google user data for advertising, for
+            training models, or for any other purpose. Tap Disconnect on your You page at any time: we
+            remove the Christ Fields calendar from your Google account, revoke our access, and delete
+            everything we held from Google. You can also remove Christ Fields under Security in your
+            Google account. Our use of information received from Google APIs follows the Google API
+            Services User Data Policy, including its Limited Use requirements.
           </P>
 
           <H>6. Cookies and local storage</H>

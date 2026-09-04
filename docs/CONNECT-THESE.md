@@ -169,6 +169,107 @@ env vars are set and a deploy has finished, it should answer `400` instead
 
 ---
 
+## 5. Google Cloud → the Calendar connect (Phase 3)
+
+The code is live but hidden until two rows exist in Netlify. Everything below
+happens at **console.cloud.google.com**, signed in with the Google account you
+want to own the project (your christfields2717.com Workspace account if you
+have one, otherwise your Gmail). About 25 minutes, then a wait of 3 to 5
+business days for Google's review.
+
+### 5a. Project and API
+
+1. Top bar → project picker → **New project** → name `Christ Fields` → Create,
+   then select it.
+2. Left menu → **APIs & Services → Library** → search **Google Calendar API** →
+   **Enable**.
+
+### 5b. The consent screen (what members see when they tap Connect)
+
+1. **APIs & Services → OAuth consent screen** (Google now calls this
+   **Google Auth Platform**). Choose **External** if asked.
+2. **Branding:** App name `Christ Fields`; user support email your address;
+   app logo `public/assets/logo.png` from this repo; **App home page**
+   `https://christfields2717.com`; **Privacy policy**
+   `https://christfields2717.com/privacy`; **Terms**
+   `https://christfields2717.com/terms`; **Authorized domain**
+   `christfields2717.com`; developer contact your address. Save.
+3. **Data access → Add or remove scopes** → paste these two, exactly, one per
+   line in the "Manually add scopes" box → Add to table → Update → Save:
+
+   ```
+   https://www.googleapis.com/auth/calendar.app.created
+   https://www.googleapis.com/auth/calendar.freebusy
+   ```
+
+   Do NOT add `calendar`, `calendar.readonly`, or `calendar.events`. The two
+   above are the narrowest that exist: one can only touch a calendar this app
+   creates; the other returns free or busy and never a title.
+4. **Audience → Publishing status → Publish app** so it says **In production**.
+   Leaving it in Testing makes every member's connection expire after 7 days.
+
+### 5c. The client (the two rows for Netlify)
+
+1. **Clients → Create client** → Application type **Web application** → name
+   `Christ Fields site`.
+2. **Authorized redirect URIs** → add both:
+
+   ```
+   https://christfields2717.com/api/google/callback
+   http://localhost:3000/api/google/callback
+   ```
+
+3. Create. Copy the **Client ID** and **Client secret** straight into Netlify
+   (Site configuration → Environment variables), same way as before:
+
+   | Key (top box) | Value (bottom box) |
+   |---|---|
+   | `GOOGLE_CLIENT_ID` | the long string ending in `.apps.googleusercontent.com` |
+   | `GOOGLE_CLIENT_SECRET` | the `GOCSPX-...` string |
+
+   Then **Deploys → Trigger deploy**. Add the same two lines to `.env.local`
+   for testing here. Never paste them into chat or a screenshot.
+
+### 5d. Verification (removes the "Google hasn't verified this app" screen)
+
+Until Google reviews the app, members see a warning page with a small
+**Advanced → Go to christfields2717.com (unsafe)** link; it works, but it is
+ugly, and the app is capped at 100 connected people. To clear it:
+
+1. **Search Console** (search.google.com/search-console) → add property
+   `christfields2717.com` → verify by DNS record (Netlify DNS → add the TXT
+   record Google gives you).
+2. Record a short unlisted YouTube video (phone screen recording is fine):
+   sign in, You page, tap **Connect Google Calendar**, show the Google consent
+   screen with the app name, allow, show the Christ Fields calendar appear in
+   Google Calendar. Then the same for **Share free or busy**, ending on the
+   leader's "When to gather" board showing only counts of free people.
+3. **Google Auth Platform → Verification Center → Prepare for verification**
+   → submit. When it asks why each scope is needed, use these:
+
+   > **calendar.app.created:** Christ Fields is a small church community
+   > scheduling app. When a member taps "Put our events on your Google
+   > Calendar", we create one secondary calendar named "Christ Fields" in their
+   > account and add, update, or remove only the group events on that calendar.
+   > We never read or write any other calendar. This is the narrowest scope
+   > that allows creating a calendar and managing events on it.
+
+   > **calendar.freebusy:** When a member taps "Help your leader pick a time",
+   > we query free/busy for their primary calendar for the next 28 days and
+   > store only whether a morning, afternoon, or evening is busy. Group leaders
+   > see counts of free members and, on the three best times, first names of
+   > those who are free. No event titles, locations, or attendees are ever
+   > received or stored. This is the narrowest scope that exposes availability.
+
+4. Reply to Google's emails promptly; they usually ask one clarifying question.
+   Typical turnaround is 3 to 5 business days.
+
+**Never** add Calendar scopes to the Clerk → Google sign-in connection. Clerk
+resets extra scopes on each sign-in and does not refresh tokens; the connect
+built here uses this project's own client on purpose.
+
+---
+
 ## 4. Things only you can do (no code involved)
 
 - **The Christ Fields CO test.** Say "Christ Fields CO, our Colorado" out loud

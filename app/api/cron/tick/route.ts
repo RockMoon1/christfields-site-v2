@@ -4,6 +4,7 @@ import { getSupabase, type CalendarFeedRow } from '@/lib/supabase';
 import { remind24h, remind2h, leaderBriefs, leaderStartPush, prune, type TickReport } from '@/lib/notify/scheduled';
 import { syncFeedForUser } from '@/app/dashboard/(app)/availability/actions';
 import { decryptText } from '@/lib/security/crypto';
+import { googleTick } from '@/lib/google/sync';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -61,6 +62,7 @@ export async function POST(req: Request) {
     briefs: 0,
     leaderStarts: 0,
     feedsRefreshed: 0,
+    googleSynced: 0,
     pruned: {},
     remaining: false,
     ms: 0,
@@ -73,6 +75,7 @@ export async function POST(req: Request) {
     if (!deadline()) report.reminders24h = await remind24h(nowMs, deadline);
     if (!deadline()) report.briefs = await leaderBriefs(nowMs, deadline);
     if (!deadline()) report.feedsRefreshed = await refreshStaleFeeds(nowMs, deadline);
+    if (!deadline()) report.googleSynced = await googleTick(nowMs, deadline);
     // Pruning is cheap and once an hour is plenty; skip it when we are already over budget.
     if (!deadline()) report.pruned = await prune(nowMs);
   } catch (err) {

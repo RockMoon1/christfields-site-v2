@@ -25,6 +25,7 @@ export interface TickReport {
   briefs: number;
   leaderStarts: number;
   feedsRefreshed: number;
+  googleSynced: number;
   pruned: Record<string, number>;
   remaining: boolean;
   ms: number;

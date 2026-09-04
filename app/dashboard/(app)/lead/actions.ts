@@ -17,6 +17,7 @@ import { weeklyOccurrences, MAX_SERIES_WEEKS } from '@/lib/schedule/series';
 import { getGroupAvailability, type GroupAvailability } from '@/lib/schedule/group-availability';
 import { recordChange } from '@/lib/notify/activity';
 import { fanOutChange, nudgeSilent, type NudgeResult } from '@/lib/notify/fanout';
+import { syncOrgCalendars } from '@/lib/google/sync';
 import { anyDelivery } from '@/lib/notify/deliveries';
 import { dedupeKey, emailWindowStartIso } from '@/lib/notify/rules';
 import { whenInWords } from '@/lib/dashboard/format';
@@ -158,6 +159,7 @@ export async function createEvent(input: PostInput): Promise<{ ok: boolean; erro
       const changeId = await recordChange(sb, { orgId: ctx.orgId, eventId: firstId, kind: 'created', summary, createdBy: userId });
       await fanOutChange(changeId);
     }
+    await syncOrgCalendars(ctx.orgId);
 
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/lead');
@@ -264,6 +266,7 @@ export async function updateEvent(eventId: string, input: EditInput): Promise<{ 
       });
       await fanOutChange(changeId);
     }
+    await syncOrgCalendars(event.org_id);
 
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/lead');
@@ -308,6 +311,7 @@ export async function cancelEvent(eventId: string, reason: string): Promise<{ ok
       createdBy: userId,
     });
     await fanOutChange(changeId);
+    await syncOrgCalendars(event.org_id);
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/lead');
     revalidatePath(`/dashboard/e/${eventId}`);
