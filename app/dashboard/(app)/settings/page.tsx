@@ -66,6 +66,20 @@ export default async function YouPage({ searchParams }: { searchParams: Promise<
       </section>
 
       <Link
+        href="/dashboard/quiet"
+        className="group mb-6 flex items-center justify-between gap-4 rounded-sm border border-border-sub bg-black-3 p-6 transition-colors hover:border-border-gold"
+      >
+        <div>
+          <h3 className="font-display text-xl font-light text-ivory">A quiet question</h3>
+          <p className="mt-1 text-sm leading-relaxed text-silver">
+            One question a week, answered in private and kept scrambled. Only you can read it. Your leader may see a
+            theme word{you.shareThemes ? '' : ' (you have turned that off)'}, never your words.
+          </p>
+        </div>
+        <span className="text-gold transition-transform group-hover:translate-x-1">&rarr;</span>
+      </Link>
+
+      <Link
         href="/dashboard/availability"
         className="group mb-6 flex items-center justify-between gap-4 rounded-sm border border-border-sub bg-black-3 p-6 transition-colors hover:border-border-gold"
       >

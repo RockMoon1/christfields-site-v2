@@ -66,6 +66,32 @@ export function HomeSlot({ card, firstName }: { card: HomeSlotCard; firstName: s
     );
   }
 
+  if (card.kind === 'rhythm') {
+    return (
+      <Card>
+        <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-gold">It has been a couple of weeks</p>
+        <p className="mt-1 font-display text-xl font-light text-ivory">
+          {card.title} is {card.when}.
+        </p>
+        <p className="mt-2 text-base leading-relaxed text-silver">It would be good to see you. No pressure, just the door open.</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link
+            href={`/dashboard/e/${card.eventId}`}
+            onClick={() => dismiss('rhythm')}
+            className="inline-flex min-h-[44px] items-center rounded-sm bg-gold px-4 text-[11px] font-medium uppercase tracking-[0.1em] text-black hover:bg-gold-lt"
+          >
+            See it
+          </Link>
+          <Dismiss onClick={() => dismiss('rhythm')}>Not this time</Dismiss>
+        </div>
+      </Card>
+    );
+  }
+
+  if (card.kind === 'quiet') {
+    return <QuietSlot question={card.question} weekKey={card.weekKey} />;
+  }
+
   if (card.kind === 'free') {
     return (
       <Card>
@@ -106,6 +132,47 @@ export function HomeSlot({ card, firstName }: { card: HomeSlotCard; firstName: s
 
   // Phone alerts. The card decides for itself whether this device can even do it.
   return <PushPrimerCard onDone={() => dismiss('push')} onDismiss={() => dismiss('push')} />;
+}
+
+/** Weekly, and "not this week" is remembered on this device only: nothing to store about a person for skipping a question. */
+function QuietSlot({ question, weekKey }: { question: string; weekKey: string }) {
+  const storageKey = `cf_quiet_skip_${weekKey}`;
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(storageKey) === '1') setHidden(true);
+    } catch {
+      // ignore
+    }
+  }, [storageKey]);
+  if (hidden) return null;
+  return (
+    <Card>
+      <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-gold">A quiet question</p>
+      <p className="mt-1 font-display text-xl font-light leading-snug text-ivory">{question}</p>
+      <p className="mt-2 text-sm leading-relaxed text-silver">Between you and God. Nobody reads it. You get a verse back.</p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Link
+          href="/dashboard/quiet"
+          className="inline-flex min-h-[44px] items-center rounded-sm bg-gold px-4 text-[11px] font-medium uppercase tracking-[0.1em] text-black hover:bg-gold-lt"
+        >
+          Answer quietly
+        </Link>
+        <Dismiss
+          onClick={() => {
+            try {
+              localStorage.setItem(storageKey, '1');
+            } catch {
+              // ignore
+            }
+            setHidden(true);
+          }}
+        >
+          Not this week
+        </Dismiss>
+      </div>
+    </Card>
+  );
 }
 
 function Card({ children }: { children: React.ReactNode }) {

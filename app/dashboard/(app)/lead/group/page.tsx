@@ -54,6 +54,17 @@ export default async function GroupPage({ searchParams }: { searchParams: Promis
         <WhenToGather availability={page.availability} orgId={orgId} lastRefreshedAt={page.lastRefreshedAt} />
       </section>
 
+      {page.notSeen.length > 0 && (
+        <section className="mb-10 rounded-sm border border-border-sub bg-black-3 p-5">
+          <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-gold">Not seen in a while</p>
+          <p className="mt-1 text-base text-ivory">{page.notSeen.join(', ')}</p>
+          <p className="mt-1 text-sm text-silver">
+            Two weeks or more since they were in the room, or said yes to something that happened. Only you see this. A
+            text from you beats anything the app can send.
+          </p>
+        </section>
+      )}
+
       <GroupTools orgId={orgId} inviteText={page.inviteText} knownCount={page.knownCount} total={page.availability.total} />
 
       <section className="mt-10">

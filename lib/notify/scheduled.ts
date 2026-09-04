@@ -1,8 +1,10 @@
-import { getSupabase, type EventRow, type EventSlotRow, type EventSlotClaimRow } from '@/lib/supabase';
+import { getSupabase, type EventRow, type EventSlotRow, type EventSlotClaimRow, type MemberPrefsRow } from '@/lib/supabase';
 import { whenInWords } from '@/lib/dashboard/format';
 import { noteLines } from '@/lib/dashboard/prompts';
 import { dayKeyInZone } from '@/lib/dashboard/timezone';
 import { appUrl } from '@/lib/dashboard/prefs';
+import { groupThemes } from '@/lib/dashboard/quiet-themes';
+import { lastSeenByMember, notSeenLately, nudgeDue } from '@/lib/dashboard/rhythm';
 import { eventMail, leaderBriefMail } from './templates';
 import { dedupeKey, localHour, orderByAnswer, WINDOWS, PUSH_PRUNE_DAYS } from './rules';
 import { loadEventContext, runPush, runEmail, answerOf, memberTz, emailOn, linksFor, whenFor } from './fanout';
@@ -26,6 +28,7 @@ export interface TickReport {
   leaderStarts: number;
   feedsRefreshed: number;
   googleSynced: number;
+  rhythm: number;
   pruned: Record<string, number>;
   remaining: boolean;
   ms: number;
@@ -172,6 +175,13 @@ export async function leaderBriefs(nowMs: number, deadline: () => boolean): Prom
     const maybe = ctx.members.filter((m) => answerOf(ctx, m.userId) === 'maybe');
     const silent = ctx.members.filter((m) => answerOf(ctx, m.userId) === 'none');
     const firstTimers = [...going, ...maybe].filter((m) => ctx.rsvps.get(m.userId)?.first_time);
+    const [themes, prayersRes] = await Promise.all([
+      groupThemes(ctx.members.map((m) => m.userId), nowMs),
+      sb
+        .from('community_prayers')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', new Date(nowMs - 7 * DAY).toISOString()),
+    ]);
 
     const email = await runEmail(ctx, {
       key: dedupeKey(e.id, 'leader_brief', startDay(e)),
@@ -189,6 +199,8 @@ export async function leaderBriefs(nowMs: number, deadline: () => boolean): Prom
           gaps,
           questions: noteLines(e.leader_note, 3),
           contextNotes: noteLines(e.context_notes || '', 6),
+          themes: themes.map((t) => ({ label: t.label, passage: t.passage, nudge: t.nudge })),
+          prayersThisWeek: prayersRes.count ?? 0,
           openUrl: `${appUrl()}/dashboard/e/${e.id}`,
         }),
       retryable: true,
@@ -196,6 +208,99 @@ export async function leaderBriefs(nowMs: number, deadline: () => boolean): Prom
     if (email.emailed > 0) did += 1;
   }
   return did;
+}
+
+/* ------------------------------------------------------------ the two-week rhythm */
+
+const RHYTHM_HOUR = 17;
+const RHYTHM_LOOKBACK_DAYS = 90;
+
+/**
+ * Once a day (the 5pm tick, group zone), for each group with something coming
+ * up: members not seen in two weeks, not nudged in two weeks, get one push
+ * naming the next gathering. Never email, never visible to other members.
+ */
+export async function rhythmPush(nowMs: number, deadline: () => boolean): Promise<number> {
+  if (localHour(nowMs, 'America/Denver') !== RHYTHM_HOUR) return 0;
+  const sb = getSupabase();
+  const { data: upcomingRows } = await sb
+    .from('events')
+    .select('id, org_id, title, starts_at, tz')
+    .eq('status', 'scheduled')
+    .gte('starts_at', new Date(nowMs).toISOString())
+    .lte('starts_at', new Date(nowMs + 14 * DAY).toISOString())
+    .order('starts_at', { ascending: true })
+    .limit(60);
+  const nextByOrg = new Map<string, { id: string; org_id: string; title: string; starts_at: string; tz: string }>();
+  for (const e of (upcomingRows as { id: string; org_id: string; title: string; starts_at: string; tz: string }[] | null) ?? []) {
+    if (!nextByOrg.has(e.org_id)) nextByOrg.set(e.org_id, e);
+  }
+  let sent = 0;
+  let orgsDone = 0;
+  for (const next of nextByOrg.values()) {
+    if (deadline() || orgsDone >= 3) break;
+    orgsDone += 1;
+    const ctx = await loadEventContext(next.id, nowMs);
+    if (!ctx || ctx.members.length === 0) continue;
+    const memberIds = ctx.members.map((m) => m.userId);
+    const since = new Date(nowMs - RHYTHM_LOOKBACK_DAYS * DAY).toISOString();
+    const { data: pastEvents } = await sb
+      .from('events')
+      .select('id, starts_at')
+      .eq('org_id', next.org_id)
+      .gte('starts_at', since)
+      .lte('starts_at', new Date(nowMs).toISOString())
+      .limit(200);
+    const eventStarts = new Map(((pastEvents as { id: string; starts_at: string }[] | null) ?? []).map((e) => [e.id, e.starts_at]));
+    const ids = [...eventStarts.keys()];
+    const [attRes, goingRes] = ids.length
+      ? await Promise.all([
+          sb.from('event_attendance').select('clerk_user_id, event_id').in('event_id', ids).eq('present', true),
+          sb.from('event_rsvps').select('clerk_user_id, event_id').in('event_id', ids).eq('status', 'going'),
+        ])
+      : [{ data: [] }, { data: [] }];
+    const lastSeen = lastSeenByMember({
+      attendance: (attRes.data as { clerk_user_id: string; event_id: string }[] | null) ?? [],
+      going: (goingRes.data as { clerk_user_id: string; event_id: string }[] | null) ?? [],
+      eventStarts,
+      nowMs,
+    });
+    const quiet = new Set(notSeenLately(ctx.members.filter((m) => !m.isLeader), lastSeen, nowMs));
+    const recipients = ctx.members.filter((m) => {
+      if (!quiet.has(m.userId)) return false;
+      if (answerOf(ctx, m.userId) === 'going') return false; // already coming to the next one
+      const prefs: MemberPrefsRow | undefined = ctx.prefs.get(m.userId);
+      return nudgeDue(prefs?.rhythm_nudged_at ?? null, nowMs);
+    });
+    if (recipients.length === 0) continue;
+    const res = await runPush(ctx, {
+      key: dedupeKey(next.id, 'rhythm', dayKeyInZone(next.tz, new Date(nowMs))),
+      recipients,
+      message: (tz) => ({
+        title: 'It has been a couple of weeks',
+        body: `${next.title} is ${whenInWords(next.starts_at, tz, nowMs)}. It would be good to see you.`,
+        url: `/dashboard/e/${next.id}`,
+        tag: `rhythm-${next.org_id}`,
+      }),
+      urgency: 'normal',
+      ttlSeconds: 20 * 3600,
+      loud: false,
+      ceiling: true,
+      retryable: true,
+    });
+    if (res.pushed > 0) {
+      // Mark everyone we tried so the fortnight clock restarts for them too.
+      const stamp = new Date(nowMs).toISOString();
+      await sb
+        .from('member_prefs')
+        .upsert(
+          recipients.map((m) => ({ clerk_user_id: m.userId, rhythm_nudged_at: stamp, updated_at: stamp })),
+          { onConflict: 'clerk_user_id' },
+        );
+      sent += res.pushed;
+    }
+  }
+  return sent;
 }
 
 /* ------------------------------------------------------------ "tap who came" */

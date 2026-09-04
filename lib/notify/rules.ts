@@ -77,15 +77,20 @@ export type DeliveryKind =
   | 'reminder_2h'
   | 'nudge'
   | 'leader_brief'
-  | 'leaders_10min';
+  | 'leaders_10min'
+  | 'rhythm'
+  | 'safety'
+  | 'safety_reveal'
+  | 'prayer_posted'
+  | 'prayer_answered';
 
 export function dedupeKey(eventId: string, kind: DeliveryKind, discriminator?: string | number): string {
   return discriminator === undefined ? `${eventId}:${kind}` : `${eventId}:${kind}:${discriminator}`;
 }
 
-/** Keys that count toward the per-member daily push ceiling. */
+/** Keys that count toward the per-member daily push ceiling (posts, changes, cancellations are exempt). */
 export function countsTowardCeiling(key: string): boolean {
-  return /:(reminder_24h|reminder_2h|nudge)(:|$)/.test(key);
+  return /:(reminder_24h|reminder_2h|nudge|rhythm|prayer_posted|prayer_answered)(:|$)/.test(key);
 }
 
 export function utcDayStartIso(nowMs: number): string {

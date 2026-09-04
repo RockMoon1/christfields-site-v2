@@ -30,6 +30,8 @@ import { SCOPES } from '@/lib/google/oauth';
 import { decryptText } from '@/lib/security/crypto';
 import { syncFeedForUser } from '@/app/dashboard/(app)/availability/actions';
 import type { CalendarFeedRow } from '@/lib/supabase';
+import { groupThemes } from '@/lib/dashboard/quiet-themes';
+import { lastSeenByMember, notSeenLately } from '@/lib/dashboard/rhythm';
 
 /**
  * Leader actions. Every one resolves the event's org and passes requireLeaderOf,
@@ -685,6 +687,8 @@ export interface LeadGroup {
   sayHi: string[];
   sayHiReady: boolean;
   seriesEnding: { title: string; lastAt: string; tz: string; eventId: string } | null;
+  /** Theme words from the group's quiet reflections. Never names, never counts. */
+  themes: { key: string; label: string; passage: string; nudge: string }[];
 }
 
 export interface LeadOverview {
@@ -753,7 +757,7 @@ export async function getLeadOverview(): Promise<LeadOverview> {
     const groups: LeadGroup[] = [];
     for (const org of orgs) {
       const members = await getGroupMembers(org.orgId);
-      const [eventsRes, availability, sayHi, seriesRes] = await Promise.all([
+      const [eventsRes, availability, sayHi, seriesRes, themes] = await Promise.all([
         sb
           .from('events')
           .select('*')
@@ -771,6 +775,7 @@ export async function getLeadOverview(): Promise<LeadOverview> {
           .not('series_id', 'is', null)
           .gte('starts_at', new Date(now).toISOString())
           .order('starts_at', { ascending: false }),
+        groupThemes(members.map((m) => m.userId), now),
       ]);
       const rows = (eventsRes.data as EventRow[] | null) ?? [];
       const ids = rows.map((e) => e.id);
@@ -848,6 +853,7 @@ export async function getLeadOverview(): Promise<LeadOverview> {
         sayHi: sayHi.names,
         sayHiReady: sayHi.ready,
         seriesEnding,
+        themes: themes.map((t) => ({ key: t.key, label: t.label, passage: t.passage, nudge: t.nudge })),
       });
     }
     return { groups, tz: GROUP_TZ };
@@ -869,6 +875,35 @@ export interface GroupPage {
   knownCount: number;
   /** When any member's connected calendar was last read. */
   lastRefreshedAt: string | null;
+  /** First names not seen for two weeks (present, or a yes to something that happened). Leader-only. */
+  notSeen: string[];
+}
+
+/** Members (not leaders) who have not been in the room for two weeks. Works from day one. */
+async function notSeenFor(orgId: string, members: GroupMember[], nowMs: number): Promise<string[]> {
+  const sb = getSupabase();
+  const { data: past } = await sb
+    .from('events')
+    .select('id, starts_at')
+    .eq('org_id', orgId)
+    .gte('starts_at', new Date(nowMs - 90 * 86_400_000).toISOString())
+    .lte('starts_at', new Date(nowMs).toISOString())
+    .limit(200);
+  const eventStarts = new Map(((past as { id: string; starts_at: string }[] | null) ?? []).map((e) => [e.id, e.starts_at]));
+  const ids = [...eventStarts.keys()];
+  if (ids.length === 0) return [];
+  const [att, going] = await Promise.all([
+    sb.from('event_attendance').select('clerk_user_id, event_id').in('event_id', ids).eq('present', true),
+    sb.from('event_rsvps').select('clerk_user_id, event_id').in('event_id', ids).eq('status', 'going'),
+  ]);
+  const lastSeen = lastSeenByMember({
+    attendance: (att.data as { clerk_user_id: string; event_id: string }[] | null) ?? [],
+    going: (going.data as { clerk_user_id: string; event_id: string }[] | null) ?? [],
+    eventStarts,
+    nowMs,
+  });
+  const quiet = new Set(notSeenLately(members.filter((m) => !m.isLeader), lastSeen, nowMs));
+  return members.filter((m) => quiet.has(m.userId)).map((m) => m.firstName).slice(0, 6);
 }
 
 /** The most recent calendar read across these members (Google free/busy or a pasted link). */
@@ -896,10 +931,12 @@ export async function getGroupPage(orgId: string): Promise<GroupPage | null> {
     if (!ctx) return null;
     const sb = getSupabase();
     const memberIds = ctx.members.map((m) => m.userId);
-    const [availability, seen, lastRefreshedAt] = await Promise.all([
-      getGroupAvailability(ctx.members, GROUP_TZ),
+    const now = Date.now();
+    const [availability, seen, lastRefreshedAt, notSeen] = await Promise.all([
+      getGroupAvailability(ctx.members, GROUP_TZ, now),
       sb.from('org_member_seen').select('clerk_user_id', { count: 'exact', head: true }).eq('org_id', orgId),
       lastCalendarRefresh(memberIds),
+      notSeenFor(orgId, ctx.members, now),
     ]);
     return {
       orgId,
@@ -908,6 +945,7 @@ export async function getGroupPage(orgId: string): Promise<GroupPage | null> {
       inviteText: `I added you to ${ctx.orgName} on Christ Fields. It is where we keep our plans. Tap here to see what is coming up: ${appUrl()}/dashboard`,
       knownCount: seen.count ?? 0,
       lastRefreshedAt,
+      notSeen,
     };
   } catch (err) {
     console.error('getGroupPage failed', err);

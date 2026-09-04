@@ -48,6 +48,7 @@ export const TITLE_BY_PREFIX: [string, string][] = [
   ['/dashboard/community', 'Prayer wall'],
   ['/dashboard/settings', 'You'],
   ['/dashboard/availability', 'When you are free'],
+  ['/dashboard/quiet', 'A quiet question'],
   ['/dashboard/foundation', 'What we stand for'],
   ['/dashboard', 'Home'],
 ];

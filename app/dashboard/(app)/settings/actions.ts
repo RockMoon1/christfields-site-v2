@@ -20,6 +20,7 @@ export interface YouData {
   feedUrl: string | null;
   hasAvailability: boolean;
   google: GoogleStatus;
+  shareThemes: boolean;
 }
 
 const NO_GOOGLE: GoogleStatus = { configured: false, write: false, busy: false, status: null, lastError: null };
@@ -30,7 +31,7 @@ function googleReady(): boolean {
 }
 
 export async function getYou(): Promise<YouData> {
-  const empty: YouData = { emailReminders: true, feedUrl: null, hasAvailability: false, google: NO_GOOGLE };
+  const empty: YouData = { emailReminders: true, feedUrl: null, hasAvailability: false, google: NO_GOOGLE, shareThemes: true };
   try {
     const { userId } = await auth();
     if (!userId) return empty;
@@ -55,6 +56,7 @@ export async function getYou(): Promise<YouData> {
         status: g?.status ?? null,
         lastError: g?.last_error ?? null,
       },
+      shareThemes: prefs.share_themes ?? true,
     };
   } catch (err) {
     console.error('getYou failed', err);
@@ -116,19 +118,24 @@ const CARD_FLAGS = {
   free: 'free_nudge_seen',
 } as const;
 
-export type HomeCardKind = keyof typeof CARD_FLAGS;
+export type HomeCardKind = keyof typeof CARD_FLAGS | 'rhythm';
 
-/** One tap dismisses a Home slot card for good. */
+/**
+ * One tap dismisses a Home slot card: for good for the one-time asks, for a
+ * fortnight for the rhythm card (it may come back after another two weeks).
+ */
 export async function dismissHomeCard(kind: HomeCardKind): Promise<{ ok: boolean }> {
   try {
     const { userId } = await auth();
-    const column = CARD_FLAGS[kind];
-    if (!userId || !column) return { ok: false };
+    if (!userId) return { ok: false };
     await ensureMemberPrefs(userId);
     const sb = getSupabase();
+    const now = new Date().toISOString();
+    const patch = kind === 'rhythm' ? { rhythm_nudged_at: now } : { [CARD_FLAGS[kind]]: true };
+    if (kind !== 'rhythm' && !CARD_FLAGS[kind]) return { ok: false };
     const { error } = await sb
       .from('member_prefs')
-      .update({ [column]: true, updated_at: new Date().toISOString() })
+      .update({ ...patch, updated_at: now })
       .eq('clerk_user_id', userId);
     revalidatePath('/dashboard');
     return { ok: !error };

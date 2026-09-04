@@ -53,30 +53,30 @@ import {
 const DAY = 86_400_000;
 const EMAIL_CHUNK = 50;
 
-export interface EventContext {
+/** What any push or email needs to know about a set of people. */
+export interface PushContext {
   sb: SupabaseClient;
+  prefs: Map<string, MemberPrefsRow>;
+  subs: Map<string, PushSubscriptionRow[]>;
+  /** Zone to assume for a member who never told us theirs. */
+  fallbackTz: string;
+  nowMs: number;
+}
+
+/** A PushContext for one event and its whole group. */
+export interface EventContext extends PushContext {
   event: EventRow;
   member: MemberEvent;
   orgName: string;
   /** Everyone in the group, leaders included. */
   members: GroupMember[];
-  prefs: Map<string, MemberPrefsRow>;
-  subs: Map<string, PushSubscriptionRow[]>;
   rsvps: Map<string, EventRsvpRow>;
-  nowMs: number;
 }
 
-export async function loadEventContext(eventId: string, nowMs: number = Date.now()): Promise<EventContext | null> {
-  const sb = getSupabase();
-  const { data } = await sb.from('events').select('*').eq('id', eventId).maybeSingle();
-  if (!data) return null;
-  const event = data as EventRow;
-  const [members, name] = await Promise.all([getGroupMembers(event.org_id), lookupOrgName(event.org_id)]);
-  const ids = members.map((m) => m.userId);
-  const [prefsRes, subsRes, rsvpRes] = await Promise.all([
+async function loadPrefsAndSubs(sb: SupabaseClient, ids: string[]) {
+  const [prefsRes, subsRes] = await Promise.all([
     ids.length ? sb.from('member_prefs').select('*').in('clerk_user_id', ids) : Promise.resolve({ data: [] }),
     ids.length ? sb.from('push_subscriptions').select('*').in('clerk_user_id', ids) : Promise.resolve({ data: [] }),
-    sb.from('event_rsvps').select('*').eq('event_id', eventId),
   ]);
   const prefs = new Map<string, MemberPrefsRow>();
   for (const p of (prefsRes.data as MemberPrefsRow[] | null) ?? []) prefs.set(p.clerk_user_id, p);
@@ -86,9 +86,30 @@ export async function loadEventContext(eventId: string, nowMs: number = Date.now
     list.push(s);
     subs.set(s.clerk_user_id, list);
   }
+  return { prefs, subs };
+}
+
+/** For pushes that are not about one event (the prayer wall, the rhythm). */
+export async function loadPeopleContext(userIds: string[], fallbackTz = 'America/Denver', nowMs: number = Date.now()): Promise<PushContext> {
+  const sb = getSupabase();
+  const { prefs, subs } = await loadPrefsAndSubs(sb, Array.from(new Set(userIds)));
+  return { sb, prefs, subs, fallbackTz, nowMs };
+}
+
+export async function loadEventContext(eventId: string, nowMs: number = Date.now()): Promise<EventContext | null> {
+  const sb = getSupabase();
+  const { data } = await sb.from('events').select('*').eq('id', eventId).maybeSingle();
+  if (!data) return null;
+  const event = data as EventRow;
+  const [members, name] = await Promise.all([getGroupMembers(event.org_id), lookupOrgName(event.org_id)]);
+  const ids = members.map((m) => m.userId);
+  const [{ prefs, subs }, rsvpRes] = await Promise.all([
+    loadPrefsAndSubs(sb, ids),
+    sb.from('event_rsvps').select('*').eq('event_id', eventId),
+  ]);
   const rsvps = new Map<string, EventRsvpRow>();
   for (const r of (rsvpRes.data as EventRsvpRow[] | null) ?? []) rsvps.set(r.clerk_user_id, r);
-  return { sb, event, member: toMemberEvent(event, name), orgName: name, members, prefs, subs, rsvps, nowMs };
+  return { sb, event, member: toMemberEvent(event, name), orgName: name, members, prefs, subs, rsvps, nowMs, fallbackTz: event.tz };
 }
 
 /* ------------------------------------------------------------ helpers */
@@ -97,15 +118,15 @@ export function answerOf(ctx: EventContext, userId: string): Answer {
   return ctx.rsvps.get(userId)?.status ?? 'none';
 }
 
-export function memberTz(ctx: EventContext, userId: string): string {
-  return safeTz(ctx.prefs.get(userId)?.tz, ctx.event.tz);
+export function memberTz(ctx: PushContext, userId: string): string {
+  return safeTz(ctx.prefs.get(userId)?.tz, ctx.fallbackTz);
 }
 
-export function hasLivePush(ctx: EventContext, userId: string): boolean {
+export function hasLivePush(ctx: PushContext, userId: string): boolean {
   return (ctx.subs.get(userId) ?? []).some((s) => isLiveSub(s, ctx.nowMs));
 }
 
-export function emailOn(ctx: EventContext, userId: string): boolean {
+export function emailOn(ctx: PushContext, userId: string): boolean {
   return ctx.prefs.get(userId)?.email_reminders ?? true;
 }
 
@@ -164,7 +185,7 @@ export interface PushRun {
   quiet: string[];
 }
 
-export async function runPush(ctx: EventContext, plan: PushPlan): Promise<PushRun> {
+export async function runPush(ctx: PushContext, plan: PushPlan): Promise<PushRun> {
   const none: PushRun = { pushed: 0, quiet: [] };
   if (!isPushConfigured()) return none;
   const withSubs = plan.recipients.filter((m) => (ctx.subs.get(m.userId) ?? []).length > 0);
@@ -230,7 +251,7 @@ export interface EmailRun {
   skippedBudget: number;
 }
 
-export async function runEmail(ctx: EventContext, plan: EmailPlan): Promise<EmailRun> {
+export async function runEmail(ctx: PushContext, plan: EmailPlan): Promise<EmailRun> {
   const none: EmailRun = { emailed: 0, skippedBudget: 0 };
   const withEmail = plan.recipients.filter((m) => !!m.email && m.email.includes('@'));
   if (withEmail.length === 0) return none;

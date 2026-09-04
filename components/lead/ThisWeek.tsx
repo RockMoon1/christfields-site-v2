@@ -69,6 +69,21 @@ export function ThisWeek({ group, tz }: { group: LeadGroup; tz: string }) {
         </div>
       )}
 
+      {group.themes.length > 0 && (
+        <div className="mt-4 rounded-sm border border-border-sub bg-black-2/60 px-4 py-3">
+          <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted">This fortnight the group is carrying</p>
+          <p className="mt-1 font-display text-xl text-ivory">{group.themes.map((t) => t.label).join(', ')}</p>
+          <ul className="mt-2 space-y-1.5">
+            {group.themes.map((t) => (
+              <li key={t.key} className="text-sm leading-snug text-silver">
+                <span className="text-ivory-dim">{t.passage}.</span> {t.nudge}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-muted">Theme words from private reflections. No names, no words, no counts.</p>
+        </div>
+      )}
+
       <p className="mt-4 text-xs text-muted">
         {group.informed} of {group.total} have told us when they are usually free.
       </p>

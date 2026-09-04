@@ -324,6 +324,9 @@ export interface LeaderBriefInput {
   questions: string[];
   /** The leader's own context notes for the passage. Leaders only. */
   contextNotes?: string[];
+  /** Theme words from the group's quiet reflections, never names or counts. */
+  themes?: { label: string; passage: string; nudge: string }[];
+  prayersThisWeek?: number;
   openUrl: string;
 }
 
@@ -356,6 +359,19 @@ export function leaderBriefMail(b: LeaderBriefInput): Mail {
     <ul style="margin:0;padding-left:18px;font-size:15px;line-height:1.7;color:${C.body};">${b.contextNotes.map((q) => `<li>${escapeHtml(q)}</li>`).join('')}</ul>`
         : ''
     }
+    ${
+      b.themes && b.themes.length
+        ? `<p style="margin:22px 0 6px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:${C.faint};">The group is carrying</p>
+    ${b.themes
+      .map(
+        (t) =>
+          `<p style="margin:0 0 8px 0;font-size:15px;line-height:1.6;color:${C.body};"><strong style="color:${C.ink};">${escapeHtml(t.label)}</strong> &middot; ${escapeHtml(t.passage)}<br><span style="color:${C.soft};">${escapeHtml(t.nudge)}</span></p>`,
+      )
+      .join('')}
+    <p style="margin:0;font-size:12px;color:${C.faint};">Theme words only, from what people wrote privately this fortnight. No names, no words.</p>`
+        : ''
+    }
+    ${b.prayersThisWeek ? `<p style="margin:16px 0 0 0;font-size:14px;color:${C.soft};">${b.prayersThisWeek} ${b.prayersThisWeek === 1 ? 'prayer' : 'prayers'} on the wall this week.</p>` : ''}
     ${buttons([{ label: 'Open the event', href: b.openUrl }])}
     <p style="margin:8px 0 0 0;font-size:13px;color:${C.soft};">After it ends, tap who came. It takes a minute and it is how you notice who is drifting.</p>`;
   const text = [
@@ -370,6 +386,10 @@ export function leaderBriefMail(b: LeaderBriefInput): Mail {
     ...(b.questions.length ? ['', 'Questions that might come up:', ...b.questions.map((q) => `- ${q}`)] : []),
     ...passageText(e),
     ...(b.contextNotes && b.contextNotes.length ? ['', 'Context for you:', ...b.contextNotes.map((q) => `- ${q}`)] : []),
+    ...(b.themes && b.themes.length
+      ? ['', 'The group is carrying (theme words only, no names):', ...b.themes.map((t) => `- ${t.label}: ${t.passage}. ${t.nudge}`)]
+      : []),
+    ...(b.prayersThisWeek ? ['', `${b.prayersThisWeek} ${b.prayersThisWeek === 1 ? 'prayer' : 'prayers'} on the wall this week.`] : []),
     '',
     `Open the event: ${b.openUrl}`,
   ].join('\n');
@@ -378,4 +398,51 @@ export function leaderBriefMail(b: LeaderBriefInput): Mail {
     html: shell(subject, `${b.going.length} in, ${b.maybe.length} not sure, ${b.silent.length} quiet.`, inner, 'Leader briefs go to the leaders of this group on the morning of a gathering.'),
     text,
   };
+}
+
+/* ============================================================
+   Safety: a person, not a page.
+   ============================================================ */
+
+/**
+ * Sent once to each leader (and the founder) when a member's private
+ * reflection matched the crisis patterns. Carries no words, no theme, no name.
+ */
+export function safetyLeaderMail(v: { leaderFirstName: string; groupName: string; openUrl: string }): Mail {
+  const subject = `Someone in ${v.groupName} needs a person this week`;
+  const inner = `${h1('Make room this week.')}
+    ${para(`Hi ${escapeHtml(v.leaderFirstName || 'there')},`)}
+    ${para(`Someone in ${escapeHtml(v.groupName)} wrote something privately this week that needs a person, not a page. We do not know who, and we are not telling you what. Please make room for one-to-ones over the next few days: a text, a coffee, a longer stay after the gathering.`)}
+    ${para('If they choose to, they can tell you it was them with one tap; you would get a second email with a first name. Until then, be the kind of leader people can bring the hard thing to.')}
+    ${para('If anyone says they are in danger right now, call 911. For thoughts of suicide or self-harm, the 988 Suicide & Crisis Lifeline answers calls and texts around the clock.', `color:${C.soft};font-size:14px;`)}
+    ${buttons([{ label: 'Open your group', href: v.openUrl }])}`;
+  const text = [
+    `Hi ${v.leaderFirstName || 'there'},`,
+    '',
+    `Someone in ${v.groupName} wrote something privately this week that needs a person, not a page. We do not know who, and we are not telling you what. Please make room for one-to-ones over the next few days.`,
+    '',
+    'If they choose to, they can tell you it was them with one tap and you will get a second email with a first name.',
+    '',
+    'If anyone says they are in danger right now, call 911. For thoughts of suicide or self-harm, 988 answers calls and texts around the clock.',
+    '',
+    `Open your group: ${v.openUrl}`,
+  ].join('\n');
+  return { subject, html: shell(subject, 'Please make room for one-to-ones this week.', inner, 'Sent to the leaders of this group and to Christ Fields.'), text };
+}
+
+/** The member tapped "let my leader know it was me". First name only. */
+export function safetyRevealMail(v: { leaderFirstName: string; memberFirstName: string; groupName: string }): Mail {
+  const subject = `${v.memberFirstName} would like you to reach out`;
+  const inner = `${h1(`It was ${escapeHtml(v.memberFirstName)}.`)}
+    ${para(`Hi ${escapeHtml(v.leaderFirstName || 'there')},`)}
+    ${para(`${escapeHtml(v.memberFirstName)} in ${escapeHtml(v.groupName)} chose to let you know that the note you got this week was theirs. They want you to reach out. Gently, soon, and in person if you can.`)}
+    ${para('You still have none of their words. Let them tell you as much or as little as they want.', `color:${C.soft};font-size:14px;`)}`;
+  const text = [
+    `Hi ${v.leaderFirstName || 'there'},`,
+    '',
+    `${v.memberFirstName} in ${v.groupName} chose to let you know that the note you got this week was theirs. They want you to reach out. Gently, soon, and in person if you can.`,
+    '',
+    'You still have none of their words. Let them tell you as much or as little as they want.',
+  ].join('\n');
+  return { subject, html: shell(subject, `${v.memberFirstName} would like you to reach out.`, inner, 'Sent because the member tapped "let my leader know it was me".'), text };
 }

@@ -3,6 +3,7 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { revalidatePath } from 'next/cache';
 import { getSupabase, type CommunityPrayer, type CommunityIntercession } from '@/lib/supabase';
+import { notifyPrayer } from '@/lib/notify/prayer';
 
 /**
  * Server actions for the Community prayer wall.
@@ -157,10 +158,14 @@ export async function postCommunityPrayer(input: {
   if (error) throw error;
   if (!data) throw new Error('Insert returned no row');
 
+  // One phone alert to the poster's groups; never fails the post.
+  const saved = data as CommunityPrayer;
+  await notifyPrayer('posted', { id: saved.id, title: saved.title, authorName: authorName, authorId: userId });
+
   revalidatePath('/dashboard/community');
   revalidatePath('/dashboard');
 
-  return { ...(data as CommunityPrayer), prayedByMe: false, mine: true };
+  return { ...saved, prayedByMe: false, mine: true };
 }
 
 /* ============================================================
@@ -222,13 +227,14 @@ export async function markCommunityAnswered(id: string): Promise<void> {
   // Ownership check.
   const { data: row, error: fetchErr } = await sb
     .from('community_prayers')
-    .select('clerk_user_id')
+    .select('clerk_user_id, title, author_name, answered')
     .eq('id', id)
     .maybeSingle();
 
   if (fetchErr) throw fetchErr;
   if (!row) throw new Error('Prayer not found');
-  if ((row as { clerk_user_id: string }).clerk_user_id !== userId) {
+  const prayer = row as { clerk_user_id: string; title: string; author_name: string; answered: boolean };
+  if (prayer.clerk_user_id !== userId) {
     throw new Error('Only the author can mark a prayer answered');
   }
 
@@ -239,6 +245,10 @@ export async function markCommunityAnswered(id: string): Promise<void> {
     .eq('clerk_user_id', userId);
 
   if (error) throw error;
+
+  if (!prayer.answered) {
+    await notifyPrayer('answered', { id, title: prayer.title, authorName: prayer.author_name, authorId: userId });
+  }
 
   revalidatePath('/dashboard/community');
   revalidatePath('/dashboard');

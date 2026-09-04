@@ -21,6 +21,10 @@ import {
 } from '@/lib/schedule/public-event';
 import { ensureMemberPrefs } from '@/lib/dashboard/prefs';
 import { getMemberTimeZone } from '@/lib/dashboard/timezone-server';
+import { dayKeyInZone } from '@/lib/dashboard/timezone';
+import { whenInWords } from '@/lib/dashboard/format';
+import { questionForWeek, weekKey } from '@/lib/dashboard/questions';
+import { lastSeenByMember, nudgeDue, RHYTHM_DAYS } from '@/lib/dashboard/rhythm';
 
 /**
  * Member-facing schedule actions.
@@ -55,6 +59,8 @@ export interface ChangedLine {
 export type HomeSlotCard =
   | { kind: 'hello'; orgName: string }
   | { kind: 'recently'; eventId: string; title: string; thanks: string }
+  | { kind: 'rhythm'; eventId: string; title: string; when: string }
+  | { kind: 'quiet'; question: string; weekKey: string }
   | { kind: 'free' }
   | { kind: 'install' }
   | { kind: 'push' };
@@ -135,7 +141,7 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     const until = new Date(now + WEEKS_AHEAD * 7 * 86_400_000).toISOString();
     const weekAgo = new Date(now - 7 * 86_400_000).toISOString();
 
-    const [eventsRes, changesRes, myRsvpRes, weeklyRes] = await Promise.all([
+    const [eventsRes, changesRes, myRsvpRes, weeklyRes, quietRes, seenRes] = await Promise.all([
       sb
         .from('events')
         .select('*')
@@ -153,6 +159,16 @@ export async function getHomeFeed(): Promise<HomeFeed> {
         .limit(20),
       sb.from('event_rsvps').select('event_id', { count: 'exact', head: true }).eq('clerk_user_id', userId),
       sb.from('availability_weekly').select('id', { count: 'exact', head: true }).eq('clerk_user_id', userId),
+      sb
+        .from('quiet_reflections')
+        .select('id', { count: 'exact', head: true })
+        .eq('clerk_user_id', userId)
+        .gte('created_at', new Date(now - 7 * 86_400_000).toISOString()),
+      // Where this member was last seen: marked present, or said yes to something that has happened.
+      Promise.all([
+        sb.from('event_attendance').select('clerk_user_id, event_id').eq('clerk_user_id', userId).eq('present', true).limit(60),
+        sb.from('event_rsvps').select('clerk_user_id, event_id').eq('clerk_user_id', userId).eq('status', 'going').limit(60),
+      ]),
     ]);
 
     if (eventsRes.error) console.error('getHomeFeed: events failed', eventsRes.error);
@@ -186,6 +202,37 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     const hasAnswered = (myRsvpRes.count ?? 0) > 0;
     const hasAvailability = (weeklyRes.count ?? 0) > 0;
     const thanks = changes.find((c) => c.kind === 'thanks');
+    const upcoming = events.filter((e) => e.status === 'scheduled');
+    const cancelledRecent = events.filter((e) => e.status === 'cancelled');
+    const [next, ...later] = upcoming;
+
+    // The two-week rhythm: seen = present, or a yes to something that has happened.
+    const [attRows, goingRows] = seenRes;
+    const seenEventIds = Array.from(
+      new Set([
+        ...(((attRows.data as { event_id: string }[] | null) ?? []).map((r) => r.event_id)),
+        ...(((goingRows.data as { event_id: string }[] | null) ?? []).map((r) => r.event_id)),
+      ]),
+    );
+    const eventStarts = new Map<string, string>(rows.map((e) => [e.id, e.starts_at]));
+    const missingStarts = seenEventIds.filter((id) => !eventStarts.has(id));
+    if (missingStarts.length > 0) {
+      const { data } = await sb.from('events').select('id, starts_at').in('id', missingStarts);
+      for (const e of (data as { id: string; starts_at: string }[] | null) ?? []) eventStarts.set(e.id, e.starts_at);
+    }
+    const lastSeen = lastSeenByMember({
+      attendance: (attRows.data as { clerk_user_id: string; event_id: string }[] | null) ?? [],
+      going: (goingRows.data as { clerk_user_id: string; event_id: string }[] | null) ?? [],
+      eventStarts,
+      nowMs: now,
+    }).get(userId);
+    const joinedMs = Math.min(...memberships.map((m) => m.joinedAtMs || now));
+    const cutoff = now - RHYTHM_DAYS * 86_400_000;
+    const awayAWhile = joinedMs < cutoff && (lastSeen === undefined || lastSeen < cutoff);
+    const rhythmDue = !!next && next.myStatus !== 'going' && awayAWhile && nudgeDue(prefs.rhythm_nudged_at ?? null, now);
+
+    const dayKey = dayKeyInZone(tz && tz !== 'UTC' ? tz : 'America/Denver');
+    const quietDue = hasAnswered && (quietRes.count ?? 0) === 0;
 
     let slot: HomeSlotCard | null = null;
     if (!prefs.hello_seen) slot = { kind: 'hello', orgName: memberships[0]?.orgName ?? 'our group' };
@@ -196,13 +243,12 @@ export async function getHomeFeed(): Promise<HomeFeed> {
         title: titleById.get(thanks.event_id) ?? 'Last time',
         thanks: thanks.summary,
       };
-    } else if (!prefs.free_nudge_seen && hasAnswered && !hasAvailability) slot = { kind: 'free' };
+    } else if (rhythmDue && next) {
+      slot = { kind: 'rhythm', eventId: next.id, title: next.title, when: whenInWords(next.startsAt, tz && tz !== 'UTC' ? tz : next.tz, now) };
+    } else if (quietDue) slot = { kind: 'quiet', question: questionForWeek(dayKey).text, weekKey: weekKey(dayKey) };
+    else if (!prefs.free_nudge_seen && hasAnswered && !hasAvailability) slot = { kind: 'free' };
     else if (!prefs.install_nudge_seen && hasAnswered) slot = { kind: 'install' };
     else if (!prefs.push_primer_seen && hasAnswered) slot = { kind: 'push' };
-
-    const upcoming = events.filter((e) => e.status === 'scheduled');
-    const cancelledRecent = events.filter((e) => e.status === 'cancelled');
-    const [next, ...later] = upcoming;
 
     return {
       tz,
