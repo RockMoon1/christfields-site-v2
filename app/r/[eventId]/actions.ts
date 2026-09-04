@@ -6,16 +6,16 @@ import { getSupabase, type EventRow, type EventRsvpRow, type EventRsvpStatus } f
 import { userIsMemberOf, orgName } from '@/lib/groups/membership';
 import { toMemberEvent, toFaces, type MemberEvent, type RsvpFace } from '@/lib/schedule/public-event';
 import { googleTemplateUrl } from '@/lib/schedule/ics-export';
-import { verifyToken } from '@/lib/notify/tokens';
+import { verifyToken, mintIcsToken } from '@/lib/notify/tokens';
 import { takeRateLimit } from '@/lib/rate-limit';
 import { whenInWords } from '@/lib/dashboard/format';
 import { appUrl } from '@/lib/dashboard/prefs';
 
 /**
  * Answer from a link with no session. The token (HMAC over event, member,
- * expiry) arrives in the URL fragment and is posted here; nothing mutates on
- * GET. Every call re-verifies the signature, the expiry, the event, and that
- * the member still belongs to its group.
+ * expiry, purpose 'rsvp') arrives in the URL fragment and is posted here;
+ * nothing mutates on GET. Every call re-verifies the signature, the expiry,
+ * the purpose, the event, and that the member still belongs to its group.
  */
 
 export interface TokenView {
@@ -26,6 +26,8 @@ export interface TokenView {
   myPlan: string;
   faces: RsvpFace[];
   token: string;
+  /** A download-only token for the .ics link (never the answer token). */
+  icsToken?: string;
 }
 
 async function ip(): Promise<string> {
@@ -34,7 +36,7 @@ async function ip(): Promise<string> {
 }
 
 async function resolve(token: string, eventId: string): Promise<{ userId: string; event: EventRow } | null> {
-  const claims = verifyToken(token);
+  const claims = verifyToken(token, 'rsvp');
   if (!claims || claims.eventId !== eventId) return null;
   const sb = getSupabase();
   const { data } = await sb.from('events').select('*').eq('id', eventId).maybeSingle();
@@ -63,6 +65,7 @@ export async function viewByToken(token: string, eventId: string): Promise<Token
       myPlan: mine?.plan ?? '',
       faces: toFaces(rsvps),
       token,
+      icsToken: mintIcsToken(eventId, r.userId, r.event.starts_at),
     };
   } catch (err) {
     console.error('viewByToken failed', err);

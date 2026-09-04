@@ -18,7 +18,7 @@ import { getGroupAvailability, type GroupAvailability } from '@/lib/schedule/gro
 import { recordChange } from '@/lib/notify/activity';
 import { fanOutChange, nudgeSilent, type NudgeResult } from '@/lib/notify/fanout';
 import { anyDelivery } from '@/lib/notify/deliveries';
-import { dedupeKey } from '@/lib/notify/rules';
+import { dedupeKey, emailWindowStartIso } from '@/lib/notify/rules';
 import { whenInWords } from '@/lib/dashboard/format';
 import { toMemberEvent, type MemberEvent } from '@/lib/schedule/public-event';
 import { appUrl } from '@/lib/dashboard/prefs';
@@ -220,12 +220,16 @@ export async function updateEvent(eventId: string, input: EditInput): Promise<{ 
     };
 
     const sb = getSupabase();
-    const { error } = await sb
+    // Optimistic lock on version: two leaders editing at once cannot silently share one change notice.
+    const { data: updated, error } = await sb
       .from('events')
       .update({ ...patch, starts_at: start.toISOString(), ends_at: endsAt, version: (event.version ?? 0) + 1 })
       .eq('id', eventId)
-      .eq('org_id', event.org_id);
+      .eq('org_id', event.org_id)
+      .eq('version', event.version ?? 0)
+      .select('id');
     if (error) return { ok: false, error: 'Could not save the change.' };
+    if (!updated || updated.length === 0) return { ok: false, error: 'Someone else just changed this one. Reload and try again.' };
 
     if (input.scope === 'following' && event.series_id) {
       const deltaMs = start.getTime() - new Date(event.starts_at).getTime();
@@ -276,10 +280,11 @@ export async function cancelEvent(eventId: string, reason: string): Promise<{ ok
     const ctx = await leaderOfEvent(eventId);
     if (!ctx) return { ok: false };
     const { event, userId } = ctx;
+    if (event.status !== 'scheduled') return { ok: true };
     const sb = getSupabase();
     const now = new Date().toISOString();
     const cleanReason = (reason || '').trim().slice(0, 200);
-    const { error } = await sb
+    const { data: updated, error } = await sb
       .from('events')
       .update({
         status: 'cancelled',
@@ -289,8 +294,12 @@ export async function cancelEvent(eventId: string, reason: string): Promise<{ ok
         version: (event.version ?? 0) + 1,
       })
       .eq('id', eventId)
-      .eq('org_id', event.org_id);
+      .eq('org_id', event.org_id)
+      .eq('status', 'scheduled')
+      .select('id');
     if (error) return { ok: false };
+    // A second tap or a second tab already did it: nothing more to record.
+    if (!updated || updated.length === 0) return { ok: true };
     const changeId = await recordChange(sb, {
       orgId: event.org_id,
       eventId,
@@ -358,14 +367,17 @@ export async function getLeaderEvent(eventId: string): Promise<LeaderEventView |
       sb.from('event_rsvps').select('*').eq('event_id', eventId),
       sb.from('event_attendance').select('*').eq('event_id', eventId),
       sb.from('event_slots').select('*').eq('event_id', eventId).order('created_at', { ascending: true }),
+      // "Could not be emailed today": distinct people skipped in the current email day.
       sb
         .from('notification_deliveries')
-        .select('id', { count: 'exact', head: true })
+        .select('clerk_user_id')
         .like('dedupe_key', `${eventId}:%`)
         .eq('channel', 'email')
-        .eq('status', 'skipped_budget'),
+        .eq('status', 'skipped_budget')
+        .gte('created_at', emailWindowStartIso(Date.now())),
       anyDelivery(sb, dedupeKey(eventId, 'nudge')),
     ]);
+    const skippedToday = new Set(((skippedRes.data as { clerk_user_id: string }[] | null) ?? []).map((r) => r.clerk_user_id)).size;
     const rsvps = (rsvpRes.data as EventRsvpRow[] | null) ?? [];
     const attendance = new Map<string, boolean>(
       ((attRes.data as EventAttendanceRow[] | null) ?? []).map((a) => [a.clerk_user_id, a.present]),
@@ -424,7 +436,7 @@ export async function getLeaderEvent(eventId: string): Promise<LeaderEventView |
       slots,
       attendanceOpen,
       markedCount: attendance.size,
-      skippedEmails: skippedRes.count ?? 0,
+      skippedEmails: skippedToday,
       shareText,
       canNudge: event.status === 'scheduled' && !event.series_id && startMs > now && silent.length > 0,
       nudged,
@@ -578,7 +590,7 @@ export async function postThanks(eventId: string, note: string): Promise<{ ok: b
 
 /** Ask the people who have not answered. Once per event, one-offs only. */
 export async function nudgeEvent(eventId: string): Promise<NudgeResult> {
-  const none: NudgeResult = { ok: false, pushed: 0, emailed: 0, skippedBudget: 0, quiet: 0 };
+  const none: NudgeResult = { ok: false, pushed: 0, emailed: 0, skippedBudget: 0, unreachable: 0 };
   try {
     const ctx = await leaderOfEvent(eventId);
     if (!ctx) return none;

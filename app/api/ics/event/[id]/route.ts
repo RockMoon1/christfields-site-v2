@@ -25,7 +25,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   let userId: string | null = null;
   const token = req.nextUrl.searchParams.get('t');
   if (token) {
-    const claims = verifyToken(token);
+    const claims = verifyToken(token, 'ics');
     if (!claims || claims.eventId !== id) return NextResponse.json({ error: 'Link expired' }, { status: 403 });
     userId = claims.userId;
   } else {

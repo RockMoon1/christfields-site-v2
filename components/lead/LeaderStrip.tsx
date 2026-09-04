@@ -93,19 +93,25 @@ export function LeaderStrip({ view, whenText }: { view: LeaderEventView; whenTex
                 return;
               }
               const reached = res.pushed + res.emailed;
+              const parts: string[] = [];
+              if (res.pushed) parts.push(`${res.pushed} phone ${res.pushed === 1 ? 'alert' : 'alerts'}`);
+              if (res.emailed) parts.push(`${res.emailed} ${res.emailed === 1 ? 'email' : 'emails'}`);
+              const tail: string[] = [];
+              if (res.skippedBudget) tail.push(`${res.skippedBudget} could not be emailed today`);
+              if (res.unreachable) tail.push(`${res.unreachable} ${res.unreachable === 1 ? 'has' : 'have'} no way to be reached`);
               setNudge({
                 done: true,
                 line: res.already
                   ? 'Already nudged for this one.'
                   : reached === 0
                     ? 'Nobody could be reached right now. Paste the share text into the group chat.'
-                    : `Asked ${reached} ${reached === 1 ? 'person' : 'people'}${res.quiet ? `; ${res.quiet} will hear in the morning` : ''}.`,
+                    : `Sent ${parts.join(' and ')}.${tail.length ? ` ${tail.join('; ')}. Paste the share text into the group chat for them.` : ''}`,
               });
             })
           }
           className="mt-3 inline-flex min-h-[44px] items-center rounded-sm border border-gold/45 px-4 text-[11px] font-medium uppercase tracking-[0.1em] text-gold hover:bg-gold hover:text-black disabled:opacity-60"
         >
-          Nudge the {view.silent.length} who have not answered
+          {view.silent.length === 1 ? `Nudge ${view.silent[0].name}` : `Nudge the ${view.silent.length} who have not answered`}
         </button>
       )}
       {nudge.line && <p className="mt-2 text-sm text-ivory-dim">{nudge.line}</p>}
@@ -131,7 +137,7 @@ export function LeaderStrip({ view, whenText }: { view: LeaderEventView; whenTex
 
       {view.skippedEmails > 0 && (
         <p className="mt-3 text-sm text-gold-lt">
-          {view.skippedEmails} people could not be emailed today. Paste the share text into the group chat.
+          {view.skippedEmails === 1 ? '1 person' : `${view.skippedEmails} people`} could not be emailed today. Paste the share text into the group chat.
         </p>
       )}
 

@@ -7,6 +7,9 @@ import type { PushSubscriptionRow } from '@/lib/supabase';
  * delivery, which is why liveness lives in the device ack (/api/push/ack),
  * not here. This module only sends, deletes dead endpoints (404/410), and
  * counts failures.
+ *
+ * Sends run ten at a time with a socket timeout, so one slow or hostile
+ * endpoint can neither stall a leader's action nor eat the tick's budget.
  */
 
 export interface PushMessage {
@@ -22,6 +25,9 @@ export interface PushOptions {
   urgency: 'high' | 'normal' | 'low';
   ttlSeconds: number;
 }
+
+const CONCURRENCY = 10;
+const SOCKET_TIMEOUT_MS = 5_000;
 
 let configured: boolean | null = null;
 
@@ -44,7 +50,14 @@ export function isPushConfigured(): boolean {
   return configured;
 }
 
+export interface SubOutcome {
+  subId: string;
+  userId: string;
+  ok: boolean;
+}
+
 export interface PushOutcome {
+  outcomes: SubOutcome[];
   sent: number;
   failed: number;
   removed: number;
@@ -55,14 +68,14 @@ function statusOf(err: unknown): number {
   return e?.statusCode ?? e?.status ?? 0;
 }
 
-/** Send one message to a set of subscriptions. Never throws. */
+/** Send one message to a set of subscriptions (any members). Never throws. */
 export async function pushToSubs(
   sb: SupabaseClient,
   subs: PushSubscriptionRow[],
   message: PushMessage,
   opts: PushOptions,
 ): Promise<PushOutcome> {
-  const out: PushOutcome = { sent: 0, failed: 0, removed: 0 };
+  const out: PushOutcome = { outcomes: [], sent: 0, failed: 0, removed: 0 };
   if (subs.length === 0 || !isPushConfigured()) return out;
 
   const payload = JSON.stringify({
@@ -73,22 +86,23 @@ export async function pushToSubs(
   });
 
   const dead: string[] = [];
-  const failed: string[] = [];
-  const CHUNK = 10;
-  for (let i = 0; i < subs.length; i += CHUNK) {
+  const failed: PushSubscriptionRow[] = [];
+  for (let i = 0; i < subs.length; i += CONCURRENCY) {
     await Promise.all(
-      subs.slice(i, i + CHUNK).map(async (s) => {
+      subs.slice(i, i + CONCURRENCY).map(async (s) => {
         try {
           await webpush.sendNotification(
             { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
             payload,
-            { TTL: opts.ttlSeconds, urgency: opts.urgency },
+            { TTL: opts.ttlSeconds, urgency: opts.urgency, timeout: SOCKET_TIMEOUT_MS },
           );
+          out.outcomes.push({ subId: s.id, userId: s.clerk_user_id, ok: true });
           out.sent += 1;
         } catch (err) {
           const code = statusOf(err);
           if (code === 404 || code === 410) dead.push(s.id);
-          else failed.push(s.id);
+          else failed.push(s);
+          out.outcomes.push({ subId: s.id, userId: s.clerk_user_id, ok: false });
         }
       }),
     );
@@ -99,13 +113,15 @@ export async function pushToSubs(
     out.removed = dead.length;
   }
   if (failed.length > 0) {
-    // No atomic increment through PostgREST without an RPC; small N, so per row.
-    for (const id of failed) {
-      const row = subs.find((s) => s.id === id);
-      await sb
-        .from('push_subscriptions')
-        .update({ fail_count: (row?.fail_count ?? 0) + 1 })
-        .eq('id', id);
+    // One UPDATE per distinct current count instead of one per row.
+    const byCount = new Map<number, string[]>();
+    for (const s of failed) {
+      const list = byCount.get(s.fail_count) ?? [];
+      list.push(s.id);
+      byCount.set(s.fail_count, list);
+    }
+    for (const [n, ids] of byCount) {
+      await sb.from('push_subscriptions').update({ fail_count: n + 1 }).in('id', ids);
     }
     out.failed = failed.length;
   }

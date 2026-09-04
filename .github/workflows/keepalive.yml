@@ -2,8 +2,10 @@ name: keepalive
 
 # Backstop for two free-tier sleep rules:
 #  - Supabase pauses a project after about a week with no traffic. The hourly
-#    Netlify tick normally keeps it awake; this touches the database weekly
-#    in case that stops (the feed route runs one small query, no secret needed).
+#    Netlify tick normally keeps it awake; this touches the database weekly in
+#    case that stops. The feed route looks the token up in member_prefs, which
+#    is one real query; the token below is long enough to pass the route's
+#    length check and can never match a real feed token, so it answers 404.
 #  - If CRON_SECRET is set as a repository secret, also run the tick itself.
 # GitHub disables scheduled workflows after 60 days without repo activity, so
 # the founder checklist has a monthly "is keepalive still green?" line.
@@ -19,11 +21,14 @@ jobs:
     steps:
       - name: Touch the database through the public feed route
         run: |
-          code=$(curl -s -o /dev/null -w '%{http_code}' https://christfields2717.com/api/ics/feed/keepalive-ping)
-          echo "feed route answered $code (404 is expected; the query still ran)"
+          code=$(curl -s -o /dev/null -w '%{http_code}' https://christfields2717.com/api/ics/feed/keepalive-ping-not-a-real-token-0000)
+          echo "feed route answered $code"
+          if [ "$code" != "404" ]; then echo "expected 404 from the token lookup; the site may be down or paused"; exit 1; fi
       - name: Run the hourly tick if the secret is available
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
-          if [ -z "$CRON_SECRET" ]; then echo "CRON_SECRET not set as a repo secret; skipping"; exit 0; fi
-          curl -s -X POST -H "authorization: Bearer $CRON_SECRET" https://christfields2717.com/api/cron/tick
+          if [ -z "$CRON_SECRET" ]; then echo "CRON_SECRET not set as a repo secret; skipping (the database ping above still ran)"; exit 0; fi
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H "authorization: Bearer $CRON_SECRET" https://christfields2717.com/api/cron/tick)
+          echo "tick answered $code"
+          if [ "$code" != "200" ]; then exit 1; fi

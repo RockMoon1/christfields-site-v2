@@ -1,7 +1,14 @@
 import { Resend } from 'resend';
 import { getSupabase } from '@/lib/supabase';
 import { takeRateLimit } from '@/lib/rate-limit';
-import { EMAIL_BUCKET, EMAIL_WINDOW_SECONDS, TIER_LIMITS, emailWindowStartIso, type EmailTier } from './rules';
+import {
+  EMAIL_BUCKET,
+  EMAIL_WINDOW_SECONDS,
+  TIER_LIMITS,
+  emailWindowStartIso,
+  isEmailBudgetError,
+  type EmailTier,
+} from './rules';
 
 /**
  * Transactional email with a shared, tiered daily budget.
@@ -12,6 +19,9 @@ import { EMAIL_BUCKET, EMAIL_WINDOW_SECONDS, TIER_LIMITS, emailWindowStartIso, t
  * stops at 50. The counter is the durable `rate_limit_take` bucket; a fan-out
  * PEEKS the window first and only actual sends take a slot, so skipped
  * recipients never inflate the count.
+ *
+ * Fan-outs go through the batch endpoint: one HTTP request per fan-out, so
+ * Resend's per-second request limit is never in play.
  *
  * Fail closed: if the counter RPC is missing, nothing but urgent mail goes out.
  */
@@ -24,8 +34,6 @@ export interface OutgoingEmail {
   subject: string;
   html: string;
   text: string;
-  /** Stable per (thing, recipient) so a retried run cannot double-send. */
-  idempotencyKey: string;
 }
 
 export function isEmailConfigured(): boolean {
@@ -58,7 +66,11 @@ export async function peekEmailBudget(tier: EmailTier, nowMs: number = Date.now(
   }
 }
 
-/** Take one slot for a tier. False means over budget (or not durable for a non-urgent tier). */
+/**
+ * Take one slot for a tier. False means over budget (or not durable for a
+ * non-urgent tier). Callers stop at the first refusal: the counter counts
+ * attempts, so continuing to ask would inflate it.
+ */
 export async function takeEmailSlot(tier: EmailTier): Promise<boolean> {
   const r = await takeRateLimit(EMAIL_BUCKET, TIER_LIMITS[tier], EMAIL_WINDOW_SECONDS);
   if (!r.durable) return tier === 'urgent';
@@ -71,19 +83,33 @@ function resend(): Resend {
   return client;
 }
 
-export async function sendOne(mail: OutgoingEmail): Promise<{ ok: boolean; id?: string; error?: string }> {
+export type BatchResult = { ok: true; ids: string[] } | { ok: false; error: string; budget: boolean };
+
+/** One request for up to 100 emails. `budget` marks refusals that mean the account is out of sends. */
+export async function sendBatch(mails: OutgoingEmail[], idempotencyKey: string): Promise<BatchResult> {
+  if (mails.length === 0) return { ok: true, ids: [] };
+  if (!isEmailConfigured()) return { ok: false, error: 'RESEND_API_KEY missing', budget: false };
+  try {
+    const { data, error } = await resend().batch.send(
+      mails.map((m) => ({ from: FROM, to: m.to, replyTo: REPLY_TO, subject: m.subject, html: m.html, text: m.text })),
+      { idempotencyKey: idempotencyKey.slice(0, 256) },
+    );
+    if (error) return { ok: false, error: `${error.name}: ${error.message}`, budget: isEmailBudgetError(error.name, error.message) };
+    const ids = (data?.data ?? []).map((d) => d.id);
+    return { ok: true, ids };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'send failed';
+    return { ok: false, error: message, budget: isEmailBudgetError(undefined, message) };
+  }
+}
+
+/** A single email (used outside fan-outs). */
+export async function sendOne(mail: OutgoingEmail, idempotencyKey: string): Promise<{ ok: boolean; id?: string; error?: string }> {
   if (!isEmailConfigured()) return { ok: false, error: 'RESEND_API_KEY missing' };
   try {
     const { data, error } = await resend().emails.send(
-      {
-        from: FROM,
-        to: mail.to,
-        replyTo: REPLY_TO,
-        subject: mail.subject,
-        html: mail.html,
-        text: mail.text,
-      },
-      { idempotencyKey: mail.idempotencyKey.slice(0, 256) },
+      { from: FROM, to: mail.to, replyTo: REPLY_TO, subject: mail.subject, html: mail.html, text: mail.text },
+      { idempotencyKey: idempotencyKey.slice(0, 256) },
     );
     if (error) return { ok: false, error: error.message };
     return { ok: true, id: data?.id };

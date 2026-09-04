@@ -4,8 +4,9 @@ import type { Config } from '@netlify/functions';
  * Netlify Scheduled Function: the hourly heartbeat that drives
  * /api/cron/tick. Free on every plan; @hourly is the finest schedule Netlify
  * offers. The route does about six seconds of work per call and says whether
- * more remains, so this runs it at most twice with a 10s abort each, well
- * inside the 30s function limit.
+ * more remains, so this runs it at most twice with a 12s abort each, inside
+ * the 30s function limit. (An abort only stops waiting; the route finishes
+ * the event it is on and its dedupe rows keep the next hour honest.)
  *
  * Env: CRON_SECRET (same value as the site), URL (set by Netlify).
  */
@@ -20,7 +21,7 @@ export default async () => {
   let remaining = true;
   for (let i = 0; i < 2 && remaining; i++) {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 10_000);
+    const timer = setTimeout(() => ctrl.abort(), 12_000);
     try {
       const res = await fetch(`${base}/api/cron/tick`, {
         method: 'POST',

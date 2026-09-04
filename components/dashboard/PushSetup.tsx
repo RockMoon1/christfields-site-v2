@@ -1,17 +1,20 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { cn } from '@/lib/utils';
 
 /**
  * Phone alerts, in three pieces:
  *  - usePush(): the browser state machine (unsupported / needs install /
  *    blocked / off / on) and the two actions.
- *  - PushPrimerCard: Home's one-time ask, after a first "I'm in".
+ *  - PushPrimerCard: Home's one-time ask, after a first "I'm in". The ask is
+ *    per MEMBER, so it is only spent on a real outcome (turned on, or "Not
+ *    now"), never because this particular device cannot do push.
  *  - PushSettingsCard: the switch on You.
- *  - PushSync: invisible; on every launch of an already-enabled device it
- *    re-sends the subscription so the server knows this device is alive
- *    (Safari does not reliably fire pushsubscriptionchange).
+ *  - PushSync: invisible; re-sends the subscription only when the endpoint or
+ *    the signed-in member changed (Safari does not reliably fire
+ *    pushsubscriptionchange). Liveness itself comes from device acks.
  *
  * The permission prompt only ever runs inside a tap, which iOS requires.
  */
@@ -30,6 +33,14 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
   return out;
 }
 
+function bufToBase64Url(buf: ArrayBuffer | null): string {
+  if (!buf) return '';
+  let s = '';
+  const bytes = new Uint8Array(buf);
+  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
 function isStandalone(): boolean {
   return (
     window.matchMedia('(display-mode: standalone)').matches ||
@@ -39,6 +50,10 @@ function isStandalone(): boolean {
 
 function isIOS(): boolean {
   return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+}
+
+function supported(): boolean {
+  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 }
 
 async function registration(): Promise<ServiceWorkerRegistration> {
@@ -60,14 +75,24 @@ async function postSubscription(sub: PushSubscription): Promise<boolean> {
   }
 }
 
+function remember(endpoint: string, userId: string) {
+  try {
+    localStorage.setItem(LS_KEY, `${endpoint}|${userId}`);
+  } catch {
+    // storage blocked; harmless
+  }
+}
+
 export function usePush() {
+  const { user } = useUser();
+  const userId = user?.id ?? '';
   const [state, setState] = useState<PushState>('loading');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const detect = useCallback(async () => {
     if (typeof window === 'undefined') return;
-    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+    if (!supported()) {
       setState(isIOS() && !isStandalone() ? 'needs_install' : 'unsupported');
       return;
     }
@@ -103,22 +128,24 @@ export function usePush() {
       }
       const reg = await registration();
       await navigator.serviceWorker.ready;
-      const sub =
-        (await reg.pushManager.getSubscription()) ??
-        (await reg.pushManager.subscribe({
+      let sub = await reg.pushManager.getSubscription();
+      // A subscription made under an older key cannot receive our pushes: replace it.
+      if (sub && bufToBase64Url(sub.options.applicationServerKey) !== VAPID_PUBLIC.replace(/=+$/, '')) {
+        await sub.unsubscribe().catch(() => undefined);
+        sub = null;
+      }
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC) as unknown as BufferSource,
-        }));
+        });
+      }
       const ok = await postSubscription(sub);
       if (!ok) {
         setError('Could not save it. Try once more.');
         return false;
       }
-      try {
-        localStorage.setItem(LS_KEY, `${sub.endpoint}|${Date.now()}`);
-      } catch {
-        // storage blocked; harmless
-      }
+      remember(sub.endpoint, userId);
       setState('on');
       return true;
     } catch (err) {
@@ -128,7 +155,7 @@ export function usePush() {
     } finally {
       setBusy(false);
     }
-  }, []);
+  }, [userId]);
 
   const disable = useCallback(async () => {
     setBusy(true);
@@ -163,11 +190,12 @@ export function PushPrimerCard({ onDone, onDismiss }: { onDone: () => void; onDi
   const { state, busy, error, enable } = usePush();
 
   useEffect(() => {
-    // Nothing to offer here: never show this card again.
-    if (state === 'unsupported' || state === 'unconfigured' || state === 'blocked' || state === 'on') onDone();
+    // Already on for this member on this device: the ask is answered.
+    if (state === 'on') onDone();
   }, [state, onDone]);
 
-  if (state === 'loading' || state === 'unsupported' || state === 'unconfigured' || state === 'blocked' || state === 'on') return null;
+  // Nothing this device can do about it: show nothing, but keep the ask for a device that can.
+  if (state !== 'off' && state !== 'needs_install') return null;
 
   if (state === 'needs_install') {
     return (
@@ -275,37 +303,34 @@ export function PushSettingsCard() {
   );
 }
 
-/* ------------------------------------------------------------ silent liveness */
+/* ------------------------------------------------------------ re-own on change */
 
 export function PushSync() {
+  const { user, isLoaded } = useUser();
+  const userId = user?.id ?? '';
+
   useEffect(() => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
-    if (Notification.permission !== 'granted' || !VAPID_PUBLIC) return;
+    if (!isLoaded || !userId || !supported() || !VAPID_PUBLIC) return;
+    if (Notification.permission !== 'granted') return;
     let stored = '';
     try {
       stored = localStorage.getItem(LS_KEY) || '';
     } catch {
       stored = '';
     }
-    const [endpoint, at] = stored.split('|');
-    const stale = !at || Date.now() - Number(at) > 86_400_000;
+    const [endpoint, owner] = stored.split('|');
     (async () => {
       try {
         const reg = await navigator.serviceWorker.getRegistration('/');
         const sub = reg ? await reg.pushManager.getSubscription() : null;
         if (!sub) return;
-        if (sub.endpoint === endpoint && !stale) return;
-        if (await postSubscription(sub)) {
-          try {
-            localStorage.setItem(LS_KEY, `${sub.endpoint}|${Date.now()}`);
-          } catch {
-            // ignore
-          }
-        }
+        // Same device, same member, same endpoint: nothing to say.
+        if (sub.endpoint === endpoint && owner === userId) return;
+        if (await postSubscription(sub)) remember(sub.endpoint, userId);
       } catch {
         // best effort
       }
     })();
-  }, []);
+  }, [isLoaded, userId]);
   return null;
 }

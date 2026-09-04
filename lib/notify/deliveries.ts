@@ -7,6 +7,9 @@ import type { NotificationDeliveryRow } from '@/lib/supabase';
  * back is theirs to send, and anything already present belongs to another run
  * (a retried action, a second tick). Afterwards the row is marked sent,
  * failed, or skipped. The tick sweeps stale `pending` rows to `failed`.
+ *
+ * Tick-driven kinds claim only what they can send right now (budget, quiet
+ * hours); everyone else is left unclaimed so the next hourly tick can try.
  */
 
 export type Channel = 'push' | 'email';
@@ -68,6 +71,23 @@ export async function markOne(
   if (error) console.error('markOne failed', error);
 }
 
+/** Give claims back (a run that could not finish); the next run may take them. */
+export async function releaseClaims(
+  sb: SupabaseClient,
+  dedupeKey: string,
+  userIds: string[],
+  channel: Channel,
+): Promise<void> {
+  if (userIds.length === 0) return;
+  await sb
+    .from('notification_deliveries')
+    .delete()
+    .eq('dedupe_key', dedupeKey)
+    .eq('channel', channel)
+    .eq('status', 'pending')
+    .in('clerk_user_id', userIds);
+}
+
 /** True when any row exists for the key (used for once-per-event things like Nudge). */
 export async function anyDelivery(sb: SupabaseClient, dedupeKey: string): Promise<boolean> {
   const { count } = await sb
@@ -77,7 +97,7 @@ export async function anyDelivery(sb: SupabaseClient, dedupeKey: string): Promis
   return (count ?? 0) > 0;
 }
 
-/** Push rows created since `sinceIso`, per member, for the daily ceiling. */
+/** Pushes actually SENT since `sinceIso`, per member, for the daily ceiling. */
 export async function pushCountsSince(
   sb: SupabaseClient,
   userIds: string[],
@@ -90,6 +110,7 @@ export async function pushCountsSince(
     .from('notification_deliveries')
     .select('clerk_user_id, dedupe_key')
     .eq('channel', 'push')
+    .eq('status', 'sent')
     .in('clerk_user_id', userIds)
     .gte('created_at', sinceIso)
     .limit(2000);

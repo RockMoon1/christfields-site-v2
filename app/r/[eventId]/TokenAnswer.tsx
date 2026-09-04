@@ -15,9 +15,22 @@ const PLANS: { key: string; label: string }[] = [
   { key: 'unsure', label: 'Not sure yet' },
 ];
 
+const LABELS: Record<EventRsvpStatus, string> = {
+  going: "I'm in",
+  maybe: 'Not sure yet',
+  not_going: "I can't make it",
+};
+
+/**
+ * The one-tap answer page. Nothing is recorded until the person taps: an
+ * email button may carry `s=` to say which answer they meant, and that button
+ * is highlighted and asks for one confirming tap. Opening a link never writes
+ * (mail scanners open links in headless browsers; a tap they cannot fake).
+ */
 export function TokenAnswer({ eventId }: { eventId: string }) {
   const [view, setView] = useState<TokenView | null | 'loading' | 'invalid'>('loading');
   const [status, setStatus] = useState<EventRsvpStatus | null>(null);
+  const [preset, setPreset] = useState<EventRsvpStatus | null>(null);
   const [plan, setPlan] = useState('');
   const [answered, setAnswered] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -26,9 +39,8 @@ export function TokenAnswer({ eventId }: { eventId: string }) {
     const hash = window.location.hash;
     const m = /(?:^|[#&])t=([^&]+)/.exec(hash);
     const token = m ? decodeURIComponent(m[1]) : '';
-    // Email buttons carry the answer too, so one tap from the inbox records it.
     const sm = /(?:^|[#&])s=(going|maybe|not_going)(?:&|$)/.exec(hash);
-    const preset = (sm ? sm[1] : null) as EventRsvpStatus | null;
+    if (sm) setPreset(sm[1] as EventRsvpStatus);
     if (!token) {
       setView('invalid');
       return;
@@ -42,25 +54,6 @@ export function TokenAnswer({ eventId }: { eventId: string }) {
         setView(v);
         setStatus(v.myStatus);
         setPlan(v.myPlan);
-        if (preset && v.event.status === 'scheduled' && v.myStatus !== preset) {
-          setStatus(preset);
-          setAnswered(true);
-          rsvpByToken(token, eventId, preset)
-            .then((res) => {
-              if (!res.ok) {
-                setStatus(v.myStatus);
-                setAnswered(false);
-              } else if (res.faces) {
-                setView({ ...v, faces: res.faces });
-              }
-            })
-            .catch(() => {
-              setStatus(v.myStatus);
-              setAnswered(false);
-            });
-        } else if (preset && v.myStatus === preset) {
-          setAnswered(true);
-        }
       })
       .catch(() => setView('invalid'));
   }, [eventId]);
@@ -81,6 +74,7 @@ export function TokenAnswer({ eventId }: { eventId: string }) {
   }
 
   const v = view;
+  const suggested = preset && v.event.status === 'scheduled' && preset !== v.myStatus ? preset : null;
 
   function choose(next: EventRsvpStatus) {
     const prev = status;
@@ -118,7 +112,7 @@ export function TokenAnswer({ eventId }: { eventId: string }) {
             <p className="font-display text-xl text-ivory">{status === 'going' ? `You are in. ${v.whenText}.` : 'Noted. We will remind you.'}</p>
           </div>
           <div className="mt-4">
-            <AddToCalendar eventId={eventId} googleUrl={v.googleUrl} token={v.token} />
+            <AddToCalendar eventId={eventId} googleUrl={v.googleUrl} token={v.icsToken} />
           </div>
           <div className="mt-5">
             <p className="text-sm text-ivory">When will you head out?</p>
@@ -151,31 +145,33 @@ export function TokenAnswer({ eventId }: { eventId: string }) {
         </div>
       ) : (
         <div className="mt-5 grid gap-2">
-          {(
-            [
-              ['going', "I'm in"],
-              ['maybe', 'Not sure yet'],
-              ['not_going', "I can't make it"],
-            ] as [EventRsvpStatus, string][]
-          ).map(([s, label]) => (
-            <button
-              key={s}
-              type="button"
-              disabled={pending}
-              aria-pressed={status === s}
-              onClick={() => choose(s)}
-              className={cn(
-                'inline-flex min-h-[52px] w-full items-center justify-center rounded-sm border px-4 text-base font-medium transition-colors',
-                status === s
-                  ? 'border-transparent bg-gold text-black'
-                  : s === 'going'
-                    ? 'border-gold/60 text-gold hover:bg-gold hover:text-black'
-                    : 'border-border-sub bg-black-2 text-silver hover:text-ivory',
-              )}
-            >
-              {label}
-            </button>
-          ))}
+          {suggested && !answered && (
+            <p className="text-center text-sm text-silver">
+              Tap once more to record <span className="text-ivory">{LABELS[suggested]}</span>.
+            </p>
+          )}
+          {(['going', 'maybe', 'not_going'] as EventRsvpStatus[]).map((s) => {
+            const isSuggested = suggested === s && !answered;
+            return (
+              <button
+                key={s}
+                type="button"
+                disabled={pending}
+                aria-pressed={status === s}
+                onClick={() => choose(s)}
+                className={cn(
+                  'inline-flex min-h-[52px] w-full items-center justify-center rounded-sm border px-4 text-base font-medium transition-colors',
+                  status === s || isSuggested
+                    ? 'border-transparent bg-gold text-black'
+                    : s === 'going'
+                      ? 'border-gold/60 text-gold hover:bg-gold hover:text-black'
+                      : 'border-border-sub bg-black-2 text-silver hover:text-ivory',
+                )}
+              >
+                {isSuggested ? `Yes: ${LABELS[s]}` : LABELS[s]}
+              </button>
+            );
+          })}
           {answered && status === 'not_going' && <p className="text-center text-sm text-silver">Thanks for letting us know.</p>}
         </div>
       )}

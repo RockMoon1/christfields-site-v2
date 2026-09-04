@@ -15,17 +15,23 @@ self.addEventListener('activate', function (event) {
   event.waitUntil(self.clients.claim());
 });
 
+function post(url, body) {
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+    keepalive: true,
+  }).catch(function () {});
+}
+
+/* Prove this device is alive with the endpoint plus its own public key. */
 function ack() {
   return self.registration.pushManager
     .getSubscription()
     .then(function (sub) {
       if (!sub) return;
-      return fetch('/api/push/ack', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ endpoint: sub.endpoint }),
-        keepalive: true,
-      });
+      var json = sub.toJSON();
+      return post('/api/push/ack', { endpoint: sub.endpoint, p256dh: json.keys && json.keys.p256dh });
     })
     .catch(function () {});
 }
@@ -67,18 +73,17 @@ self.addEventListener('notificationclick', function (event) {
   );
 });
 
+/* The push service replaced our subscription. Re-subscribe and tell the
+ * server which old endpoint this replaces; that route needs no session. */
 self.addEventListener('pushsubscriptionchange', function (event) {
-  var key = event.oldSubscription && event.oldSubscription.options ? event.oldSubscription.options.applicationServerKey : null;
-  if (!key) return;
+  var old = event.oldSubscription;
+  var key = old && old.options ? old.options.applicationServerKey : null;
+  if (!old || !key) return;
   event.waitUntil(
     self.registration.pushManager
       .subscribe({ userVisibleOnly: true, applicationServerKey: key })
       .then(function (sub) {
-        return fetch('/api/push/subscribe', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ subscription: sub.toJSON(), userAgent: 'sw-resubscribe' }),
-        });
+        return post('/api/push/rotate', { oldEndpoint: old.endpoint, subscription: sub.toJSON() });
       })
       .catch(function () {}),
   );

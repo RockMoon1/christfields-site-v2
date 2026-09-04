@@ -5,12 +5,15 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
  * without a session: answer an event, download its .ics.
  *
  * Token = base64url(payload) . base64url(HMAC-SHA256(payload, APP_TOKEN_SECRET))
- * payload = `${eventId}:${userId}:${expMs}` (ids never contain ':').
+ * payload = `${eventId}:${userId}:${expMs}:${purpose}` (ids never contain ':').
  *
- * Scope is one event and one member, expiry is a few days after the event, and
- * anything that mutates re-checks org membership and event status on the server.
- * Tokens travel in the URL fragment so mail scanners and trackers never see them.
+ * Scope is one event, one member, and ONE PURPOSE. An .ics link travels in a
+ * query string (calendar apps, proxies, and logs see it), so it must never be
+ * able to answer for the member; the answer token travels only in a URL
+ * fragment. Anything that mutates re-checks membership and event status.
  */
+
+export type TokenPurpose = 'rsvp' | 'ics';
 
 function secret(): string {
   const s = process.env.APP_TOKEN_SECRET;
@@ -30,6 +33,7 @@ export interface TokenClaims {
   eventId: string;
   userId: string;
   expMs: number;
+  purpose: TokenPurpose;
 }
 
 export function isTokenConfigured(): boolean {
@@ -38,12 +42,12 @@ export function isTokenConfigured(): boolean {
 }
 
 export function mintToken(claims: TokenClaims): string {
-  const payload = `${claims.eventId}:${claims.userId}:${Math.floor(claims.expMs)}`;
+  const payload = `${claims.eventId}:${claims.userId}:${Math.floor(claims.expMs)}:${claims.purpose}`;
   return `${b64url(payload)}.${sign(payload)}`;
 }
 
-/** Null when malformed, tampered, or expired. */
-export function verifyToken(token: string, nowMs: number = Date.now()): TokenClaims | null {
+/** Null when malformed, tampered, expired, or minted for another purpose. */
+export function verifyToken(token: string, purpose: TokenPurpose, nowMs: number = Date.now()): TokenClaims | null {
   try {
     if (!token || token.length > 512) return null;
     const dot = token.indexOf('.');
@@ -57,12 +61,13 @@ export function verifyToken(token: string, nowMs: number = Date.now()): TokenCla
     if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
 
     const parts = payload.split(':');
-    if (parts.length !== 3) return null;
-    const [eventId, userId, expRaw] = parts;
+    if (parts.length !== 4) return null;
+    const [eventId, userId, expRaw, p] = parts;
     const expMs = Number(expRaw);
     if (!eventId || !userId || !Number.isFinite(expMs)) return null;
+    if (p !== purpose) return null;
     if (expMs < nowMs) return null;
-    return { eventId, userId, expMs };
+    return { eventId, userId, expMs, purpose };
   } catch {
     return null;
   }
@@ -83,5 +88,11 @@ export function tokenExpiryFor(startsAtISO: string): number {
  */
 export function mintIcsToken(eventId: string, userId: string, startsAtISO: string): string | undefined {
   if (!isTokenConfigured()) return undefined;
-  return mintToken({ eventId, userId, expMs: tokenExpiryFor(startsAtISO) });
+  return mintToken({ eventId, userId, expMs: tokenExpiryFor(startsAtISO), purpose: 'ics' });
+}
+
+/** The fragment-only token behind the one-tap answer page. */
+export function mintRsvpToken(eventId: string, userId: string, startsAtISO: string): string | undefined {
+  if (!isTokenConfigured()) return undefined;
+  return mintToken({ eventId, userId, expMs: tokenExpiryFor(startsAtISO), purpose: 'rsvp' });
 }

@@ -19,6 +19,8 @@ export const EMAIL_WINDOW_SECONDS = 86_400;
 
 export const PUSH_LIVE_DAYS = 14;
 export const PUSH_PRUNE_DAYS = 60;
+/** Subscriptions per member; the oldest beyond this are dropped. */
+export const PUSH_MAX_PER_MEMBER = 5;
 export const QUIET_START_HOUR = 21;
 export const QUIET_END_HOUR = 7;
 /** Reminders and nudges per member per day. Posts, changes, and cancellations are exempt. */
@@ -102,12 +104,21 @@ export function changedTier(startsAtMs: number, nowMs: number): EmailTier {
   return startsAtMs - nowMs <= 24 * 60 * 60 * 1000 ? 'urgent' : 'info';
 }
 
+/** Resend refusals that mean "the account is out of sends", not "this address is bad". */
+export function isEmailBudgetError(name: string | undefined, message: string | undefined): boolean {
+  const s = `${name ?? ''} ${message ?? ''}`.toLowerCase();
+  return /quota|rate.?limit|too many requests/.test(s);
+}
+
 /**
- * Time windows the hourly tick scans. Wide on purpose (the tick can run at any
- * minute and may skip an hour); dedupe keys make the first hit the only hit.
+ * Time windows the hourly tick scans, relative to now. Wide on purpose (the
+ * tick can run at any minute and may skip an hour); dedupe keys make the first
+ * successful hit the only hit, and quiet-hour members are left unclaimed so a
+ * later tick inside the window still reaches them.
  */
 export const WINDOWS = {
   reminder_24h: { fromMs: 22 * 3_600_000, toMs: 26 * 3_600_000 },
   reminder_2h: { fromMs: 1 * 3_600_000, toMs: 3 * 3_600_000 },
-  leaders_10min: { fromMs: 0, toMs: 1 * 3_600_000 },
+  /** Starts a little before now so an event at :00 is not missed by a tick at :00:30. */
+  leaders_10min: { fromMs: -30 * 60_000, toMs: 1 * 3_600_000 },
 } as const;

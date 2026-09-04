@@ -5,16 +5,16 @@ import { dayKeyInZone } from '@/lib/dashboard/timezone';
 import { appUrl } from '@/lib/dashboard/prefs';
 import { eventMail, leaderBriefMail } from './templates';
 import { dedupeKey, localHour, orderByAnswer, WINDOWS, PUSH_PRUNE_DAYS } from './rules';
-import { loadEventContext, runPush, runEmail, answerOf, memberTz, linksFor, type EventContext } from './fanout';
+import { loadEventContext, runPush, runEmail, answerOf, memberTz, emailOn, linksFor, whenFor } from './fanout';
 
 /**
  * What the hourly tick does. Every task is idempotent through the dedupe
  * ledger, computes from live event state at send time, and respects a wall
  * clock deadline so two Netlify invocations always fit inside the 30s limit.
  *
- * Reminders: the day before (push + email, audience by answer), two hours
- * before (push only, with one conversation starter), a 7am brief to leaders,
- * and a "tap who came" push to leaders as it starts.
+ * Reminder keys carry the event's local start day (or hour), so a leader
+ * moving an event to another day opens a fresh reminder slot while a
+ * same-day tick still hits the same key.
  */
 
 const DAY = 86_400_000;
@@ -30,10 +30,6 @@ export interface TickReport {
   ms: number;
 }
 
-function emailOn(ctx: EventContext, userId: string): boolean {
-  return ctx.prefs.get(userId)?.email_reminders ?? true;
-}
-
 async function scheduledBetween(fromMs: number, toMs: number): Promise<EventRow[]> {
   const sb = getSupabase();
   const { data } = await sb
@@ -47,6 +43,10 @@ async function scheduledBetween(fromMs: number, toMs: number): Promise<EventRow[
   return (data as EventRow[] | null) ?? [];
 }
 
+function startDay(e: EventRow): string {
+  return dayKeyInZone(e.tz, new Date(e.starts_at));
+}
+
 /* ------------------------------------------------------------ the day before */
 
 export async function remind24h(nowMs: number, deadline: () => boolean): Promise<number> {
@@ -56,27 +56,27 @@ export async function remind24h(nowMs: number, deadline: () => boolean): Promise
     if (deadline()) break;
     const ctx = await loadEventContext(e.id, nowMs);
     if (!ctx) continue;
-    const key = dedupeKey(e.id, 'reminder_24h');
+    const key = dedupeKey(e.id, 'reminder_24h', startDay(e));
     const series = !!e.series_id;
     // Series: only people who said in or not sure. One-offs: everyone who has not declined.
     const audience = ctx.members.filter((m) => {
       const a = answerOf(ctx, m.userId);
       return series ? a === 'going' || a === 'maybe' : a !== 'not_going';
     });
-    const url = `/dashboard/e/${e.id}`;
     const push = await runPush(ctx, {
       key,
       recipients: audience,
-      message: {
+      message: (tz) => ({
         title: `Tomorrow: ${e.title}`,
-        body: `${whenInWords(e.starts_at, e.tz, nowMs)}${e.location ? ` at ${e.location}` : ''}`,
-        url,
+        body: `${whenInWords(e.starts_at, tz, nowMs)}${e.location ? ` at ${e.location}` : ''}`,
+        url: `/dashboard/e/${e.id}`,
         tag: `event-${e.id}`,
-      },
+      }),
       urgency: 'normal',
       ttlSeconds: 20 * 3600,
       loud: false,
       ceiling: true,
+      retryable: true,
     });
     const email = await runEmail(ctx, {
       key,
@@ -89,12 +89,13 @@ export async function remind24h(nowMs: number, deadline: () => boolean): Promise
         eventMail({
           kind: 'reminder_24h',
           event: ctx.member,
-          whenText: whenInWords(e.starts_at, memberTz(ctx, m.userId), nowMs),
+          whenText: whenFor(ctx, m.userId),
           firstName: m.firstName,
           myAnswer: answerOf(ctx, m.userId),
           starters: noteLines(e.member_note, 2),
           links: linksFor(ctx, m.userId),
         }),
+      retryable: true,
     });
     if (push.pushed + email.emailed > 0) did += 1;
   }
@@ -113,20 +114,21 @@ export async function remind2h(nowMs: number, deadline: () => boolean): Promise<
     const going = ctx.members.filter((m) => answerOf(ctx, m.userId) === 'going');
     if (going.length === 0) continue;
     const starter = noteLines(e.member_note, 1)[0] ?? '';
-    // One body for everyone (a per-member plan echo would mean one send per member).
+    const startMs = Date.parse(e.starts_at);
     const push = await runPush(ctx, {
-      key: dedupeKey(e.id, 'reminder_2h'),
+      key: dedupeKey(e.id, 'reminder_2h', `${startDay(e)}T${localHour(startMs, e.tz)}`),
       recipients: going,
-      message: {
-        title: `${e.title} at ${whenInWords(e.starts_at, e.tz, nowMs).split(', ').pop()}`,
+      message: (tz) => ({
+        title: `${e.title} at ${whenInWords(e.starts_at, tz, nowMs).split(', ').pop()}`,
         body: starter || `${e.location ? `${e.location}. ` : ''}See you soon.`,
         url: `/dashboard/e/${e.id}`,
         tag: `event-${e.id}`,
-      },
+      }),
       urgency: 'high',
       ttlSeconds: 2 * 3600,
       loud: false,
       ceiling: true,
+      retryable: true,
     });
     if (push.pushed > 0) did += 1;
   }
@@ -141,7 +143,7 @@ export async function leaderBriefs(nowMs: number, deadline: () => boolean): Prom
   let did = 0;
   for (const e of events) {
     if (deadline()) break;
-    const today = dayKeyInZone(e.tz, new Date(nowMs)) === dayKeyInZone(e.tz, new Date(e.starts_at));
+    const today = dayKeyInZone(e.tz, new Date(nowMs)) === startDay(e);
     if (!today || localHour(nowMs, e.tz) < 7) continue;
     const ctx = await loadEventContext(e.id, nowMs);
     if (!ctx) continue;
@@ -171,7 +173,7 @@ export async function leaderBriefs(nowMs: number, deadline: () => boolean): Prom
     const firstTimers = [...going, ...maybe].filter((m) => ctx.rsvps.get(m.userId)?.first_time);
 
     const email = await runEmail(ctx, {
-      key: dedupeKey(e.id, 'leader_brief'),
+      key: dedupeKey(e.id, 'leader_brief', startDay(e)),
       tier: 'reminder',
       recipients: leaders,
       build: (m) =>
@@ -187,6 +189,7 @@ export async function leaderBriefs(nowMs: number, deadline: () => boolean): Prom
           questions: noteLines(e.leader_note, 3),
           openUrl: `${appUrl()}/dashboard/e/${e.id}`,
         }),
+      retryable: true,
     });
     if (email.emailed > 0) did += 1;
   }
@@ -205,18 +208,19 @@ export async function leaderStartPush(nowMs: number, deadline: () => boolean): P
     const leaders = ctx.members.filter((m) => m.isLeader);
     const going = ctx.members.filter((m) => answerOf(ctx, m.userId) === 'going').length;
     const push = await runPush(ctx, {
-      key: dedupeKey(e.id, 'leaders_10min'),
+      key: dedupeKey(e.id, 'leaders_10min', startDay(e)),
       recipients: leaders,
-      message: {
+      message: () => ({
         title: `${e.title} starts soon`,
         body: `${going} said they are in. Afterwards, tap who came.`,
         url: `/dashboard/e/${e.id}`,
         tag: `lead-${e.id}`,
-      },
+      }),
       urgency: 'high',
       ttlSeconds: 3600,
       loud: true,
       ceiling: false,
+      retryable: true,
     });
     if (push.pushed > 0) did += 1;
   }
@@ -229,11 +233,15 @@ export async function prune(nowMs: number): Promise<Record<string, number>> {
   const sb = getSupabase();
   const out: Record<string, number> = {};
   const count = (r: { count?: number | null }) => r.count ?? 0;
-  const today = new Date(nowMs).toISOString().slice(0, 10);
+  // Two days of slack: busy rows are dated in the member's zone, not UTC.
+  const busyCutoff = new Date(nowMs - 2 * DAY).toISOString().slice(0, 10);
+  const thirtyDays = new Date(nowMs - 30 * DAY).toISOString();
 
-  const [busy, deliveries, changes, deadPush, stalePending] = await Promise.all([
-    sb.from('calendar_busy').delete({ count: 'exact' }).lt('on_date', today),
-    sb.from('notification_deliveries').delete({ count: 'exact' }).lt('created_at', new Date(nowMs - 30 * DAY).toISOString()),
+  const [busy, deliveries, nudges, changes, deadPush, stalePending] = await Promise.all([
+    sb.from('calendar_busy').delete({ count: 'exact' }).lt('on_date', busyCutoff),
+    // Nudge rows are what makes Nudge once-per-event, so they live longer than the rest.
+    sb.from('notification_deliveries').delete({ count: 'exact' }).lt('created_at', thirtyDays).not('dedupe_key', 'like', '%:nudge'),
+    sb.from('notification_deliveries').delete({ count: 'exact' }).lt('created_at', new Date(nowMs - 120 * DAY).toISOString()).like('dedupe_key', '%:nudge'),
     sb.from('event_changes').delete({ count: 'exact' }).lt('created_at', new Date(nowMs - 180 * DAY).toISOString()),
     sb
       .from('push_subscriptions')
@@ -246,7 +254,7 @@ export async function prune(nowMs: number): Promise<Record<string, number>> {
       .lt('created_at', new Date(nowMs - 3_600_000).toISOString()),
   ]);
   out.busy = count(busy);
-  out.deliveries = count(deliveries);
+  out.deliveries = count(deliveries) + count(nudges);
   out.changes = count(changes);
   out.deadPush = count(deadPush);
   out.stalePending = count(stalePending);
