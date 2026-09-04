@@ -8,14 +8,16 @@ describe('google oauth state', () => {
     process.env.APP_TOKEN_SECRET = 'test-secret-that-is-long-enough-123456';
   });
 
-  it('round-trips member and feature', () => {
+  it('round-trips member, feature, and the page to return to', () => {
     const s = mintState('user_1', 'busy');
-    expect(verifyState(s)).toEqual({ userId: 'user_1', feature: 'busy' });
+    expect(verifyState(s)).toEqual({ userId: 'user_1', feature: 'busy', from: 'settings' });
+    const a = mintState('user_1', 'busy', 'availability');
+    expect(verifyState(a)?.from).toBe('availability');
   });
 
   it('expires after ten minutes and rejects tampering', () => {
     const now = Date.UTC(2026, 8, 10, 12);
-    const s = mintState('user_1', 'write', now);
+    const s = mintState('user_1', 'write', 'settings', now);
     expect(verifyState(s, now + 9 * 60_000)?.feature).toBe('write');
     expect(verifyState(s, now + 11 * 60_000)).toBeNull();
     const [payload, sig] = s.split('.');
@@ -51,6 +53,10 @@ describe('google event body', () => {
     version: 2,
     seriesId: null,
     ridesEnabled: false,
+    scriptureRef: '',
+    scriptureText: '',
+    scriptureWhy: '',
+    discussion: '',
   };
 
   it('carries only member-safe fields and a 90 minute default length', () => {

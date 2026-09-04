@@ -51,7 +51,7 @@ export default async function GroupPage({ searchParams }: { searchParams: Promis
           {page.availability.informed} of {page.availability.total} have told us when they are free. Names are who said
           they are free. Nobody is ever shown as busy.
         </p>
-        <WhenToGather availability={page.availability} orgId={orgId} />
+        <WhenToGather availability={page.availability} orgId={orgId} lastRefreshedAt={page.lastRefreshedAt} />
       </section>
 
       <GroupTools orgId={orgId} inviteText={page.inviteText} knownCount={page.knownCount} total={page.availability.total} />

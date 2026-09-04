@@ -34,15 +34,18 @@ export async function GET(req: NextRequest) {
   const state = verifyState(q.get('state') || '');
   const code = q.get('code') || '';
   if (!state || state.userId !== userId || !code) return back('error');
+  // From here on, land the member back where they tapped Connect.
+  const backPage = `${base}/dashboard/${state.from}`;
+  const done = (flag: string) => NextResponse.redirect(`${backPage}?google=${flag}`);
 
   const ex = await exchangeCode(code);
   if (!ex.ok) {
     console.error('google exchange failed', ex.error);
-    return back('error');
+    return done('error');
   }
   const wanted = SCOPES[state.feature];
   const granted = ex.scopes.filter((s) => s === SCOPES.write || s === SCOPES.busy);
-  if (!granted.includes(wanted)) return back('denied');
+  if (!granted.includes(wanted)) return done('denied');
 
   const sb = getSupabase();
   const { data } = await sb.from('google_connections').select('*').eq('clerk_user_id', userId).maybeSingle();
@@ -52,7 +55,7 @@ export async function GET(req: NextRequest) {
   let refreshEnc: string;
   if (ex.refreshToken) refreshEnc = encryptText(ex.refreshToken);
   else if (existing?.refresh_token_enc && existing.status === 'ok') refreshEnc = existing.refresh_token_enc;
-  else return back('error');
+  else return done('error');
 
   // Scopes this token does NOT carry are gone: clean up what they governed.
   const hadWrite = !!existing?.scopes.includes(SCOPES.write);
@@ -91,7 +94,7 @@ export async function GET(req: NextRequest) {
   );
   if (error) {
     console.error('google connection save failed', error);
-    return back('error');
+    return done('error');
   }
 
   // A short first sync so something is there when they look; the tick finishes the rest.
@@ -99,5 +102,5 @@ export async function GET(req: NextRequest) {
   await syncMemberCalendar(userId, { deadline: () => Date.now() > until, maxCalls: 12 }).catch((err) =>
     console.error('first google sync failed', err),
   );
-  return back(state.feature === 'write' ? 'calendar' : 'busy');
+  return done(state.feature === 'write' ? 'calendar' : 'busy');
 }

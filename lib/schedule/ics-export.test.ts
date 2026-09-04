@@ -22,6 +22,10 @@ const event: MemberEvent = {
   version: 2,
   seriesId: null,
   ridesEnabled: false,
+  scriptureRef: "",
+  scriptureText: "",
+  scriptureWhy: "",
+  discussion: "",
 };
 
 describe('ics export', () => {

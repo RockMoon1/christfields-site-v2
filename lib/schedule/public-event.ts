@@ -28,6 +28,11 @@ export interface MemberEvent {
   version: number;
   seriesId: string | null;
   ridesEnabled: boolean;
+  /** Optional Scripture for the gathering. context_notes is leader-only and NOT here. */
+  scriptureRef: string;
+  scriptureText: string;
+  scriptureWhy: string;
+  discussion: string;
 }
 
 export function toMemberEvent(row: EventRow, orgName: string): MemberEvent {
@@ -50,6 +55,10 @@ export function toMemberEvent(row: EventRow, orgName: string): MemberEvent {
     version: row.version ?? 0,
     seriesId: row.series_id ?? null,
     ridesEnabled: !!row.rides_enabled,
+    scriptureRef: row.scripture_ref || '',
+    scriptureText: row.scripture_text || '',
+    scriptureWhy: row.scripture_why || '',
+    discussion: row.discussion || '',
   };
 }
 

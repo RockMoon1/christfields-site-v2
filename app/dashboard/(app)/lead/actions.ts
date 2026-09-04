@@ -23,6 +23,13 @@ import { dedupeKey, emailWindowStartIso } from '@/lib/notify/rules';
 import { whenInWords } from '@/lib/dashboard/format';
 import { toMemberEvent, type MemberEvent } from '@/lib/schedule/public-event';
 import { appUrl } from '@/lib/dashboard/prefs';
+import { cleanReference } from '@/lib/dashboard/bible';
+import { takeRateLimit } from '@/lib/rate-limit';
+import { syncMemberCalendar } from '@/lib/google/sync';
+import { SCOPES } from '@/lib/google/oauth';
+import { decryptText } from '@/lib/security/crypto';
+import { syncFeedForUser } from '@/app/dashboard/(app)/availability/actions';
+import type { CalendarFeedRow } from '@/lib/supabase';
 
 /**
  * Leader actions. Every one resolves the event's org and passes requireLeaderOf,
@@ -36,7 +43,29 @@ const TITLE_MAX = 120;
 const DESC_MAX = 600;
 const LOCATION_MAX = 160;
 const NOTE_MAX = 400;
+const SCRIPTURE_TEXT_MAX = 900;
+const SCRIPTURE_WHY_MAX = 200;
+const CONTEXT_MAX = 900;
 const GROUP_TZ = 'America/Denver';
+
+/** The optional Scripture block on a post. context is leader-only. */
+export interface ScriptureInput {
+  scriptureRef?: string;
+  scriptureText?: string;
+  scriptureWhy?: string;
+  discussion?: string;
+  contextNotes?: string;
+}
+
+function scriptureColumns(input: ScriptureInput) {
+  return {
+    scripture_ref: cleanReference(input.scriptureRef || ''),
+    scripture_text: (input.scriptureText || '').trim().slice(0, SCRIPTURE_TEXT_MAX),
+    scripture_why: (input.scriptureWhy || '').trim().slice(0, SCRIPTURE_WHY_MAX),
+    discussion: (input.discussion || '').trim().slice(0, NOTE_MAX),
+    context_notes: (input.contextNotes || '').trim().slice(0, CONTEXT_MAX),
+  };
+}
 
 interface EventLeaderCtx {
   event: EventRow;
@@ -88,7 +117,7 @@ export interface PostInput {
   notify: boolean;
 }
 
-export async function createEvent(input: PostInput): Promise<{ ok: boolean; error?: string; id?: string }> {
+export async function createEvent(input: PostInput & ScriptureInput): Promise<{ ok: boolean; error?: string; id?: string }> {
   try {
     const { userId } = await auth();
     if (!userId) return { ok: false, error: 'Not signed in.' };
@@ -123,6 +152,7 @@ export async function createEvent(input: PostInput): Promise<{ ok: boolean; erro
       leader_note: (input.leaderNote || '').trim().slice(0, NOTE_MAX),
       rides_enabled: !!input.ridesEnabled,
       status: 'scheduled',
+      ...scriptureColumns(input),
     };
 
     const sb = getSupabase();
@@ -189,7 +219,7 @@ export interface EditInput {
   scope: 'one' | 'following';
 }
 
-export async function updateEvent(eventId: string, input: EditInput): Promise<{ ok: boolean; error?: string }> {
+export async function updateEvent(eventId: string, input: EditInput & ScriptureInput): Promise<{ ok: boolean; error?: string }> {
   try {
     const ctx = await leaderOfEvent(eventId);
     if (!ctx) return { ok: false, error: 'Not allowed.' };
@@ -219,6 +249,7 @@ export async function updateEvent(eventId: string, input: EditInput): Promise<{ 
       leader_note: (input.leaderNote || '').trim().slice(0, NOTE_MAX),
       rides_enabled: !!input.ridesEnabled,
       updated_at: new Date().toISOString(),
+      ...scriptureColumns(input),
     };
 
     const sb = getSupabase();
@@ -347,6 +378,8 @@ export interface LeaderEventView {
   event: MemberEvent;
   leaderNote: string;
   thanksNote: string;
+  /** Leader-only notes on the passage. */
+  contextNotes: string;
   going: RosterName[];
   maybe: RosterName[];
   cant: RosterName[];
@@ -433,6 +466,7 @@ export async function getLeaderEvent(eventId: string): Promise<LeaderEventView |
       event: toMemberEvent(event, orgName),
       leaderNote: event.leader_note || '',
       thanksNote: event.thanks_note || '',
+      contextNotes: event.context_notes || '',
       going,
       maybe,
       cant,
@@ -833,6 +867,27 @@ export interface GroupPage {
   availability: GroupAvailability;
   inviteText: string;
   knownCount: number;
+  /** When any member's connected calendar was last read. */
+  lastRefreshedAt: string | null;
+}
+
+/** The most recent calendar read across these members (Google free/busy or a pasted link). */
+async function lastCalendarRefresh(memberIds: string[]): Promise<string | null> {
+  if (memberIds.length === 0) return null;
+  const sb = getSupabase();
+  const [g, f] = await Promise.all([
+    sb.from('google_connections').select('last_freebusy_at, scopes').eq('status', 'ok').in('clerk_user_id', memberIds),
+    sb.from('calendar_feeds').select('last_synced_at').in('clerk_user_id', memberIds),
+  ]);
+  let best = 0;
+  for (const r of (g.data as { last_freebusy_at: string | null; scopes: string[] }[] | null) ?? []) {
+    if (!r.scopes?.includes(SCOPES.busy) || !r.last_freebusy_at) continue;
+    best = Math.max(best, Date.parse(r.last_freebusy_at));
+  }
+  for (const r of (f.data as { last_synced_at: string | null }[] | null) ?? []) {
+    if (r.last_synced_at) best = Math.max(best, Date.parse(r.last_synced_at));
+  }
+  return best > 0 ? new Date(best).toISOString() : null;
 }
 
 export async function getGroupPage(orgId: string): Promise<GroupPage | null> {
@@ -840,9 +895,11 @@ export async function getGroupPage(orgId: string): Promise<GroupPage | null> {
     const ctx = await requireLeaderOf(orgId);
     if (!ctx) return null;
     const sb = getSupabase();
-    const [availability, seen] = await Promise.all([
+    const memberIds = ctx.members.map((m) => m.userId);
+    const [availability, seen, lastRefreshedAt] = await Promise.all([
       getGroupAvailability(ctx.members, GROUP_TZ),
       sb.from('org_member_seen').select('clerk_user_id', { count: 'exact', head: true }).eq('org_id', orgId),
+      lastCalendarRefresh(memberIds),
     ]);
     return {
       orgId,
@@ -850,10 +907,119 @@ export async function getGroupPage(orgId: string): Promise<GroupPage | null> {
       availability,
       inviteText: `I added you to ${ctx.orgName} on Christ Fields. It is where we keep our plans. Tap here to see what is coming up: ${appUrl()}/dashboard`,
       knownCount: seen.count ?? 0,
+      lastRefreshedAt,
     };
   } catch (err) {
     console.error('getGroupPage failed', err);
     return null;
+  }
+}
+
+/* ============================================================
+   Who is free, for the Post form; and the leader's Refresh.
+   ============================================================ */
+
+export interface OrgAvailability {
+  availability: GroupAvailability;
+  /** Scheduled events in the next three weeks, for "also that day". */
+  upcoming: { id: string; title: string; startsAt: string }[];
+  lastRefreshedAt: string | null;
+}
+
+export async function getOrgAvailability(orgId: string): Promise<OrgAvailability | null> {
+  try {
+    const ctx = await requireLeaderOf(orgId);
+    if (!ctx) return null;
+    const sb = getSupabase();
+    const now = Date.now();
+    const [availability, eventsRes, lastRefreshedAt] = await Promise.all([
+      getGroupAvailability(ctx.members, GROUP_TZ, now),
+      sb
+        .from('events')
+        .select('id, title, starts_at')
+        .eq('org_id', orgId)
+        .eq('status', 'scheduled')
+        .gte('starts_at', new Date(now - 86_400_000).toISOString())
+        .lte('starts_at', new Date(now + 22 * 86_400_000).toISOString())
+        .order('starts_at', { ascending: true })
+        .limit(40),
+      lastCalendarRefresh(ctx.members.map((m) => m.userId)),
+    ]);
+    return {
+      availability,
+      upcoming: ((eventsRes.data as { id: string; title: string; starts_at: string }[] | null) ?? []).map((e) => ({
+        id: e.id,
+        title: e.title,
+        startsAt: e.starts_at,
+      })),
+      lastRefreshedAt,
+    };
+  } catch (err) {
+    console.error('getOrgAvailability failed', err);
+    return null;
+  }
+}
+
+const REFRESH_WINDOW_SECONDS = 600;
+const REFRESH_BUDGET_MS = 6_000;
+
+/**
+ * Pull the group's connected calendars again, now. Once every ten minutes per
+ * group (durable bucket), Google free/busy for up to eight members and pasted
+ * links older than an hour for up to five, all inside a six-second box. The
+ * hourly job covers everything this does not reach.
+ */
+export async function refreshGroupBusy(orgId: string): Promise<{ ok: boolean; refreshed: number; retryInSec?: number }> {
+  try {
+    const ctx = await requireLeaderOf(orgId);
+    if (!ctx) return { ok: false, refreshed: 0 };
+    const gate = await takeRateLimit(`gbusy:${orgId}`, 1, REFRESH_WINDOW_SECONDS);
+    if (gate.durable && !gate.allowed) {
+      const nowSec = Math.floor(Date.now() / 1000);
+      const windowEnd = Math.floor(nowSec / REFRESH_WINDOW_SECONDS) * REFRESH_WINDOW_SECONDS + REFRESH_WINDOW_SECONDS;
+      return { ok: false, refreshed: 0, retryInSec: Math.max(1, windowEnd - nowSec) };
+    }
+    const started = Date.now();
+    const deadline = () => Date.now() - started > REFRESH_BUDGET_MS;
+    const memberIds = ctx.members.map((m) => m.userId);
+    const sb = getSupabase();
+    let refreshed = 0;
+
+    const { data: gRows } = await sb
+      .from('google_connections')
+      .select('clerk_user_id, scopes')
+      .eq('status', 'ok')
+      .in('clerk_user_id', memberIds)
+      .limit(8);
+    for (const r of (gRows as { clerk_user_id: string; scopes: string[] }[] | null) ?? []) {
+      if (deadline()) break;
+      if (!r.scopes?.includes(SCOPES.busy)) continue;
+      const res = await syncMemberCalendar(r.clerk_user_id, { deadline, busyOnly: true });
+      if (res.ok) refreshed += 1;
+    }
+
+    const { data: feeds } = await sb
+      .from('calendar_feeds')
+      .select('*')
+      .in('clerk_user_id', memberIds)
+      .lt('last_synced_at', new Date(Date.now() - 3_600_000).toISOString())
+      .order('last_synced_at', { ascending: true })
+      .limit(5);
+    for (const f of (feeds as CalendarFeedRow[] | null) ?? []) {
+      if (deadline()) break;
+      const url = f.ics_url_enc ? decryptText(f.ics_url_enc) : f.ics_url || null;
+      if (!url) continue;
+      const res = await syncFeedForUser(f.clerk_user_id, url, f.tz || GROUP_TZ);
+      if (res.ok) refreshed += 1;
+    }
+
+    revalidatePath('/dashboard/lead/group');
+    revalidatePath('/dashboard/lead/post');
+    revalidatePath('/dashboard/lead');
+    return { ok: true, refreshed };
+  } catch (err) {
+    console.error('refreshGroupBusy failed', err);
+    return { ok: false, refreshed: 0 };
   }
 }
 

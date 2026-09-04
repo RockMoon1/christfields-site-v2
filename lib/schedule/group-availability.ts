@@ -1,26 +1,22 @@
 import { getSupabase } from '@/lib/supabase';
-import {
-  SLOTS,
-  upcomingDays,
-  weeklyKey,
-  overrideKey,
-  isFree,
-  type Slot,
-} from '@/lib/dashboard/availability';
+import { SLOTS, upcomingDays, weeklyKey, overrideKey, memberIsFree, type Slot, type MemberAvailability } from '@/lib/dashboard/availability';
 import type { GroupMember } from '@/lib/groups/membership';
+import { SCOPES } from '@/lib/google/oauth';
 
 /**
  * The scheduler's brain: fold the group's usual-week pattern, date overrides and
  * calendar busy blocks into a 21-day x 3-slot picture, and rank the best times.
  *
  * Privacy, by construction and by rule:
- *  - Only availability_weekly, availability_overrides and calendar_busy are read.
- *    None of them can hold an event title.
+ *  - Only availability_weekly, availability_overrides, calendar_busy, and the
+ *    fact of a connected calendar are read. None of them can hold a title.
  *  - Cells carry COUNTS only. Names of who is FREE appear only on the top three
  *    best-time cards, never per cell, so a leader can never read a member's
  *    busy pattern by absence across 63 cells.
  *  - "unknown" means the member has told us nothing at all (no weekly rows, no
  *    overrides, no connected calendar). It is never shown as busy or free.
+ *  - A member who connected a calendar (pasted link or Google free/busy) and
+ *    never tapped the grid counts as free wherever the calendar is not busy.
  *
  * Authorization is the caller's job (requireLeaderOf). This function trusts the
  * roster it is handed.
@@ -72,7 +68,7 @@ export async function getGroupAvailability(
   if (userIds.length === 0) return { total: 0, informed: 0, days: [], best: [] };
 
   const sb = getSupabase();
-  const [weeklyRes, overrideRes, busyRes, feedRes] = await Promise.all([
+  const [weeklyRes, overrideRes, busyRes, feedRes, googleRes] = await Promise.all([
     sb.from('availability_weekly').select('clerk_user_id, weekday, slot').in('clerk_user_id', userIds),
     sb
       .from('availability_overrides')
@@ -87,6 +83,7 @@ export async function getGroupAvailability(
       .gte('on_date', days[0].iso)
       .lte('on_date', days[days.length - 1].iso),
     sb.from('calendar_feeds').select('clerk_user_id').in('clerk_user_id', userIds),
+    sb.from('google_connections').select('clerk_user_id, scopes').eq('status', 'ok').in('clerk_user_id', userIds),
   ]);
 
   if (weeklyRes.error) console.error('getGroupAvailability: weekly load failed', weeklyRes.error);
@@ -94,6 +91,7 @@ export async function getGroupAvailability(
   if (busyRes.error) console.error('getGroupAvailability: busy load failed', busyRes.error);
 
   const informedUsers = new Set<string>();
+  const calendarUsers = new Set<string>();
 
   const weeklyByUser = new Map<string, Set<string>>();
   for (const r of (weeklyRes.data as { clerk_user_id: string; weekday: number; slot: string }[] | null) ?? []) {
@@ -119,14 +117,28 @@ export async function getGroupAvailability(
     set.add(overrideKey(r.on_date, r.slot as Slot));
     busyByUser.set(r.clerk_user_id, set);
     informedUsers.add(r.clerk_user_id);
+    calendarUsers.add(r.clerk_user_id);
   }
   for (const r of (feedRes.data as { clerk_user_id: string }[] | null) ?? []) {
     informedUsers.add(r.clerk_user_id);
+    calendarUsers.add(r.clerk_user_id);
+  }
+  for (const r of (googleRes.data as { clerk_user_id: string; scopes: string[] }[] | null) ?? []) {
+    if (!r.scopes?.includes(SCOPES.busy)) continue;
+    informedUsers.add(r.clerk_user_id);
+    calendarUsers.add(r.clerk_user_id);
   }
 
   const EMPTY_SET = new Set<string>();
   const EMPTY_MAP = new Map<string, boolean>();
   const unknownCount = userIds.filter((u) => !informedUsers.has(u)).length;
+
+  const availabilityOf = (uid: string): MemberAvailability => ({
+    weekly: weeklyByUser.get(uid) ?? EMPTY_SET,
+    overrides: overByUser.get(uid) ?? EMPTY_MAP,
+    busy: busyByUser.get(uid) ?? EMPTY_SET,
+    hasCalendarSource: calendarUsers.has(uid),
+  });
 
   const planDays: PlanDay[] = [];
   const candidates: PlanBest[] = [];
@@ -137,10 +149,7 @@ export async function getGroupAvailability(
       const freeNames: string[] = [];
       for (const uid of userIds) {
         if (!informedUsers.has(uid)) continue;
-        const wf = weeklyByUser.get(uid) ?? EMPTY_SET;
-        const ov = overByUser.get(uid) ?? EMPTY_MAP;
-        const cb = busyByUser.get(uid) ?? EMPTY_SET;
-        if (isFree(d.iso, d.weekday, slot, wf, ov, cb)) {
+        if (memberIsFree(d.iso, d.weekday, slot, availabilityOf(uid))) {
           freeNames.push(firstNameByUser.get(uid) ?? 'Member');
         }
       }

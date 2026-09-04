@@ -188,6 +188,7 @@ export async function leaderBriefs(nowMs: number, deadline: () => boolean): Prom
           firstTimers: firstTimers.map(name),
           gaps,
           questions: noteLines(e.leader_note, 3),
+          contextNotes: noteLines(e.context_notes || '', 6),
           openUrl: `${appUrl()}/dashboard/e/${e.id}`,
         }),
       retryable: true,

@@ -130,6 +130,17 @@ function eventBlock(e: MemberEvent, whenText: string, struck = false): string {
   </tr></table>`;
 }
 
+/** The passage a leader chose, as one line. Nothing else from the Word block travels by email. */
+function passageLine(e: MemberEvent): string {
+  if (!e.scriptureRef) return '';
+  return `<p style="margin:12px 0 0 0;font-size:14px;line-height:1.6;color:${C.soft};">From the Word: <span style="color:${C.ink};">${escapeHtml(e.scriptureRef)}</span>${e.scriptureWhy ? ` &middot; ${escapeHtml(e.scriptureWhy)}` : ''}</p>`;
+}
+
+function passageText(e: MemberEvent): string[] {
+  if (!e.scriptureRef) return [];
+  return ['', `From the Word: ${e.scriptureRef}${e.scriptureWhy ? ` (${e.scriptureWhy})` : ''}`];
+}
+
 function startersBlock(starters: string[]): string {
   if (starters.length === 0) return '';
   return `<p style="margin:22px 0 6px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:${C.faint};">Two things you could ask someone</p>
@@ -250,12 +261,14 @@ export function eventMail(input: EventMailInput): Mail {
       ${para(hi)}
       ${para(lead)}
       ${eventBlock(e, whenText)}
+      ${passageLine(e)}
       ${buttons(answerButtons(links, input.myAnswer, kind))}
       ${going ? startersBlock(input.starters) : ''}`;
     const text = [
       `Hi ${name},`,
       '',
       going ? `You are in for ${e.title} ${dayWord}, ${whenText}${where}.` : `${e.title} is ${whenText}${where}. Are you coming?`,
+      ...passageText(e),
       '',
       ...textLinks(links, input.myAnswer, kind),
       ...(going && input.starters.length ? ['', 'Two things you could ask someone:', ...input.starters.slice(0, 2).map((s) => `- ${s}`)] : []),
@@ -281,12 +294,14 @@ export function eventMail(input: EventMailInput): Mail {
     ${para(hi)}
     ${para(`${escapeHtml(e.orgName)} just posted ${escapeHtml(e.title)}${weekly ? ', every week' : ''}. Can you make it?`)}
     ${eventBlock(e, whenText)}
+    ${passageLine(e)}
     ${buttons(answerButtons(links, input.myAnswer, kind))}
     ${calendarLine(links, 'Put it on your calendar')}`;
   const text = [
     `Hi ${name},`,
     '',
     `${e.orgName} just posted ${e.title}${weekly ? ' (every week)' : ''}: ${whenText}${where}. Can you make it?`,
+    ...passageText(e),
     '',
     ...textLinks(links, input.myAnswer, kind),
   ].join('\n');
@@ -307,6 +322,8 @@ export interface LeaderBriefInput {
   firstTimers: string[];
   gaps: string[];
   questions: string[];
+  /** The leader's own context notes for the passage. Leaders only. */
+  contextNotes?: string[];
   openUrl: string;
 }
 
@@ -332,6 +349,13 @@ export function leaderBriefMail(b: LeaderBriefInput): Mail {
     <ul style="margin:0;padding-left:18px;font-size:15px;line-height:1.7;color:${C.body};">${b.questions.map((q) => `<li>${escapeHtml(q)}</li>`).join('')}</ul>`
         : ''
     }
+    ${e.scriptureRef ? `<p style="margin:22px 0 6px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:${C.faint};">From the Word</p><p style="margin:0;font-size:15px;line-height:1.7;color:${C.body};">${escapeHtml(e.scriptureRef)}${e.scriptureWhy ? ` &middot; ${escapeHtml(e.scriptureWhy)}` : ''}</p>` : ''}
+    ${
+      b.contextNotes && b.contextNotes.length
+        ? `<p style="margin:14px 0 6px 0;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:${C.faint};">Context for you</p>
+    <ul style="margin:0;padding-left:18px;font-size:15px;line-height:1.7;color:${C.body};">${b.contextNotes.map((q) => `<li>${escapeHtml(q)}</li>`).join('')}</ul>`
+        : ''
+    }
     ${buttons([{ label: 'Open the event', href: b.openUrl }])}
     <p style="margin:8px 0 0 0;font-size:13px;color:${C.soft};">After it ends, tap who came. It takes a minute and it is how you notice who is drifting.</p>`;
   const text = [
@@ -344,6 +368,8 @@ export function leaderBriefMail(b: LeaderBriefInput): Mail {
     ...(b.firstTimers.length ? [`First time: ${b.firstTimers.join(', ')}`] : []),
     ...(b.gaps.length ? [`Still needed: ${b.gaps.join('; ')}`] : []),
     ...(b.questions.length ? ['', 'Questions that might come up:', ...b.questions.map((q) => `- ${q}`)] : []),
+    ...passageText(e),
+    ...(b.contextNotes && b.contextNotes.length ? ['', 'Context for you:', ...b.contextNotes.map((q) => `- ${q}`)] : []),
     '',
     `Open the event: ${b.openUrl}`,
   ].join('\n');

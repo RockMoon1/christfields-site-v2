@@ -85,8 +85,42 @@ export function overrideKey(iso: string, slot: Slot): string {
   return `${iso}-${slot}`;
 }
 
+/** Which coarse slot a local hour falls in; night hours belong to none. Client-safe. */
+export function slotForLocalHour(hour: number): Slot | null {
+  if (hour >= 6 && hour < 12) return 'morning';
+  if (hour >= 12 && hour < 17) return 'afternoon';
+  if (hour >= 17 && hour < 22) return 'evening';
+  return null;
+}
+
+export interface MemberAvailability {
+  weekly: Set<string>;
+  overrides: Map<string, boolean>;
+  busy: Set<string>;
+  /** A pasted calendar link or a Google free/busy connection. */
+  hasCalendarSource: boolean;
+}
+
 /**
- * Effective free/busy for a date + slot. Precedence:
+ * Effective free/busy for one member on a date + slot. Precedence:
+ *  1. A specific-date override (true=free, false=busy) always wins.
+ *  2. A calendar busy block makes the slot busy.
+ *  3. A member who connected a calendar and never tapped the weekly grid is
+ *     free wherever the calendar is not busy: "let your calendar fill this in"
+ *     has to mean exactly that.
+ *  4. Otherwise the usual weekly pattern decides.
+ */
+export function memberIsFree(iso: string, weekday: number, slot: Slot, m: MemberAvailability): boolean {
+  const ov = m.overrides.get(overrideKey(iso, slot));
+  if (ov !== undefined) return ov;
+  if (m.busy.has(overrideKey(iso, slot))) return false;
+  if (m.weekly.size === 0) return m.hasCalendarSource;
+  return m.weekly.has(weeklyKey(weekday, slot));
+}
+
+/**
+ * Effective free/busy for a date + slot (older form, weekly pattern only as the
+ * baseline). Precedence:
  *  1. A specific-date override (true=free, false=busy) always wins.
  *  2. Otherwise a connected calendar's busy block makes the slot busy.
  *  3. Otherwise fall back to the usual weekly pattern.

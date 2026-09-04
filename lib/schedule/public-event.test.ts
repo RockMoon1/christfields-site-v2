@@ -25,6 +25,11 @@ const row: EventRow = {
   thanks_note: 'SECRET thanks draft',
   rides_enabled: true,
   host_user_id: 'user_host',
+  scripture_ref: 'Romans 12:1-2',
+  scripture_text: '',
+  scripture_why: 'Living sacrifice',
+  discussion: 'What stands out?',
+  context_notes: 'LEADER ONLY: written to Rome around AD 57',
 };
 
 describe('member-facing event allowlist', () => {
@@ -37,6 +42,9 @@ describe('member-facing event allowlist', () => {
     expect(json).not.toContain('SECRET');
     expect(json).not.toContain('user_leader');
     expect(json).not.toContain('user_host');
+    expect(json).not.toContain('LEADER ONLY');
+    expect(e.scriptureRef).toBe('Romans 12:1-2');
+    expect(e.scriptureWhy).toBe('Living sacrifice');
     expect(e.cancelReason).toBe('');
   });
 

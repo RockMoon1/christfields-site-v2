@@ -154,6 +154,13 @@ export function LeaderStrip({ view, whenText }: { view: LeaderEventView; whenTex
         </div>
       )}
 
+      {view.contextNotes && !cancelled && (
+        <div className="mt-3 rounded-sm border border-border-sub bg-black-2/60 px-4 py-3">
+          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-[0.22em] text-muted">Context for you (only leaders see this)</p>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-ivory-dim">{view.contextNotes}</p>
+        </div>
+      )}
+
       {view.attendanceOpen && (
         <div className="mt-5">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">

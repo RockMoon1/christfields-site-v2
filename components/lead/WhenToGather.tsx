@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { GroupAvailability } from '@/lib/schedule/group-availability';
 import { SLOTS, SLOT_LABEL, type Slot } from '@/lib/dashboard/availability';
+import { RefreshBusy } from './RefreshBusy';
 
 /**
  * The three best times, each with names and a Post-this button, then a plain
@@ -8,14 +9,23 @@ import { SLOTS, SLOT_LABEL, type Slot } from '@/lib/dashboard/availability';
  * names appear only on the best-time cards so a leader can never read a
  * member's busy pattern by absence.
  */
-export function WhenToGather({ availability, orgId }: { availability: GroupAvailability; orgId: string }) {
+export function WhenToGather({
+  availability,
+  orgId,
+  lastRefreshedAt = null,
+}: {
+  availability: GroupAvailability;
+  orgId: string;
+  lastRefreshedAt?: string | null;
+}) {
   const { best, days, total } = availability;
 
   return (
     <div className="space-y-8">
       {best.length === 0 ? (
         <div className="rounded-sm border border-dashed border-border-sub p-6 text-sm text-silver">
-          Nobody has told us when they are free yet. Share the group link and ask people to tap their usual times.
+          Nobody has told us when they are free yet. Share the group link and ask people to tap their usual times, or
+          connect their calendar on the You page.
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-3">
@@ -40,6 +50,8 @@ export function WhenToGather({ availability, orgId }: { availability: GroupAvail
         </div>
       )}
 
+      <RefreshBusy orgId={orgId} lastRefreshedAt={lastRefreshedAt} />
+
       <div className="overflow-x-auto">
         <div className="min-w-[420px]">
           <div className="mb-2 grid grid-cols-[100px_repeat(3,1fr)] gap-1.5">
@@ -62,6 +74,10 @@ export function WhenToGather({ availability, orgId }: { availability: GroupAvail
           ))}
         </div>
       </div>
+      <p className="text-xs text-muted">
+        Calendars count all-day events as free unless the person marked them Busy. Only free or busy is ever read,
+        never what it is.
+      </p>
     </div>
   );
 }

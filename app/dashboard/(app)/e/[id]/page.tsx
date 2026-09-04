@@ -7,6 +7,7 @@ import { SlotList } from '@/components/dashboard/SlotList';
 import { Starters } from '@/components/dashboard/Starters';
 import { PlanQuestion } from '@/components/dashboard/PlanQuestion';
 import { LeaderStrip } from '@/components/lead/LeaderStrip';
+import { FromTheWord } from '@/components/dashboard/FromTheWord';
 import { whenInWords } from '@/lib/dashboard/format';
 import { googleTemplateUrl } from '@/lib/schedule/ics-export';
 import { appUrl } from '@/lib/dashboard/prefs';
@@ -46,6 +47,8 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
       />
 
       <div className="mt-6 space-y-6">
+        {event.status === 'scheduled' && <FromTheWord event={event} />}
+
         {answered && event.withinDay && event.status === 'scheduled' && (
           <PlanQuestion eventId={event.id} initial={event.myPlan} />
         )}

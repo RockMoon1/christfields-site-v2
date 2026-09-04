@@ -2,13 +2,14 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { ledOrgs } from '@/lib/groups/membership';
 import { SLOT_DEFAULT_HOUR, isSlot } from '@/lib/dashboard/availability';
-import { getEventForEdit } from '../actions';
+import { getEventForEdit, getOrgAvailability } from '../actions';
 import { PostForm } from '@/components/lead/PostForm';
 
 /**
- * Post something. Five visible fields, one collapsed More, two buttons.
- * Arriving from a best-time card prefills the day and time; arriving from
- * "Extend?" prefills everything from the last occurrence of a series.
+ * Post something. Five visible fields, one collapsed More, two buttons, and
+ * under the When field the one thing a leader used to have to go looking for:
+ * who is free then. Arriving from a best-time card prefills the day and time;
+ * arriving from "Extend?" prefills everything from the last occurrence.
  */
 export default async function PostPage({
   searchParams,
@@ -27,8 +28,11 @@ export default async function PostPage({
     startsAtLocal = `${sp.date}T${h < 10 ? `0${h}` : h}:00`;
   }
 
-  let extend: Awaited<ReturnType<typeof getEventForEdit>> = null;
-  if (sp.extend) extend = await getEventForEdit(sp.extend);
+  const [extend, orgAvailability] = await Promise.all([
+    sp.extend ? getEventForEdit(sp.extend) : Promise.resolve(null),
+    getOrgAvailability(defaultOrg),
+  ]);
+  const initialOrg = extend?.event.org_id ?? defaultOrg;
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -42,8 +46,10 @@ export default async function PostPage({
       <PostForm
         mode="create"
         orgs={orgs.map((o) => ({ orgId: o.orgId, orgName: o.orgName }))}
+        availability={initialOrg === defaultOrg ? orgAvailability?.availability ?? null : null}
+        upcoming={initialOrg === defaultOrg ? orgAvailability?.upcoming ?? [] : []}
         initial={{
-          orgId: extend?.event.org_id ?? defaultOrg,
+          orgId: initialOrg,
           title: extend?.event.title ?? '',
           type: extend?.event.event_type ?? 'gathering',
           startsAtIso: extend ? new Date(new Date(extend.event.starts_at).getTime() + 7 * 86_400_000).toISOString() : null,
@@ -57,6 +63,11 @@ export default async function PostPage({
           bringItems: '',
           ridesEnabled: extend?.event.rides_enabled ?? false,
           seriesId: null,
+          scriptureRef: extend?.event.scripture_ref ?? '',
+          scriptureText: extend?.event.scripture_text ?? '',
+          scriptureWhy: extend?.event.scripture_why ?? '',
+          discussion: extend?.event.discussion ?? '',
+          contextNotes: extend?.event.context_notes ?? '',
         }}
       />
     </div>

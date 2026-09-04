@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -24,16 +25,19 @@ function browserTz(): string {
 }
 
 /**
- * The usual-week tap grid (one toggle per tap, no dragging) and the paste-a-
- * calendar-link card. Two concepts, nothing else.
+ * The usual-week tap grid (one toggle per tap, no dragging), then the ways a
+ * calendar can fill it in instead: Google in one tap when the site has it
+ * switched on, or a pasted private link from any calendar. If you connect a
+ * calendar and never tap the grid, you count as free wherever it is not busy.
  */
 export function AvailabilityBoard({ initial }: { initial: MyAvailability }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [weeklyFree, setWeeklyFree] = useState<Set<string>>(() => new Set(initial.weekly));
   const cal = initial.calendar;
+  const google = initial.google;
 
-  // Auto-refresh a connected calendar when it has gone stale, once per visit.
+  // Auto-refresh a connected pasted link when it has gone stale, once per visit.
   const didAutoRefresh = useRef(false);
   useEffect(() => {
     if (didAutoRefresh.current) return;
@@ -68,10 +72,16 @@ export function AvailabilityBoard({ initial }: { initial: MyAvailability }) {
     });
   }
 
+  const anyCalendar = cal.connected || (google.configured && google.connected && google.status === 'ok');
+
   return (
     <div className="space-y-10">
       <section>
-        <p className="mb-3 text-sm text-silver">Tap the times you are normally free. Tap again to clear.</p>
+        <p className="mb-3 text-sm text-silver">
+          {anyCalendar
+            ? 'Your calendar fills this in. Tap times below only if you want to narrow it down.'
+            : 'Tap the times you are normally free. Tap again to clear.'}
+        </p>
         <div className="grid grid-cols-[52px_repeat(3,1fr)] gap-1.5">
           <div />
           {SLOTS.map((slot) => (
@@ -108,8 +118,45 @@ export function AvailabilityBoard({ initial }: { initial: MyAvailability }) {
         </div>
       </section>
 
-      <CalendarConnect cal={cal} isPending={isPending} startTransition={startTransition} router={router} />
+      {google.configured && <GoogleBusyCard google={google} />}
+
+      <CalendarConnect cal={cal} isPending={isPending} startTransition={startTransition} router={router} googleOffered={google.configured} />
+
+      <p className="text-xs leading-relaxed text-muted">
+        Calendars count all-day events (a trip, a day off) as free unless you mark them Busy in your calendar app.
+      </p>
     </div>
+  );
+}
+
+function GoogleBusyCard({ google }: { google: MyAvailability['google'] }) {
+  const on = google.connected && google.status === 'ok';
+  return (
+    <section className="rounded-sm border border-border-gold bg-gold/[0.04] p-6">
+      <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-gold">One tap</p>
+      <h3 className="font-display text-xl font-light text-ivory">Let Google fill this in</h3>
+      <p className="mt-2 text-sm leading-relaxed text-silver">
+        We check your Google Calendar for the next four weeks and keep only which mornings, afternoons, and evenings
+        are busy. We only ever see free or busy. Never what it is.
+      </p>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        {on ? (
+          <>
+            <span className="text-sm text-gold-lt">Connected. We check regularly, usually every hour.</span>
+            <Link href="/dashboard/settings" className="text-[11px] font-medium uppercase tracking-[0.1em] text-muted hover:text-silver">
+              Manage on You &rarr;
+            </Link>
+          </>
+        ) : (
+          <a
+            href="/api/google/connect?feature=busy&from=availability"
+            className="inline-flex min-h-[44px] items-center rounded-sm bg-gold px-4 text-[11px] font-medium uppercase tracking-[0.1em] text-black hover:bg-gold-lt"
+          >
+            {google.connected ? 'Connect Google again' : 'Share free or busy from Google'}
+          </a>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -120,11 +167,13 @@ function CalendarConnect({
   isPending,
   startTransition,
   router,
+  googleOffered,
 }: {
   cal: MyAvailability['calendar'];
   isPending: boolean;
   startTransition: Transition;
   router: ReturnType<typeof useRouter>;
+  googleOffered: boolean;
 }) {
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
@@ -150,7 +199,7 @@ function CalendarConnect({
   if (cal.connected) {
     return (
       <section className="rounded-sm border border-border-sub bg-black-3 p-6">
-        <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-gold">Your calendar is connected</p>
+        <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-gold">Your calendar link is connected</p>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="text-sm text-ivory">{cal.host ?? 'Your calendar'}</span>
           <span
@@ -194,11 +243,11 @@ function CalendarConnect({
 
   return (
     <section className="rounded-sm border border-border-sub bg-black-3 p-6">
-      <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-gold">Optional</p>
-      <h3 className="font-display text-xl font-light text-ivory">Let your calendar fill this in</h3>
+      <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-gold">{googleOffered ? 'Any other calendar' : 'Optional'}</p>
+      <h3 className="font-display text-xl font-light text-ivory">{googleOffered ? 'Or paste a calendar link' : 'Let your calendar fill this in'}</h3>
       <p className="mt-2 text-sm leading-relaxed text-silver">
         Paste your calendar&rsquo;s private link and your busy times fill in on their own. We only ever read
-        free or busy, never what you are doing. Works with Google, Apple, and Outlook.
+        free or busy, never what you are doing. Works with {googleOffered ? 'Apple, Outlook, and Google' : 'Google, Apple, and Outlook'}.
       </p>
 
       {!open ? (

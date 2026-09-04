@@ -21,6 +21,8 @@ export function prefsDefaults(userId: string): MemberPrefsRow {
     free_nudge_seen: false,
     feed_token: null,
     updated_at: new Date(0).toISOString(),
+    share_themes: true,
+    rhythm_nudged_at: null,
   };
 }
 

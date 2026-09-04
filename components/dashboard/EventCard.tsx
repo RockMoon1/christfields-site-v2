@@ -170,6 +170,14 @@ export function EventCard({
               </RsvpButton>
             </div>
           )}
+          {status === 'not_going' && justAnswered && (
+            <p className="mt-3 text-sm leading-relaxed text-silver">
+              Thanks for letting us know. Want your leader to pick times that work for you?{' '}
+              <Link href="/dashboard/availability" className="text-gold hover:text-gold-lt">
+                Tell us when you are free &rarr;
+              </Link>
+            </p>
+          )}
         </>
       )}
     </article>

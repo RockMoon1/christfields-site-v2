@@ -78,6 +78,15 @@ as a table comment, which the covenant review asked for.
 
 ---
 
+### 1e. Migration 020 — Phase 4 (Scripture on posts, quiet question, rhythm)  ⬅ RUN BEFORE THE PHASE 4 DEPLOY
+
+Supabase → SQL Editor → New query → paste `db/migrations/020_more_into_it.sql` →
+Run. Additive and safe to re-run. The Phase 4 code writes the new event
+columns on every post, so this must be in before that deploy goes live; the
+Netlify build itself does not touch the database.
+
+---
+
 ## 2. Netlify → Environment variables
 
 **Where:** app.netlify.com → your christfields site → Site configuration →

@@ -62,6 +62,14 @@ export interface EventRow {
   thanks_note: string;
   rides_enabled: boolean;
   host_user_id: string | null;
+  /** Phase 4 (migration 020): optional Scripture for the gathering. */
+  scripture_ref: string;
+  scripture_text: string;
+  scripture_why: string;
+  /** Up to three questions for the group, newline separated. Member-visible. */
+  discussion: string;
+  /** Historical / interpretive notes. LEADER-ONLY. */
+  context_notes: string;
 }
 
 export interface EventRsvpRow {
@@ -154,6 +162,20 @@ export interface MemberPrefsRow {
   free_nudge_seen: boolean;
   feed_token: string | null;
   updated_at: string;
+  /** Phase 4 (migration 020). */
+  share_themes: boolean;
+  rhythm_nudged_at: string | null;
+}
+
+export interface QuietReflectionRow {
+  id: string;
+  clerk_user_id: string;
+  question_key: string;
+  body_enc: string;
+  themes: string[];
+  confirmed: boolean;
+  safety: boolean;
+  created_at: string;
 }
 
 /* ============================================================

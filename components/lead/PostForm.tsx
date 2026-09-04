@@ -1,12 +1,15 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { EVENT_TYPE_LIST, isEventType, type EventType } from '@/lib/dashboard/events';
 import { defaultMemberNote, defaultLeaderNote } from '@/lib/dashboard/prompts';
+import { bibleUrl, cleanReference } from '@/lib/dashboard/bible';
 import { MAX_SERIES_WEEKS } from '@/lib/schedule/series';
-import { createEvent, updateEvent } from '@/app/dashboard/(app)/lead/actions';
+import type { GroupAvailability } from '@/lib/schedule/group-availability';
+import { createEvent, updateEvent, getOrgAvailability } from '@/app/dashboard/(app)/lead/actions';
+import { WhoIsFree, type UpcomingLite } from './WhoIsFree';
 
 export interface PostInitial {
   orgId: string;
@@ -25,6 +28,11 @@ export interface PostInitial {
   bringItems: string;
   ridesEnabled: boolean;
   seriesId: string | null;
+  scriptureRef?: string;
+  scriptureText?: string;
+  scriptureWhy?: string;
+  discussion?: string;
+  contextNotes?: string;
 }
 
 function pad(n: number): string {
@@ -53,19 +61,24 @@ const labelClass = 'mb-1.5 block text-[10px] font-medium uppercase tracking-[0.2
 
 /**
  * One form for posting and for changing. Five visible fields; everything else
- * under More. Post and tell everyone, or save quietly. On edit, "tell everyone"
- * only fans out when the time or place actually changed.
+ * under More, including the optional Scripture for the gathering. Under When,
+ * who is free then. Post and tell everyone, or save quietly. On edit, "tell
+ * everyone" only fans out when the time or place actually changed.
  */
 export function PostForm({
   mode,
   eventId,
   orgs,
   initial,
+  availability: initialAvailability = null,
+  upcoming: initialUpcoming = [],
 }: {
   mode: 'create' | 'edit';
   eventId?: string;
   orgs: { orgId: string; orgName: string }[];
   initial: PostInitial;
+  availability?: GroupAvailability | null;
+  upcoming?: UpcomingLite[];
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -84,11 +97,34 @@ export function PostForm({
   const [weeks, setWeeks] = useState(initial.weeks);
   const [bringItems, setBringItems] = useState(initial.bringItems);
   const [ridesEnabled, setRidesEnabled] = useState(initial.ridesEnabled);
-  const [more, setMore] = useState(false);
+  const [scriptureRef, setScriptureRef] = useState(initial.scriptureRef ?? '');
+  const [scriptureText, setScriptureText] = useState(initial.scriptureText ?? '');
+  const [scriptureWhy, setScriptureWhy] = useState(initial.scriptureWhy ?? '');
+  const [discussion, setDiscussion] = useState(initial.discussion ?? '');
+  const [contextNotes, setContextNotes] = useState(initial.contextNotes ?? '');
+  const hasScripture = !!(scriptureRef || scriptureText || scriptureWhy || discussion || contextNotes);
+  const [more, setMore] = useState(hasScripture);
+  const [word, setWord] = useState(hasScripture);
   const [notify, setNotify] = useState(true);
   const [scope, setScope] = useState<'one' | 'following'>('one');
 
+  // Who is free: comes with the page for the first org; fetched again when a leader switches groups.
+  const [availability, setAvailability] = useState<GroupAvailability | null>(initialAvailability);
+  const [upcoming, setUpcoming] = useState<UpcomingLite[]>(initialUpcoming);
+  const loadedFor = useRef(initial.orgId);
+  useEffect(() => {
+    if (orgId === loadedFor.current) return;
+    loadedFor.current = orgId;
+    getOrgAvailability(orgId)
+      .then((r) => {
+        setAvailability(r?.availability ?? null);
+        setUpcoming(r?.upcoming ?? []);
+      })
+      .catch(() => undefined);
+  }, [orgId]);
+
   const orgName = useMemo(() => orgs.find((o) => o.orgId === orgId)?.orgName ?? '', [orgs, orgId]);
+  const cleanRef = cleanReference(scriptureRef);
 
   function pickType(t: EventType) {
     setType(t);
@@ -104,7 +140,15 @@ export function PostForm({
     if (!when) return setError('Pick a day and time.');
     const startsAt = new Date(when);
     if (Number.isNaN(startsAt.getTime())) return setError('That date does not look right.');
+    if (scriptureRef.trim() && !cleanRef) return setError('Write the passage like "Romans 12:1-2".');
     const endsAt = ends ? new Date(ends) : null;
+    const scripture = {
+      scriptureRef: cleanRef,
+      scriptureText,
+      scriptureWhy,
+      discussion,
+      contextNotes,
+    };
 
     startTransition(async () => {
       if (mode === 'create') {
@@ -123,6 +167,7 @@ export function PostForm({
           bringItems: bringItems.split(/[\n,]/).map((s) => s.trim()).filter(Boolean),
           ridesEnabled,
           notify: !quietly,
+          ...scripture,
         }).catch(() => ({ ok: false as const, error: 'Something went wrong.' }));
         if (!res.ok) return setError(res.error ?? 'Could not save it.');
         router.push(res.id ? `/dashboard/e/${res.id}` : '/dashboard/lead');
@@ -139,6 +184,7 @@ export function PostForm({
           ridesEnabled,
           notify,
           scope,
+          ...scripture,
         }).catch(() => ({ ok: false as const, error: 'Something went wrong.' }));
         if (!res.ok) return setError(res.error ?? 'Could not save the change.');
         router.push(`/dashboard/e/${eventId}`);
@@ -233,6 +279,10 @@ export function PostForm({
         </div>
       </div>
 
+      <div className="-mt-2 mb-4">
+        <WhoIsFree when={when} availability={availability} upcoming={upcoming} onPick={setWhen} />
+      </div>
+
       <label className={labelClass} htmlFor="post-line">
         One line for people
       </label>
@@ -246,14 +296,27 @@ export function PostForm({
         className={cn(inputClass, 'mb-4')}
       />
 
-      <button
-        type="button"
-        onClick={() => setMore((v) => !v)}
-        aria-expanded={more}
-        className="mb-4 inline-flex min-h-[44px] items-center text-[11px] font-medium uppercase tracking-[0.1em] text-gold hover:text-gold-lt"
-      >
-        {more ? 'Less' : 'More'} {more ? '↑' : '↓'}
-      </button>
+      <div className="mb-4 flex flex-wrap gap-4">
+        <button
+          type="button"
+          onClick={() => setMore((v) => !v)}
+          aria-expanded={more}
+          className="inline-flex min-h-[44px] items-center text-[11px] font-medium uppercase tracking-[0.1em] text-gold hover:text-gold-lt"
+        >
+          {more ? 'Less' : 'More'} {more ? '↑' : '↓'}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setWord((v) => !v);
+            if (!word) setMore(true);
+          }}
+          aria-expanded={word}
+          className="inline-flex min-h-[44px] items-center text-[11px] font-medium uppercase tracking-[0.1em] text-gold hover:text-gold-lt"
+        >
+          From the Word {word ? '↑' : '↓'}
+        </button>
+      </div>
 
       {more && (
         <div className="mb-4 space-y-4 rounded-sm border border-border-sub bg-black-2 p-4">
@@ -305,6 +368,90 @@ export function PostForm({
                     {s === 'one' ? 'Just this one' : 'This and the following ones'}
                   </button>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {word && (
+            <div className="space-y-3 rounded-sm border border-border-gold bg-gold/[0.04] p-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-gold">From the Word (optional)</p>
+              <div>
+                <label className={labelClass} htmlFor="post-scripture-ref">
+                  Passage
+                </label>
+                <input
+                  id="post-scripture-ref"
+                  type="text"
+                  value={scriptureRef}
+                  onChange={(e) => setScriptureRef(e.target.value)}
+                  placeholder="e.g. Romans 12:1-2"
+                  maxLength={60}
+                  className={inputClass}
+                />
+                {cleanRef && (
+                  <a
+                    href={bibleUrl(cleanRef)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-block text-[11px] font-medium uppercase tracking-[0.1em] text-gold hover:text-gold-lt"
+                  >
+                    Check it on BibleGateway &rarr;
+                  </a>
+                )}
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="post-scripture-text">
+                  The words (paste them if you want people to read them here)
+                </label>
+                <textarea
+                  id="post-scripture-text"
+                  value={scriptureText}
+                  onChange={(e) => setScriptureText(e.target.value)}
+                  rows={3}
+                  maxLength={900}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="post-scripture-why">
+                  Why this passage, in one line
+                </label>
+                <input
+                  id="post-scripture-why"
+                  type="text"
+                  value={scriptureWhy}
+                  onChange={(e) => setScriptureWhy(e.target.value)}
+                  maxLength={200}
+                  placeholder="What we are hoping to see in it together."
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="post-discussion">
+                  Questions for the group (up to three, one per line)
+                </label>
+                <textarea
+                  id="post-discussion"
+                  value={discussion}
+                  onChange={(e) => setDiscussion(e.target.value)}
+                  rows={3}
+                  maxLength={400}
+                  placeholder={'What stands out?\nWhere is this hard to live?\nWhat would change if we believed it?'}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="post-context">
+                  Context for you (history, who wrote it and why; only leaders see this)
+                </label>
+                <textarea
+                  id="post-context"
+                  value={contextNotes}
+                  onChange={(e) => setContextNotes(e.target.value)}
+                  rows={3}
+                  maxLength={900}
+                  className={inputClass}
+                />
               </div>
             </div>
           )}

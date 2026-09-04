@@ -1,0 +1,222 @@
+{
+  "safety": {
+    "phrases": [
+      "kill myself", "killing myself", "suicide", "suicidal", "end my life", "end it all", "want to die", "wanna die",
+      "better off dead", "self harm", "self-harm", "cut myself", "cutting myself", "hurt myself", "hurting myself",
+      "overdose", "hits me", "he hit me", "she hit me", "hitting me", "hurting me", "abusing me", "abuses me",
+      "not safe at home", "threatens me", "afraid of him", "afraid of her", "raped", "molested", "touched me"
+    ]
+  },
+  "themes": {
+    "honesty": {
+      "label": "honesty",
+      "words": ["lie", "lies", "lying", "lied", "liar", "dishonest", "dishonesty", "cheated", "cheating", "secret", "secrets"],
+      "phrases": ["cover up", "not telling", "hiding it", "half truth", "half-truth", "hiding from"],
+      "passage": "Ephesians 4:25",
+      "nudge": "Someone may be carrying a lie they want to put down. Grace before truth lands well."
+    },
+    "anger": {
+      "label": "anger",
+      "words": ["angry", "anger", "furious", "rage", "resent", "resentment", "bitter", "bitterness", "temper"],
+      "phrases": ["snapped at", "yelled at", "lost it with"],
+      "passage": "James 1:19-20",
+      "nudge": "Anger is in the room for someone. Name it as human before naming it as sin."
+    },
+    "lust": {
+      "label": "lust",
+      "words": ["lust", "porn", "pornography", "impure", "impurity"],
+      "phrases": ["looking at things", "hook up", "hooking up", "sleeping with"],
+      "passage": "1 Corinthians 10:13",
+      "nudge": "Someone is fighting a private battle. Talk about the way out God provides, not the shame."
+    },
+    "pride": {
+      "label": "pride",
+      "words": ["pride", "proud", "arrogant", "arrogance", "ego"],
+      "phrases": ["better than them", "look down on", "prove myself", "always right", "be right"],
+      "passage": "Philippians 2:3-4",
+      "nudge": "Pride rarely knows it is pride. Model the lowest seat this week."
+    },
+    "envy": {
+      "label": "envy",
+      "words": ["envy", "envious", "jealous", "jealousy", "comparing", "comparison"],
+      "phrases": ["wish i had", "their life", "everyone else has"],
+      "passage": "Galatians 5:26",
+      "nudge": "Comparison is stealing someone's joy. A word on contentment lands well."
+    },
+    "addiction": {
+      "label": "addiction",
+      "words": ["addiction", "addicted", "drinking", "drunk", "alcohol", "weed", "drugs", "relapse", "relapsed", "gambling", "vaping"],
+      "phrases": ["can't stop", "cant stop", "one more time"],
+      "passage": "Romans 7:24-25",
+      "nudge": "Someone is losing a fight alone. Make it normal to ask for a hand this week."
+    },
+    "anxiety": {
+      "label": "anxiety",
+      "words": ["anxious", "anxiety", "worry", "worried", "worrying", "overwhelmed", "panic", "stressed", "stress", "overthinking"],
+      "phrases": ["can't sleep", "cant sleep", "racing thoughts", "what if"],
+      "passage": "Philippians 4:6-7",
+      "nudge": "Someone's mind will not slow down. Rest and the nearness of God are the words."
+    },
+    "fear": {
+      "label": "fear",
+      "words": ["afraid", "scared", "fear", "fears", "terrified", "dread", "frightened"],
+      "phrases": [],
+      "passage": "Isaiah 41:10",
+      "nudge": "Fear is close for someone. \"Do not be afraid\" is the most repeated command for a reason."
+    },
+    "grief": {
+      "label": "grief",
+      "words": ["grief", "grieving", "died", "death", "funeral", "mourning", "widow", "widower"],
+      "phrases": ["passed away", "lost my mom", "lost my dad", "lost my mother", "lost my father", "lost my husband", "lost my wife", "lost my son", "lost my daughter", "lost my baby", "lost my friend", "lost my brother", "lost my sister", "lost him", "lost her", "miss him", "miss her", "miss them"],
+      "passage": "Psalm 34:18",
+      "nudge": "Someone is grieving. Leave room for silence; do not rush to the lesson."
+    },
+    "loneliness": {
+      "label": "loneliness",
+      "words": ["lonely", "loneliness", "isolated", "isolation"],
+      "phrases": ["no one", "nobody cares", "left out", "no friends", "on my own", "by myself"],
+      "passage": "Deuteronomy 31:8",
+      "nudge": "Someone feels unseen. Learn a name, ask a second question, sit next to them."
+    },
+    "shame": {
+      "label": "shame",
+      "words": ["shame", "ashamed", "guilt", "guilty", "worthless", "regret", "regrets"],
+      "phrases": ["hate myself", "disgusted with myself", "can't forgive myself", "cant forgive myself"],
+      "passage": "Romans 8:1",
+      "nudge": "Shame is whispering to someone. Say out loud that there is no condemnation in Christ."
+    },
+    "doubt": {
+      "label": "doubt",
+      "words": ["doubt", "doubting", "doubts", "unsure", "skeptical"],
+      "phrases": ["is god real", "does god", "don't believe", "dont believe", "where is god", "hard to believe", "if god"],
+      "passage": "Mark 9:24",
+      "nudge": "Someone is doubting and afraid to say so. Make doubt speakable this week."
+    },
+    "marriage": {
+      "label": "marriage",
+      "words": ["wife", "husband", "marriage", "married", "spouse", "divorce", "divorced", "separated"],
+      "phrases": ["my ex"],
+      "passage": "Ephesians 4:2-3",
+      "nudge": "A marriage in the room is under strain. Patience and bearing with one another are the words."
+    },
+    "parenting": {
+      "label": "parenting",
+      "words": ["kids", "kid", "son", "daughter", "children", "toddler", "teenager", "teen", "parenting", "newborn"],
+      "phrases": ["my baby", "my child"],
+      "passage": "Psalm 127:3",
+      "nudge": "Someone is carrying their children. A word for tired parents lands well."
+    },
+    "family": {
+      "label": "family",
+      "words": ["mom", "mother", "dad", "father", "parents", "brother", "sister", "sibling", "siblings", "grandma", "grandpa", "family"],
+      "phrases": ["in-laws", "in laws"],
+      "passage": "Colossians 3:13",
+      "nudge": "Family is heavy for someone. Honour and forgiveness both need saying."
+    },
+    "friendship": {
+      "label": "friendship",
+      "words": ["friend", "friends", "friendship", "betrayed", "betrayal"],
+      "phrases": ["fell out", "drifted apart", "ghosted me"],
+      "passage": "Proverbs 17:17",
+      "nudge": "A friendship has cracked for someone. Talk about what a brother born for adversity looks like."
+    },
+    "work": {
+      "label": "work",
+      "words": ["coworker", "coworkers", "fired", "career", "overtime", "deadline", "deadlines", "promotion", "unemployed", "interview"],
+      "phrases": ["my job", "at work", "my boss", "laid off", "job search", "looking for work"],
+      "passage": "Colossians 3:23-24",
+      "nudge": "Work is weighing on someone. Whom we really work for is the word."
+    },
+    "money": {
+      "label": "money",
+      "words": ["money", "bills", "debt", "rent", "broke", "paycheck", "afford", "finances", "financial", "loan", "loans"],
+      "phrases": ["credit card", "can't pay", "cant pay"],
+      "passage": "Matthew 6:31-33",
+      "nudge": "Money is tight for someone. Say plainly that the group helps each other, and how."
+    },
+    "health": {
+      "label": "health",
+      "words": ["sick", "illness", "diagnosis", "diagnosed", "chronic", "surgery", "hospital", "cancer", "doctor", "insomnia", "migraines"],
+      "phrases": ["my body", "in pain", "test results"],
+      "passage": "2 Corinthians 12:9",
+      "nudge": "Someone's body is failing them. Pray for healing and for grace in weakness, both."
+    },
+    "burnout": {
+      "label": "burnout",
+      "words": ["exhausted", "burnout", "tired", "drained", "depleted"],
+      "phrases": ["burned out", "burnt out", "no energy", "running on empty", "can't keep up", "cant keep up"],
+      "passage": "Matthew 11:28-30",
+      "nudge": "Someone is running on empty. Rest is not a reward; say so."
+    },
+    "purpose": {
+      "label": "purpose",
+      "words": ["purpose", "calling", "direction", "meaning", "pointless", "stuck", "aimless"],
+      "phrases": ["what am i doing", "my life is going", "what is the point"],
+      "passage": "Jeremiah 29:11",
+      "nudge": "Someone is asking what it is all for. Talk about faithfulness in the small and ordinary."
+    },
+    "identity": {
+      "label": "identity",
+      "words": ["identity", "insecure", "insecurity", "inadequate", "failure"],
+      "phrases": ["who i am", "not enough", "good enough", "don't belong", "dont belong", "fit in", "who am i"],
+      "passage": "1 John 3:1",
+      "nudge": "Someone doubts they belong. Say who they are to God before what they do for Him."
+    },
+    "forgiveness": {
+      "label": "forgiveness",
+      "words": ["forgive", "forgiveness", "forgiving", "unforgiving", "grudge", "wronged"],
+      "phrases": ["let it go", "hurt me", "did to me"],
+      "passage": "Matthew 18:21-22",
+      "nudge": "Someone is deciding whether to forgive. Do not rush it; do not skip it."
+    },
+    "gratitude": {
+      "label": "gratitude",
+      "words": ["grateful", "gratitude", "thankful", "thankfulness", "blessed", "blessing", "blessings", "joy", "joyful"],
+      "phrases": ["so good", "answered prayer"],
+      "passage": "Psalm 100:4-5",
+      "nudge": "Someone is full of thanks. Give it a minute of the room; gratitude is contagious."
+    },
+    "prayer": {
+      "label": "prayer",
+      "words": ["pray", "prayer", "praying", "prayers", "devotion", "devotions", "worship", "fasting"],
+      "phrases": ["quiet time", "reading the bible", "read my bible", "hear god", "hearing god"],
+      "passage": "Luke 11:9-10",
+      "nudge": "Someone wants to pray better and feels behind. Keep it simple and honest."
+    },
+    "church": {
+      "label": "church",
+      "words": ["church", "pastor", "sermon", "congregation", "ministry", "elders"],
+      "phrases": ["small group", "church hurt", "left the church"],
+      "passage": "Hebrews 10:24-25",
+      "nudge": "Church has been complicated for someone. Listen longer than you speak."
+    },
+    "decision": {
+      "label": "decision",
+      "words": ["decide", "decision", "decisions", "deciding", "choice", "choose", "crossroads", "offer"],
+      "phrases": ["should i", "which way", "big decision", "or not"],
+      "passage": "Proverbs 3:5-6",
+      "nudge": "A decision is looming for someone. Wisdom, counsel, and peace are the words."
+    },
+    "temptation": {
+      "label": "temptation",
+      "words": ["tempted", "temptation", "temptations", "tempting"],
+      "phrases": ["give in", "gave in", "keep falling", "struggle with", "struggling with", "same sin", "keep doing"],
+      "passage": "1 Corinthians 10:13",
+      "nudge": "Someone keeps falling in the same place. Talk about the way out, and about company on the way."
+    },
+    "patience": {
+      "label": "patience",
+      "words": ["patient", "patience", "impatient", "waiting", "delay", "delayed"],
+      "phrases": ["how long", "still waiting", "when will"],
+      "passage": "Isaiah 40:31",
+      "nudge": "Someone is tired of waiting. Waiting on the Lord is different from waiting around; say how."
+    },
+    "hope": {
+      "label": "hope",
+      "words": ["hope", "hopeful", "hopeless", "discouraged", "discouragement", "despair", "defeated"],
+      "phrases": ["no hope", "give up", "giving up", "what's the use", "whats the use"],
+      "passage": "Romans 15:13",
+      "nudge": "Hope is thin for someone. The God of hope is the word, not a pep talk."
+    }
+  }
+}

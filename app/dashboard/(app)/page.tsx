@@ -8,6 +8,9 @@ import { HomeSlot } from '@/components/dashboard/HomeSlot';
 import { whenInWords } from '@/lib/dashboard/format';
 import { googleTemplateUrl } from '@/lib/schedule/ics-export';
 import { appUrl } from '@/lib/dashboard/prefs';
+import { dayKeyInZone } from '@/lib/dashboard/timezone';
+import { verseForDay } from '@/lib/dashboard/verses';
+import { VerseCard } from '@/components/dashboard/VerseCard';
 
 /**
  * Home. At most four things: what changed, the next event as one big card,
@@ -18,10 +21,14 @@ export default async function HomePage() {
   const base = appUrl();
   const zoneFor = (eventTz: string) => (feed.tz && feed.tz !== 'UTC' ? feed.tz : eventTz);
   const icsToken = (eventId: string, startsAt: string) => (userId ? mintIcsToken(eventId, userId, startsAt) : undefined);
+  const dayKey = dayKeyInZone(feed.tz && feed.tz !== 'UTC' ? feed.tz : 'America/Denver');
+  const verse = verseForDay(dayKey);
 
   return (
     <div className="mx-auto max-w-2xl">
       <ChangedStrip lines={feed.changed} tz={feed.tz} />
+
+      <VerseCard verse={verse} />
 
       {feed.slot?.kind === 'hello' && <HomeSlot card={feed.slot} firstName={feed.firstName} />}
 

@@ -51,6 +51,8 @@ export interface SyncOptions {
   nowMs?: number;
   deadline?: () => boolean;
   maxCalls?: number;
+  /** Only refresh free/busy (a leader's Refresh); leave the calendar mirror to the tick. */
+  busyOnly?: boolean;
 }
 
 export interface SyncOutcome {
@@ -104,7 +106,7 @@ export async function syncMemberCalendar(userId: string, opts: SyncOptions = {})
   const tz = safeTz((prefs as { tz: string } | null)?.tz, 'America/Denver');
 
   /* ---------------- write side ---------------- */
-  if (has(conn, SCOPES.write)) {
+  if (has(conn, SCOPES.write) && !opts.busyOnly) {
     let calendarId: string | null = conn.cf_calendar_id;
     let skipWrite = false;
     let check: 'exists' | 'gone' | 'unknown' = 'gone';

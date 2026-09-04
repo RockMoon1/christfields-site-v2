@@ -54,12 +54,25 @@ function sign(payload: string): string {
   return createHmac('sha256', secret()).update(payload).digest('base64url');
 }
 
-export function mintState(userId: string, feature: GoogleFeature, nowMs: number = Date.now()): string {
-  const payload = `${userId}:${feature}:${nowMs + STATE_TTL_MS}:${randomBytes(8).toString('base64url')}`;
+/** Where the member tapped Connect, so the callback can send them back there. */
+export type ConnectFrom = 'settings' | 'availability';
+
+export function isConnectFrom(v: unknown): v is ConnectFrom {
+  return v === 'settings' || v === 'availability';
+}
+
+export interface StateClaims {
+  userId: string;
+  feature: GoogleFeature;
+  from: ConnectFrom;
+}
+
+export function mintState(userId: string, feature: GoogleFeature, from: ConnectFrom = 'settings', nowMs: number = Date.now()): string {
+  const payload = `${userId}:${feature}:${nowMs + STATE_TTL_MS}:${from}:${randomBytes(8).toString('base64url')}`;
   return `${Buffer.from(payload).toString('base64url')}.${sign(payload)}`;
 }
 
-export function verifyState(state: string, nowMs: number = Date.now()): { userId: string; feature: GoogleFeature } | null {
+export function verifyState(state: string, nowMs: number = Date.now()): StateClaims | null {
   try {
     if (!state || state.length > 512) return null;
     const dot = state.indexOf('.');
@@ -68,11 +81,11 @@ export function verifyState(state: string, nowMs: number = Date.now()): { userId
     const a = Buffer.from(state.slice(dot + 1));
     const b = Buffer.from(sign(payload));
     if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
-    const [userId, feature, expRaw] = payload.split(':');
+    const [userId, feature, expRaw, from] = payload.split(':');
     if (!userId || !isGoogleFeature(feature)) return null;
     const exp = Number(expRaw);
     if (!Number.isFinite(exp) || exp < nowMs) return null;
-    return { userId, feature };
+    return { userId, feature, from: isConnectFrom(from) ? from : 'settings' };
   } catch {
     return null;
   }
@@ -80,7 +93,7 @@ export function verifyState(state: string, nowMs: number = Date.now()): { userId
 
 /* ------------------------------------------------------------ redirect */
 
-export function authUrl(userId: string, feature: GoogleFeature): string {
+export function authUrl(userId: string, feature: GoogleFeature, from: ConnectFrom = 'settings'): string {
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID || '',
     redirect_uri: redirectUri(),
@@ -89,7 +102,7 @@ export function authUrl(userId: string, feature: GoogleFeature): string {
     access_type: 'offline',
     prompt: 'consent',
     include_granted_scopes: 'true',
-    state: mintState(userId, feature),
+    state: mintState(userId, feature, from),
   });
   return `${AUTH_URL}?${params.toString()}`;
 }

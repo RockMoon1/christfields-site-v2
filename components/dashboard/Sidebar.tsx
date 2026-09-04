@@ -18,7 +18,7 @@ export function Sidebar({ isLeader = false }: { isLeader?: boolean }) {
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-border-sub bg-black-2 lg:flex">
       <Link
-        href="/"
+        href="/dashboard"
         className="flex items-center gap-3 border-b border-border-sub px-6 py-5 transition-colors hover:bg-black-3"
       >
         <Image src="/assets/logo.png" alt="Christ Fields" width={32} height={32} />

@@ -13,6 +13,7 @@ import {
 import { isSlot, type Slot } from '@/lib/dashboard/availability';
 import { validateIcsUrl, fetchBusySlots } from '@/lib/dashboard/ics';
 import { encryptText, decryptText, isEncryptionConfigured } from '@/lib/security/crypto';
+import { isGoogleConfigured, SCOPES } from '@/lib/google/oauth';
 
 /**
  * Member-facing availability actions. Each member taps when they are usually
@@ -37,10 +38,19 @@ export interface CalendarInfo {
   busy: { date: string; slot: Slot }[];
 }
 
+export interface GoogleBusyInfo {
+  /** The Google client and the encryption key both exist on this deploy. */
+  configured: boolean;
+  /** This member granted the free/busy permission. */
+  connected: boolean;
+  status: 'ok' | 'revoked' | 'error' | null;
+}
+
 export interface MyAvailability {
   weekly: string[];
   overrides: { date: string; slot: Slot; available: boolean }[];
   calendar: CalendarInfo;
+  google: GoogleBusyInfo;
 }
 
 async function requireUser(): Promise<string | null> {
@@ -86,22 +96,28 @@ async function readFeedUrl(feed: FeedLink): Promise<string | null> {
 }
 
 export async function getMyAvailability(): Promise<MyAvailability> {
+  const googleReady = isGoogleConfigured() && isEncryptionConfigured();
   const empty: MyAvailability = {
     weekly: [],
     overrides: [],
     calendar: { connected: false, status: null, host: null, lastSyncedAt: null, error: null, busy: [] },
+    google: { configured: googleReady, connected: false, status: null },
   };
   try {
     const userId = await requireUser();
     if (!userId) return empty;
 
     const sb = getSupabase();
-    const [weeklyRes, overrideRes, feedRes, busyRes] = await Promise.all([
+    const [weeklyRes, overrideRes, feedRes, busyRes, googleRes] = await Promise.all([
       sb.from('availability_weekly').select('weekday, slot').eq('clerk_user_id', userId),
       sb.from('availability_overrides').select('on_date, slot, available').eq('clerk_user_id', userId),
       sb.from('calendar_feeds').select('*').eq('clerk_user_id', userId).maybeSingle(),
       sb.from('calendar_busy').select('on_date, slot').eq('clerk_user_id', userId),
+      googleReady
+        ? sb.from('google_connections').select('scopes, status').eq('clerk_user_id', userId).maybeSingle()
+        : Promise.resolve({ data: null }),
     ]);
+    const g = googleRes.data as { scopes: string[]; status: 'ok' | 'revoked' | 'error' } | null;
 
     const weekly = ((weeklyRes.data as Pick<AvailabilityWeeklyRow, 'weekday' | 'slot'>[] | null) ?? []).map(
       (r) => `${r.weekday}-${r.slot}`,
@@ -138,6 +154,11 @@ export async function getMyAvailability(): Promise<MyAvailability> {
         lastSyncedAt: feed?.last_synced_at ?? null,
         error: feed?.last_error ?? null,
         busy,
+      },
+      google: {
+        configured: googleReady,
+        connected: !!g?.scopes?.includes(SCOPES.busy),
+        status: g?.status ?? null,
       },
     };
   } catch (err) {
