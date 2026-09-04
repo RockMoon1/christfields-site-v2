@@ -74,7 +74,8 @@ export interface ThemeMatch {
 
 export function matchThemes(text: string): ThemeMatch {
   const hay = normalize(text || '');
-  const safety = LEX.safety.phrases.some((p) => hay.includes(` ${p.toLowerCase()} `) || hay.includes(`${p.toLowerCase()} `));
+  // Same whole-word matcher as the themes: "draped" and "scraped" are not "raped".
+  const safety = LEX.safety.phrases.some((p) => count(hay, wordRe(p.toLowerCase())) > 0);
   const scored: { key: string; score: number }[] = [];
   for (const [key, t] of Object.entries(LEX.themes)) {
     let score = 0;

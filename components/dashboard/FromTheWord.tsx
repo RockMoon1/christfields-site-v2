@@ -33,8 +33,8 @@ export function FromTheWord({ event }: { event: MemberEvent }) {
         <div className="mt-4">
           <p className="mb-1.5 text-[10px] font-medium uppercase tracking-[0.22em] text-muted">We will sit with</p>
           <ol className="space-y-1.5 pl-5 text-base leading-snug text-ivory-dim marker:text-gold">
-            {questions.map((q) => (
-              <li key={q} className="list-decimal">
+            {questions.map((q, i) => (
+              <li key={`${i}-${q}`} className="list-decimal">
                 {q}
               </li>
             ))}

@@ -29,7 +29,7 @@ interface GResult<T> {
   data: T | null;
 }
 
-async function gfetch<T>(accessToken: string, path: string, init: RequestInit = {}): Promise<GResult<T>> {
+async function gfetch<T>(accessToken: string, path: string, init: RequestInit = {}, timeoutMs: number = TIMEOUT_MS): Promise<GResult<T>> {
   try {
     const res = await fetch(`${API}${path}`, {
       ...init,
@@ -39,7 +39,7 @@ async function gfetch<T>(accessToken: string, path: string, init: RequestInit = 
         ...(init.body ? { 'content-type': 'application/json' } : {}),
         ...(init.headers || {}),
       },
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(Math.max(500, timeoutMs)),
     });
     if (res.status === 204) return { ok: true, status: 204, data: null };
     const data = (await res.json().catch(() => null)) as T | null;
@@ -150,11 +150,22 @@ export interface BusyInterval {
 }
 
 /** Busy ranges on the primary calendar. Null on any failure (leave the old rows alone). */
-export async function freeBusy(accessToken: string, tz: string, fromISO: string, toISO: string): Promise<BusyInterval[] | null> {
-  const r = await gfetch<{ calendars?: Record<string, { busy?: BusyInterval[]; errors?: unknown[] }> }>(accessToken, '/freeBusy', {
-    method: 'POST',
-    body: JSON.stringify({ timeMin: fromISO, timeMax: toISO, timeZone: tz, items: [{ id: 'primary' }] }),
-  });
+export async function freeBusy(
+  accessToken: string,
+  tz: string,
+  fromISO: string,
+  toISO: string,
+  timeoutMs: number = TIMEOUT_MS,
+): Promise<BusyInterval[] | null> {
+  const r = await gfetch<{ calendars?: Record<string, { busy?: BusyInterval[]; errors?: unknown[] }> }>(
+    accessToken,
+    '/freeBusy',
+    {
+      method: 'POST',
+      body: JSON.stringify({ timeMin: fromISO, timeMax: toISO, timeZone: tz, items: [{ id: 'primary' }] }),
+    },
+    timeoutMs,
+  );
   if (!r.ok || !r.data?.calendars) return null;
   const primary = r.data.calendars.primary ?? Object.values(r.data.calendars)[0];
   if (!primary || (primary.errors && primary.errors.length > 0)) return null;

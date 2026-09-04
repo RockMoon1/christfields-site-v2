@@ -53,7 +53,7 @@ export function ThisWeek({ group, tz }: { group: LeadGroup; tz: string }) {
             {group.seriesEnding.title} ends after {dateInWords(group.seriesEnding.lastAt, group.seriesEnding.tz)}.
           </p>
           <Link
-            href={`/dashboard/lead/post?extend=${encodeURIComponent(group.seriesEnding.eventId)}`}
+            href={`/dashboard/lead/post?org=${encodeURIComponent(group.orgId)}&extend=${encodeURIComponent(group.seriesEnding.eventId)}`}
             className="text-[11px] font-medium uppercase tracking-[0.1em] text-gold hover:text-gold-lt"
           >
             Extend it &rarr;

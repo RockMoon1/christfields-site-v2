@@ -53,13 +53,18 @@ export interface SyncOptions {
   maxCalls?: number;
   /** Only refresh free/busy (a leader's Refresh); leave the calendar mirror to the tick. */
   busyOnly?: boolean;
+  /** Per-request socket timeout, so a caller with a small time box can keep it. */
+  timeoutMs?: number;
 }
 
 export interface SyncOutcome {
+  /** True when everything attempted succeeded (partial runs are not ok). */
   ok: boolean;
   pushed: number;
   removed: number;
   busy: number;
+  /** True only when free/busy was actually read from Google this run. */
+  busyRead: boolean;
   error?: string;
 }
 
@@ -79,7 +84,8 @@ export async function syncMemberCalendar(userId: string, opts: SyncOptions = {})
   const nowMs = opts.nowMs ?? Date.now();
   const deadline = opts.deadline ?? (() => false);
   const maxCalls = opts.maxCalls ?? DEFAULT_MAX_CALLS;
-  const none: SyncOutcome = { ok: false, pushed: 0, removed: 0, busy: 0 };
+  const timeoutMs = opts.timeoutMs ?? 8_000;
+  const none: SyncOutcome = { ok: false, pushed: 0, removed: 0, busy: 0, busyRead: false };
   if (!isGoogleConfigured()) return { ...none, error: 'not configured' };
   const sb = getSupabase();
   const { data } = await sb.from('google_connections').select('*').eq('clerk_user_id', userId).maybeSingle();
@@ -92,14 +98,14 @@ export async function syncMemberCalendar(userId: string, opts: SyncOptions = {})
     await finish(userId, nowMs, { status: 'error', last_error: 'could not read the stored token' });
     return { ...none, error: 'token unreadable' };
   }
-  const token = await refreshAccessToken(refreshToken);
+  const token = await refreshAccessToken(refreshToken, timeoutMs);
   if (!token.ok) {
     if (token.revoked) await finish(userId, nowMs, { status: 'revoked', last_error: token.error.slice(0, 200) });
     else await finish(userId, nowMs, { last_error: token.error.slice(0, 200) }); // transient: try again later
     return { ...none, error: token.error };
   }
   const access = token.accessToken;
-  const out: SyncOutcome = { ok: true, pushed: 0, removed: 0, busy: 0 };
+  const out: SyncOutcome = { ok: true, pushed: 0, removed: 0, busy: 0, busyRead: false };
   const errors: string[] = [];
 
   const { data: prefs } = await sb.from('member_prefs').select('tz').eq('clerk_user_id', userId).maybeSingle();
@@ -241,26 +247,35 @@ export async function syncMemberCalendar(userId: string, opts: SyncOptions = {})
   }
 
   /* ---------------- read side ---------------- */
-  if (has(conn, SCOPES.busy) && !deadline()) {
-    const d = new Date(nowMs);
-    const fromMs = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - DAY;
-    const toMs = fromMs + (BUSY_DAYS + 1) * DAY;
-    const intervals = await freeBusy(access, tz, new Date(fromMs).toISOString(), new Date(toMs).toISOString());
-    if (intervals) {
-      const slots = intervalsToBusySlots(intervals, tz, fromMs, toMs);
-      await sb.from('calendar_busy').delete().eq('clerk_user_id', userId).eq('source', 'google');
-      if (slots.length > 0) {
-        await sb
-          .from('calendar_busy')
-          .insert(slots.map((s) => ({ clerk_user_id: userId, on_date: s.date, slot: s.slot, source: 'google' })));
-      }
-      out.busy = slots.length;
+  if (has(conn, SCOPES.busy)) {
+    if (deadline()) {
+      errors.push('partial');
     } else {
-      errors.push('free/busy read failed');
+      const d = new Date(nowMs);
+      const fromMs = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - DAY;
+      const toMs = fromMs + (BUSY_DAYS + 1) * DAY;
+      const intervals = await freeBusy(access, tz, new Date(fromMs).toISOString(), new Date(toMs).toISOString(), timeoutMs);
+      if (intervals) {
+        const slots = intervalsToBusySlots(intervals, tz, fromMs, toMs);
+        await sb.from('calendar_busy').delete().eq('clerk_user_id', userId).eq('source', 'google');
+        if (slots.length > 0) {
+          await sb
+            .from('calendar_busy')
+            .insert(slots.map((s) => ({ clerk_user_id: userId, on_date: s.date, slot: s.slot, source: 'google' })));
+        }
+        out.busy = slots.length;
+        out.busyRead = true;
+      } else {
+        errors.push('free/busy read failed');
+      }
     }
   }
 
-  if (errors.length) out.error = errors.join('; ');
+  if (errors.length) {
+    out.error = errors.join('; ');
+    out.ok = false;
+  }
+  // last_freebusy_at is the queue stamp for the hourly round-robin, not proof of a read (see busyRead).
   await finish(userId, nowMs, { last_error: out.error ?? null });
   return out;
 }

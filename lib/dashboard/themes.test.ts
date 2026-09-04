@@ -23,6 +23,10 @@ describe('theme matching', () => {
     expect(m.themes).not.toContain('safety');
     expect(matchThemes('He hits me when he drinks.').safety).toBe(true);
     expect(matchThemes('The sermon really hit me this week.').safety).toBe(false);
+    expect(matchThemes('We draped the flag over the casket.').safety).toBe(false);
+    expect(matchThemes('I scraped my knee hiking.').safety).toBe(false);
+    expect(matchThemes('That song hits me hard every time.').safety).toBe(false);
+    expect(matchThemes('I have been cutting myself again.').safety).toBe(true);
   });
 
   it('caps at two themes and every theme has a passage and a nudge', () => {

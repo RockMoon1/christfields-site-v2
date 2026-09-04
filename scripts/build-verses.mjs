@@ -94,8 +94,9 @@ const REFS = [
   'Revelation 1:8', 'Revelation 3:20', 'Revelation 21:4', 'Revelation 21:5', 'Revelation 22:13', 'Revelation 22:17',
 ];
 
-// Verse tagging: same lexicon as members' reflections, so a member carrying
-// grief meets a verse tagged grief.
+// Verse tagging: the members' lexicon, minus the words that mean something
+// else in Scripture ("Son", "lie down", "fear of Yahweh"), plus a fixed tag for
+// each theme's own passage so every theme has at least one verse with words.
 function esc(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -108,21 +109,45 @@ function countHits(hay, term) {
   while (re.exec(hay)) n += 1;
   return n;
 }
-function tag(text) {
+const SCRIPTURE_NOISE = new Set([
+  'son', 'daughter', 'children', 'child', 'kids', 'kid', 'father', 'mother', 'mom', 'dad', 'brother', 'sister', 'family', 'parents',
+  'lie', 'lies', 'secret', 'secrets', 'died', 'death', 'drinking', 'drunk', 'fear', 'fears', 'work', 'friend', 'friends',
+  'wife', 'husband', 'married', 'marriage', 'sick', 'pain', 'money', 'debt', 'rent', 'joy', 'hope', 'pray', 'prayer', 'prayers',
+  'church', 'choose', 'choice', 'offer', 'waiting', 'wait', 'patient', 'patience', 'proud', 'pride', 'tired', 'stuck',
+]);
+const PASSAGE_TAG = new Map(Object.entries(LEX.themes).map(([key, t]) => [t.passage, key]));
+function tag(ref, text) {
   const hay = normalize(text);
   const scored = [];
   for (const [key, t] of Object.entries(LEX.themes)) {
     let score = 0;
-    for (const w of t.words) score += countHits(hay, w.toLowerCase());
+    for (const w of t.words) if (!SCRIPTURE_NOISE.has(w.toLowerCase())) score += countHits(hay, w.toLowerCase());
     for (const p of t.phrases) score += countHits(hay, p.toLowerCase());
     if (score > 0) scored.push({ key, score });
   }
   scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, 3).map((s) => s.key);
+  const tags = scored.slice(0, 3).map((s) => s.key);
+  const own = PASSAGE_TAG.get(ref);
+  if (own && !tags.includes(own)) tags.unshift(own);
+  return tags;
 }
 
 // Make sure every theme's own passage is in the list.
 for (const t of Object.values(LEX.themes)) if (!REFS.includes(t.passage)) REFS.push(t.passage);
+
+// --retag: reuse the committed text, only recompute tags (no network).
+if (process.argv.includes('--retag')) {
+  const existing = JSON.parse(readFileSync(OUT, 'utf8'));
+  const retagged = existing.map((v) => {
+    const ref = v.ref.replace(/^Psalms /, 'Psalm ');
+    return { ref, text: v.text, tags: tag(ref, v.text) };
+  });
+  const missing = Object.values(LEX.themes).map((t) => t.passage).filter((p) => !retagged.some((v) => v.ref === p));
+  if (missing.length) console.error('theme passages missing from verses.json:', missing.join(', '));
+  writeFileSync(OUT, JSON.stringify(retagged, null, 0) + '\n');
+  console.log(`retagged ${retagged.length} verses; tagged: ${retagged.filter((v) => v.tags.length).length}`);
+  process.exit(missing.length ? 1 : 0);
+}
 
 async function fetchVerse(ref) {
   const url = `https://bible-api.com/${encodeURIComponent(ref)}?translation=web`;
@@ -156,7 +181,8 @@ for (const ref of REFS) {
     failed += 1;
     console.error('skip', ref);
   } else {
-    out.push({ ref: v.ref, text: v.text, tags: tag(v.text) });
+    // Keep the curated spelling ("Psalm 23", not the API's "Psalms 23") so theme passages match by ref.
+    out.push({ ref, text: v.text, tags: tag(ref, v.text) });
     process.stdout.write(`\r${out.length} fetched`);
   }
   await sleep(900);

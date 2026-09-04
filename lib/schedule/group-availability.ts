@@ -82,8 +82,12 @@ export async function getGroupAvailability(
       .in('clerk_user_id', userIds)
       .gte('on_date', days[0].iso)
       .lte('on_date', days[days.length - 1].iso),
-    sb.from('calendar_feeds').select('clerk_user_id').in('clerk_user_id', userIds),
-    sb.from('google_connections').select('clerk_user_id, scopes').eq('status', 'ok').in('clerk_user_id', userIds),
+    sb.from('calendar_feeds').select('clerk_user_id, status').in('clerk_user_id', userIds),
+    sb
+      .from('google_connections')
+      .select('clerk_user_id, scopes, last_freebusy_at, last_error')
+      .eq('status', 'ok')
+      .in('clerk_user_id', userIds),
   ]);
 
   if (weeklyRes.error) console.error('getGroupAvailability: weekly load failed', weeklyRes.error);
@@ -119,12 +123,19 @@ export async function getGroupAvailability(
     informedUsers.add(r.clerk_user_id);
     calendarUsers.add(r.clerk_user_id);
   }
-  for (const r of (feedRes.data as { clerk_user_id: string }[] | null) ?? []) {
+  // A calendar source counts only while it works: a broken link or a failed
+  // free/busy read must leave the member "unknown", never "free everywhere".
+  for (const r of (feedRes.data as { clerk_user_id: string; status: string }[] | null) ?? []) {
+    if (r.status !== 'ok') continue;
     informedUsers.add(r.clerk_user_id);
     calendarUsers.add(r.clerk_user_id);
   }
-  for (const r of (googleRes.data as { clerk_user_id: string; scopes: string[] }[] | null) ?? []) {
+  for (const r of (googleRes.data as
+    | { clerk_user_id: string; scopes: string[]; last_freebusy_at: string | null; last_error: string | null }[]
+    | null) ?? []) {
     if (!r.scopes?.includes(SCOPES.busy)) continue;
+    if (!r.last_freebusy_at) continue;
+    if (r.last_error && /free\/busy/i.test(r.last_error)) continue;
     informedUsers.add(r.clerk_user_id);
     calendarUsers.add(r.clerk_user_id);
   }

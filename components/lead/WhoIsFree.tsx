@@ -45,9 +45,11 @@ export function WhoIsFree({
   const box = 'mt-2 rounded-sm border px-4 py-3 text-sm leading-relaxed';
 
   if (!day) {
+    const first = availability.days[0]?.iso ?? '';
+    const past = first && date < first;
     return (
       <div className={`${box} border-border-sub text-silver`}>
-        That is more than three weeks out. We only know who is free for the next three weeks.
+        {past ? 'That day has already passed.' : 'That is more than three weeks out. We only know who is free for the next three weeks.'}
         {sameDay.length > 0 && <SameDay list={sameDay} />}
       </div>
     );

@@ -961,41 +961,57 @@ export async function getOrgAvailability(orgId: string): Promise<OrgAvailability
 }
 
 const REFRESH_WINDOW_SECONDS = 600;
-const REFRESH_BUDGET_MS = 6_000;
+/** Hard box: a server action has about ten seconds on Netlify; leave room for the page to render. */
+const REFRESH_BUDGET_MS = 5_000;
+const MIN_START_MS = 1_500;
+
+export interface RefreshResult {
+  ok: boolean;
+  /** Connected calendars we tried to read. */
+  attempted: number;
+  /** Of those, the ones that answered. */
+  refreshed: number;
+  retryInSec?: number;
+}
 
 /**
  * Pull the group's connected calendars again, now. Once every ten minutes per
  * group (durable bucket), Google free/busy for up to eight members and pasted
- * links older than an hour for up to five, all inside a six-second box. The
- * hourly job covers everything this does not reach.
+ * links older than an hour for up to five, inside a hard five-second box: each
+ * request is given only the time that is left. The hourly job covers the rest.
  */
-export async function refreshGroupBusy(orgId: string): Promise<{ ok: boolean; refreshed: number; retryInSec?: number }> {
+export async function refreshGroupBusy(orgId: string): Promise<RefreshResult> {
   try {
     const ctx = await requireLeaderOf(orgId);
-    if (!ctx) return { ok: false, refreshed: 0 };
+    if (!ctx) return { ok: false, attempted: 0, refreshed: 0 };
     const gate = await takeRateLimit(`gbusy:${orgId}`, 1, REFRESH_WINDOW_SECONDS);
     if (gate.durable && !gate.allowed) {
       const nowSec = Math.floor(Date.now() / 1000);
       const windowEnd = Math.floor(nowSec / REFRESH_WINDOW_SECONDS) * REFRESH_WINDOW_SECONDS + REFRESH_WINDOW_SECONDS;
-      return { ok: false, refreshed: 0, retryInSec: Math.max(1, windowEnd - nowSec) };
+      return { ok: false, attempted: 0, refreshed: 0, retryInSec: Math.max(1, windowEnd - nowSec) };
     }
-    const started = Date.now();
-    const deadline = () => Date.now() - started > REFRESH_BUDGET_MS;
+    const until = Date.now() + REFRESH_BUDGET_MS;
+    const remaining = () => until - Date.now();
+    const deadline = () => remaining() <= 0;
     const memberIds = ctx.members.map((m) => m.userId);
     const sb = getSupabase();
+    let attempted = 0;
     let refreshed = 0;
 
     const { data: gRows } = await sb
       .from('google_connections')
-      .select('clerk_user_id, scopes')
+      .select('clerk_user_id')
       .eq('status', 'ok')
       .in('clerk_user_id', memberIds)
+      .contains('scopes', [SCOPES.busy])
+      .order('last_freebusy_at', { ascending: true, nullsFirst: true })
       .limit(8);
-    for (const r of (gRows as { clerk_user_id: string; scopes: string[] }[] | null) ?? []) {
-      if (deadline()) break;
-      if (!r.scopes?.includes(SCOPES.busy)) continue;
-      const res = await syncMemberCalendar(r.clerk_user_id, { deadline, busyOnly: true });
-      if (res.ok) refreshed += 1;
+    for (const r of (gRows as { clerk_user_id: string }[] | null) ?? []) {
+      if (remaining() < MIN_START_MS) break;
+      attempted += 1;
+      // Two requests (token, free/busy) share what is left.
+      const res = await syncMemberCalendar(r.clerk_user_id, { deadline, busyOnly: true, timeoutMs: Math.min(4_000, Math.floor(remaining() / 2)) });
+      if (res.busyRead) refreshed += 1;
     }
 
     const { data: feeds } = await sb
@@ -1006,20 +1022,21 @@ export async function refreshGroupBusy(orgId: string): Promise<{ ok: boolean; re
       .order('last_synced_at', { ascending: true })
       .limit(5);
     for (const f of (feeds as CalendarFeedRow[] | null) ?? []) {
-      if (deadline()) break;
+      if (remaining() < MIN_START_MS) break;
       const url = f.ics_url_enc ? decryptText(f.ics_url_enc) : f.ics_url || null;
       if (!url) continue;
-      const res = await syncFeedForUser(f.clerk_user_id, url, f.tz || GROUP_TZ);
+      attempted += 1;
+      const res = await syncFeedForUser(f.clerk_user_id, url, f.tz || GROUP_TZ, Math.min(4_000, remaining() - 300));
       if (res.ok) refreshed += 1;
     }
 
     revalidatePath('/dashboard/lead/group');
     revalidatePath('/dashboard/lead/post');
     revalidatePath('/dashboard/lead');
-    return { ok: true, refreshed };
+    return { ok: true, attempted, refreshed };
   } catch (err) {
     console.error('refreshGroupBusy failed', err);
-    return { ok: false, refreshed: 0 };
+    return { ok: false, attempted: 0, refreshed: 0 };
   }
 }
 

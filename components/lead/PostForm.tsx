@@ -111,12 +111,16 @@ export function PostForm({
   // Who is free: comes with the page for the first org; fetched again when a leader switches groups.
   const [availability, setAvailability] = useState<GroupAvailability | null>(initialAvailability);
   const [upcoming, setUpcoming] = useState<UpcomingLite[]>(initialUpcoming);
-  const loadedFor = useRef(initial.orgId);
+  // Which org the grid on screen belongs to; null when the page supplied nothing.
+  const loadedFor = useRef<string | null>(initialAvailability ? initial.orgId : null);
   useEffect(() => {
     if (orgId === loadedFor.current) return;
     loadedFor.current = orgId;
-    getOrgAvailability(orgId)
+    const target = orgId;
+    getOrgAvailability(target)
       .then((r) => {
+        // A slower earlier request must not overwrite the org now selected.
+        if (loadedFor.current !== target) return;
         setAvailability(r?.availability ?? null);
         setUpcoming(r?.upcoming ?? []);
       })

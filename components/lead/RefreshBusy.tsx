@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { refreshGroupBusy } from '@/app/dashboard/(app)/lead/actions';
 
@@ -17,23 +17,28 @@ function ago(iso: string | null, nowMs: number): string {
 /**
  * Pull the connected calendars again, now. Once every ten minutes per group so
  * a tap-happy leader cannot run up Google or the pasted links; the hourly job
- * covers the rest.
+ * covers the rest. The relative time is computed after mount so the server
+ * and the browser never disagree about "just now".
  */
 export function RefreshBusy({ orgId, lastRefreshedAt }: { orgId: string; lastRefreshedAt: string | null }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [line, setLine] = useState<string | null>(null);
-  const [nowMs] = useState(() => Date.now());
+  const [agoText, setAgoText] = useState<string | null>(null);
+
+  useEffect(() => {
+    setAgoText(ago(lastRefreshedAt, Date.now()));
+  }, [lastRefreshedAt]);
 
   return (
     <div className="flex flex-wrap items-center gap-3 text-xs text-muted">
-      <span>Calendars checked {ago(lastRefreshedAt, nowMs)}.</span>
+      <span>{agoText ? `Calendars checked ${agoText}.` : 'Connected calendars are checked every hour.'}</span>
       <button
         type="button"
         disabled={pending}
         onClick={() =>
           startTransition(async () => {
-            const res = await refreshGroupBusy(orgId).catch(() => ({ ok: false as const, refreshed: 0, retryInSec: 0 }));
+            const res = await refreshGroupBusy(orgId).catch(() => ({ ok: false as const, attempted: 0, refreshed: 0, retryInSec: 0 }));
             if (!res.ok) {
               setLine(
                 res.retryInSec
@@ -42,7 +47,10 @@ export function RefreshBusy({ orgId, lastRefreshedAt }: { orgId: string; lastRef
               );
               return;
             }
-            setLine(res.refreshed === 0 ? 'Nothing to check: nobody has connected a calendar yet.' : `Checked ${res.refreshed} ${res.refreshed === 1 ? 'calendar' : 'calendars'}.`);
+            if (res.attempted === 0) setLine('Nothing to check yet: nobody has connected a calendar.');
+            else if (res.refreshed === res.attempted) setLine(`Checked ${res.refreshed} ${res.refreshed === 1 ? 'calendar' : 'calendars'}.`);
+            else if (res.refreshed === 0) setLine(`Tried ${res.attempted} ${res.attempted === 1 ? 'calendar' : 'calendars'}; none answered. The hourly check will try again.`);
+            else setLine(`Checked ${res.refreshed} of ${res.attempted}; the rest did not answer in time.`);
             router.refresh();
           })
         }

@@ -252,10 +252,11 @@ export async function syncFeedForUser(
   userId: string,
   url: string,
   tz: string,
+  timeoutMs: number = 8000,
 ): Promise<{ ok: boolean; error?: string }> {
   const fromMs = startOfTodayUtcMs();
   const toMs = fromMs + SYNC_DAYS * DAY;
-  const result = await fetchBusySlots(url, tz, fromMs, toMs);
+  const result = await fetchBusySlots(url, tz, fromMs, toMs, timeoutMs);
 
   const sb = getSupabase();
   if (result.ok) {

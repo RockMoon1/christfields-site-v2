@@ -20,23 +20,22 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(req: NextRequest) {
   const base = appUrl();
-  const settings = `${base}/dashboard/settings`;
-  const back = (flag: string) => NextResponse.redirect(`${settings}?google=${flag}`);
   const q = req.nextUrl.searchParams;
+  // Google echoes the state on cancellations too, so even a "no" lands the member back where they tapped.
+  const state = verifyState(q.get('state') || '');
+  const from = state?.from ?? 'settings';
+  const backPage = `${base}/dashboard/${from}`;
+  const done = (flag: string) => NextResponse.redirect(`${backPage}?google=${flag}`);
 
-  if (q.get('error')) return back('denied');
-  if (!isGoogleConfigured() || !isEncryptionConfigured()) return back('unconfigured');
+  if (q.get('error')) return done('denied');
+  if (!isGoogleConfigured() || !isEncryptionConfigured()) return done('unconfigured');
 
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.redirect(`${base}/dashboard/sign-in?redirect_url=${encodeURIComponent('/dashboard/settings?google=signin')}`);
+    return NextResponse.redirect(`${base}/dashboard/sign-in?redirect_url=${encodeURIComponent(`/dashboard/${from}?google=signin`)}`);
   }
-  const state = verifyState(q.get('state') || '');
   const code = q.get('code') || '';
-  if (!state || state.userId !== userId || !code) return back('error');
-  // From here on, land the member back where they tapped Connect.
-  const backPage = `${base}/dashboard/${state.from}`;
-  const done = (flag: string) => NextResponse.redirect(`${backPage}?google=${flag}`);
+  if (!state || state.userId !== userId || !code) return done('error');
 
   const ex = await exchangeCode(code);
   if (!ex.ok) {

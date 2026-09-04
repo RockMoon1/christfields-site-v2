@@ -152,6 +152,7 @@ export async function exchangeCode(code: string): Promise<ExchangeOk | { ok: fal
 /** `revoked` is true when Google says the grant is gone for good (invalid_grant). */
 export async function refreshAccessToken(
   refreshToken: string,
+  timeoutMs: number = TIMEOUT_MS,
 ): Promise<{ ok: true; accessToken: string; scopes: string[] } | { ok: false; error: string; revoked: boolean }> {
   try {
     const res = await fetch(TOKEN_URL, {
@@ -163,7 +164,7 @@ export async function refreshAccessToken(
         client_secret: process.env.GOOGLE_CLIENT_SECRET || '',
         grant_type: 'refresh_token',
       }),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(Math.max(500, timeoutMs)),
     });
     const json = (await res.json().catch(() => ({}))) as { access_token?: string; scope?: string; error?: string; error_description?: string };
     if (!res.ok || !json.access_token) {

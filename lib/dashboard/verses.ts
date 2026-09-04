@@ -28,10 +28,15 @@ export function dayOfYear(dayKey: string): number {
   return Math.floor((Date.UTC(y, m, d) - start) / 86_400_000) + 1;
 }
 
-/** The verse for a calendar day. Consecutive days never repeat within a year. */
+/**
+ * The verse for a calendar day. The year shifts the starting point, so every
+ * verse in the file gets its turn over the years; within one year no two days
+ * repeat as long as the file holds at least 366 verses.
+ */
 export function verseForDay(dayKey: string): Verse {
   if (VERSES.length === 0) return { ref: 'Psalm 118:24', text: 'This is the day that Yahweh has made. We will rejoice and be glad in it!', tags: [] };
-  return VERSES[(dayOfYear(dayKey) - 1) % VERSES.length];
+  const year = Number(dayKey.slice(0, 4)) || 0;
+  return VERSES[(dayOfYear(dayKey) - 1 + year * 366) % VERSES.length];
 }
 
 /** A verse tagged with the theme, rotating daily; falls back to the theme's own passage. */

@@ -28,11 +28,10 @@ export default async function PostPage({
     startsAtLocal = `${sp.date}T${h < 10 ? `0${h}` : h}:00`;
   }
 
-  const [extend, orgAvailability] = await Promise.all([
-    sp.extend ? getEventForEdit(sp.extend) : Promise.resolve(null),
-    getOrgAvailability(defaultOrg),
-  ]);
+  // Resolve the extended event first so the grid belongs to the org actually shown.
+  const extend = sp.extend ? await getEventForEdit(sp.extend) : null;
   const initialOrg = extend?.event.org_id ?? defaultOrg;
+  const orgAvailability = await getOrgAvailability(initialOrg);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -46,8 +45,8 @@ export default async function PostPage({
       <PostForm
         mode="create"
         orgs={orgs.map((o) => ({ orgId: o.orgId, orgName: o.orgName }))}
-        availability={initialOrg === defaultOrg ? orgAvailability?.availability ?? null : null}
-        upcoming={initialOrg === defaultOrg ? orgAvailability?.upcoming ?? [] : []}
+        availability={orgAvailability?.availability ?? null}
+        upcoming={orgAvailability?.upcoming ?? []}
         initial={{
           orgId: initialOrg,
           title: extend?.event.title ?? '',

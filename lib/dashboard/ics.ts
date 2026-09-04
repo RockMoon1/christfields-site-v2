@@ -98,9 +98,9 @@ async function hostIsPublic(hostname: string): Promise<boolean> {
  * refuse any private/reserved IP, which defends DNS-rebinding and inward-pointing
  * names. Caps redirect hops, total time (8s), and body size (2MB).
  */
-async function fetchIcsText(initialUrl: string): Promise<string> {
+async function fetchIcsText(initialUrl: string, timeoutMs: number = 8000): Promise<string> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 8000);
+  const timer = setTimeout(() => controller.abort(), Math.max(500, timeoutMs));
   try {
     let url = initialUrl;
     for (let hop = 0; hop < 4; hop += 1) {
@@ -279,9 +279,10 @@ export async function fetchBusySlots(
   tz: string,
   fromMs: number,
   toMs: number,
+  timeoutMs: number = 8000,
 ): Promise<SyncResult> {
   try {
-    const text = await fetchIcsText(url);
+    const text = await fetchIcsText(url, timeoutMs);
     if (!text.includes('BEGIN:VCALENDAR')) {
       return { ok: false, slots: [], error: 'That link did not return a calendar.' };
     }
