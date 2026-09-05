@@ -27,6 +27,12 @@ describe('theme matching', () => {
     expect(matchThemes('I scraped my knee hiking.').safety).toBe(false);
     expect(matchThemes('That song hits me hard every time.').safety).toBe(false);
     expect(matchThemes('I have been cutting myself again.').safety).toBe(true);
+    // Ordinary faith and body language must never trip the care card.
+    expect(matchThemes('That sermon really touched me.').safety).toBe(false);
+    expect(matchThemes('My knee has been hurting me all week.').safety).toBe(false);
+    expect(matchThemes('I do not want to die before I see my grandkids grow up.').safety).toBe(false);
+    expect(matchThemes('Honestly some days I want to die.').safety).toBe(true);
+    expect(matchThemes('He hurts me and I am afraid of him.').safety).toBe(true);
   });
 
   it('caps at two themes and every theme has a passage and a nudge', () => {

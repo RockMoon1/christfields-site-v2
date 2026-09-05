@@ -435,7 +435,7 @@ export function safetyRevealMail(v: { leaderFirstName: string; memberFirstName: 
   const subject = `${v.memberFirstName} would like you to reach out`;
   const inner = `${h1(`It was ${escapeHtml(v.memberFirstName)}.`)}
     ${para(`Hi ${escapeHtml(v.leaderFirstName || 'there')},`)}
-    ${para(`${escapeHtml(v.memberFirstName)} in ${escapeHtml(v.groupName)} chose to let you know that the note you got this week was theirs. They want you to reach out. Gently, soon, and in person if you can.`)}
+    ${para(`${escapeHtml(v.memberFirstName)} in ${escapeHtml(v.groupName)} wrote something privately this week that needs a person, not a page, and chose to let you know it was them. They want you to reach out. Gently, soon, and in person if you can.`)}
     ${para('You still have none of their words. Let them tell you as much or as little as they want.', `color:${C.soft};font-size:14px;`)}`;
   const text = [
     `Hi ${v.leaderFirstName || 'there'},`,

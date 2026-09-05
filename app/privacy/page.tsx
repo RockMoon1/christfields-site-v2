@@ -177,17 +177,18 @@ export default function PrivacyPage() {
           </P>
           <P>
             <strong className="text-ivory">A quiet question.</strong> Once a week the app offers one
-            question you may answer in private. Your answer is stored encrypted; nobody at Christ Fields
-            and no leader can read it, and you can delete it at any time. When you save it, the app looks
+            question you may answer in private. Your answer is stored encrypted; we do not read it, no
+            leader can see it, only your signed-in account opens it, and you can delete it at any time.
+            When you save it, the app looks
             for a theme word (such as &ldquo;grief&rdquo; or &ldquo;work&rdquo;) using a fixed word list
             on our own server; nothing you write is sent to any outside service or model. You confirm or
             correct that word. Your group&rsquo;s leaders may then see theme words for the group as a whole,
             never your words, never your name, never a count, and only once at least three people have
             written that fortnight. You can switch even that off on the You page. One exception, for your
             safety: if what you write matches patterns about suicide, self-harm, or being harmed, the app
-            shows you the 988 Suicide &amp; Crisis Lifeline and sends your group&rsquo;s leaders one private
-            note that someone needs a person this week, with no words, no theme, and no name unless you
-            choose to give it with one tap.
+            shows you the 988 Suicide &amp; Crisis Lifeline and sends the leaders of your groups, and
+            Christ Fields, one private note that someone needs a person this week, with no words, no
+            theme, and no name unless you choose to give it with one tap.
           </P>
           <P>
             <strong className="text-ivory">Calendar links you paste.</strong> If you paste a private

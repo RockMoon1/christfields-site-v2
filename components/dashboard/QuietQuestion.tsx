@@ -25,9 +25,10 @@ export function QuietQuestion({ view }: { view: QuietView }) {
   const [body, setBody] = useState('');
   const [error, setError] = useState('');
   const [share, setShare] = useState(view.shareThemes);
-  const [result, setResult] = useState<{ id: string; themes: string[]; safety: boolean; notified: boolean; verse: Verse | null } | null>(null);
+  const [result, setResult] = useState<{ id: string; themes: string[]; suggested: string[]; safety: boolean; notified: boolean; verse: Verse | null } | null>(null);
   const [picking, setPicking] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [revealError, setRevealError] = useState('');
   const [themeError, setThemeError] = useState('');
   const label = (key: string) => view.themeChoices.find((t) => t.key === key)?.label ?? key;
 
@@ -46,7 +47,7 @@ export function QuietQuestion({ view }: { view: QuietView }) {
         setError(res.error ?? 'Could not keep that.');
         return;
       }
-      setResult({ id: res.id, themes: res.themes, safety: res.safety, notified: res.notified, verse: res.verse });
+      setResult({ id: res.id, themes: res.themes, suggested: res.themes, safety: res.safety, notified: res.notified, verse: res.verse });
       setBody('');
     });
   }
@@ -135,19 +136,24 @@ export function QuietQuestion({ view }: { view: QuietView }) {
                   : 'We could not reach a leader automatically right now. Please text your leader directly, or call or text 988.'}
               </p>
               {!revealed ? (
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() =>
-                    startTransition(async () => {
-                      const r = await revealToLeaders(result.id).catch(() => ({ ok: false }));
-                      if (r.ok) setRevealed(true);
-                    })
-                  }
-                  className="mt-4 inline-flex min-h-[44px] items-center rounded-sm bg-gold px-5 text-[11px] font-medium uppercase tracking-[0.1em] text-black hover:bg-gold-lt disabled:opacity-60"
-                >
-                  Let my leader know it was me
-                </button>
+                <>
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() =>
+                      startTransition(async () => {
+                        setRevealError('');
+                        const r = await revealToLeaders(result.id).catch(() => ({ ok: false, sent: 0 }));
+                        if (r.ok) setRevealed(true);
+                        else setRevealError('We could not send that right now. Please text your leader directly, or call or text 988.');
+                      })
+                    }
+                    className="mt-4 inline-flex min-h-[44px] items-center rounded-sm bg-gold px-5 text-[11px] font-medium uppercase tracking-[0.1em] text-black hover:bg-gold-lt disabled:opacity-60"
+                  >
+                    Let my leader know it was me
+                  </button>
+                  {revealError && <p className="mt-2 text-sm text-red-300">{revealError}</p>}
+                </>
               ) : (
                 <p className="mt-4 text-sm text-gold-lt">Done. Your leader has your first name and will reach out gently.</p>
               )}
@@ -166,10 +172,13 @@ export function QuietQuestion({ view }: { view: QuietView }) {
               )}
               <div className="mt-5">
                 <p className="text-sm text-silver">
-                  {result.themes.length ? 'Sounds like:' : 'We could not tell what this is about. Pick a word if you like:'}
+                  {result.suggested.length ? 'Sounds like:' : 'We could not tell what this is about. Pick a word if you like:'}
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {(picking ? view.themeChoices.map((t) => t.key) : result.themes).map((key) => {
+                  {(picking
+                    ? view.themeChoices.map((t) => t.key)
+                    : Array.from(new Set([...result.suggested, ...result.themes]))
+                  ).map((key) => {
                     const on = result.themes.includes(key);
                     return (
                       <button
@@ -188,7 +197,7 @@ export function QuietQuestion({ view }: { view: QuietView }) {
                   })}
                   {!picking && (
                     <button type="button" onClick={() => setPicking(true)} className="min-h-[44px] px-3 text-sm text-muted hover:text-silver">
-                      Not quite?
+                      {result.suggested.length ? 'Not quite?' : 'Pick a word'}
                     </button>
                   )}
                 </div>

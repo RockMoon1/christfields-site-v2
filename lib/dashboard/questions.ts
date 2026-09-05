@@ -42,28 +42,40 @@ export const QUESTIONS: QuietQuestion[] = [
   { key: 'next-step', text: 'What is one small step you could take this week?' },
 ];
 
-/** ISO week number for a YYYY-MM-DD key (UTC arithmetic, same on every server). */
-export function weekOf(dayKey: string): number {
+const DAY = 86_400_000;
+
+/**
+ * ISO week and ISO week-year for a YYYY-MM-DD key (UTC arithmetic, the same on
+ * every server). The week-year matters at New Year: Jan 1 can belong to the
+ * last week of the previous year, and a question or a safety dedupe key must
+ * not change in the middle of a week.
+ */
+export function isoWeek(dayKey: string): { year: number; week: number } {
   const y = Number(dayKey.slice(0, 4));
   const m = Number(dayKey.slice(5, 7)) - 1;
   const d = Number(dayKey.slice(8, 10));
   const date = new Date(Date.UTC(y, m, d));
   const day = date.getUTCDay() || 7;
-  date.setUTCDate(date.getUTCDate() + 4 - day);
-  const yearStart = Date.UTC(date.getUTCFullYear(), 0, 1);
-  return Math.ceil(((date.getTime() - yearStart) / 86_400_000 + 1) / 7);
+  date.setUTCDate(date.getUTCDate() + 4 - day); // the Thursday of this week decides the year
+  const year = date.getUTCFullYear();
+  const yearStart = Date.UTC(year, 0, 1);
+  const week = Math.ceil(((date.getTime() - yearStart) / DAY + 1) / 7);
+  return { year, week };
+}
+
+export function weekOf(dayKey: string): number {
+  return isoWeek(dayKey).week;
 }
 
 /** "2026-W36": the key a reflection is filed under, so one question serves the whole week. */
 export function weekKey(dayKey: string): string {
-  const y = Number(dayKey.slice(0, 4));
-  const w = weekOf(dayKey);
-  return `${y}-W${w < 10 ? `0${w}` : w}`;
+  const { year, week } = isoWeek(dayKey);
+  return `${year}-W${week < 10 ? `0${week}` : week}`;
 }
 
 export function questionForWeek(dayKey: string): QuietQuestion {
-  const y = Number(dayKey.slice(0, 4)) || 0;
-  const idx = (weekOf(dayKey) - 1 + y * 7) % QUESTIONS.length;
+  const { year, week } = isoWeek(dayKey);
+  const idx = (week - 1 + year * 7) % QUESTIONS.length;
   return QUESTIONS[idx];
 }
 

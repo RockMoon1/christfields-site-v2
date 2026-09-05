@@ -12,8 +12,8 @@ import { dayKeyInZone } from '@/lib/dashboard/timezone';
 import { dateInWords } from '@/lib/dashboard/format';
 import { getMemberTimeZone } from '@/lib/dashboard/timezone-server';
 import { ensureMemberPrefs, appUrl } from '@/lib/dashboard/prefs';
-import { claimMany, markMany } from '@/lib/notify/deliveries';
-import { sendOne, takeEmailSlot, isEmailConfigured } from '@/lib/notify/email';
+import { claimMany, markMany, releaseClaims } from '@/lib/notify/deliveries';
+import { sendOne, isEmailConfigured } from '@/lib/notify/email';
 import { safetyLeaderMail, safetyRevealMail } from '@/lib/notify/templates';
 
 /**
@@ -233,21 +233,59 @@ interface LeaderTarget {
   groupName: string;
 }
 
-/** Leaders of every group this member is in, plus the founder. Never the member. */
-async function leadersFor(userId: string): Promise<LeaderTarget[]> {
+/**
+ * Leaders of every group this member is in, plus the founder. Never the
+ * member, and never the same inbox twice (a founder who also leads a group
+ * gets one copy; a founder writing a reflection is not emailed about it).
+ */
+async function leadersFor(userId: string, memberEmail: string): Promise<LeaderTarget[]> {
   const memberships = await getMyMemberships();
   const out: LeaderTarget[] = [];
-  const seen = new Set<string>();
+  const seenIds = new Set<string>();
+  const seenEmails = new Set<string>([memberEmail.toLowerCase()].filter(Boolean));
   for (const m of memberships) {
     for (const p of await getGroupMembers(m.orgId)) {
-      if (!p.isLeader || p.userId === userId || seen.has(p.userId) || !p.email.includes('@')) continue;
-      seen.add(p.userId);
+      const email = p.email.toLowerCase();
+      if (!p.isLeader || p.userId === userId || seenIds.has(p.userId) || !email.includes('@') || seenEmails.has(email)) continue;
+      seenIds.add(p.userId);
+      seenEmails.add(email);
       out.push({ id: p.userId, email: p.email, firstName: p.firstName, groupName: m.orgName });
     }
   }
-  const groupName = memberships[0]?.orgName ?? 'Christ Fields';
-  if (!seen.has('founder') && FOUNDER_EMAIL.includes('@')) out.push({ id: 'founder', email: FOUNDER_EMAIL, firstName: 'Lisandro', groupName });
+  const founder = FOUNDER_EMAIL.toLowerCase();
+  if (founder.includes('@') && !seenEmails.has(founder)) {
+    out.push({ id: 'founder', email: FOUNDER_EMAIL, firstName: 'Lisandro', groupName: memberships[0]?.orgName ?? 'Christ Fields' });
+  }
   return out;
+}
+
+async function memberEmailOf(): Promise<string> {
+  const u = await currentUser().catch(() => null);
+  return u?.primaryEmailAddress?.emailAddress ?? u?.emailAddresses?.[0]?.emailAddress ?? '';
+}
+
+/**
+ * Send one email to each target under a dedupe key. Safety mail sits OUTSIDE
+ * the shared daily budget (Resend's hard cap leaves headroom above our 80 for
+ * exactly this), and a failed send gives its claim back so the next save can
+ * try again. Returns how many went out now.
+ */
+async function sendToLeaders(key: string, targets: LeaderTarget[], build: (t: LeaderTarget) => ReturnType<typeof safetyLeaderMail>): Promise<number> {
+  const sb = getSupabase();
+  const claimed = await claimMany(sb, key, targets.map((t) => t.id), 'email');
+  let sent = 0;
+  for (const t of targets) {
+    if (!claimed.has(t.id)) continue;
+    const res = await sendOne({ ...build(t), to: t.email }, `${key}:${t.id}`);
+    if (res.ok) {
+      await markMany(sb, key, [t.id], 'email', 'sent');
+      sent += 1;
+    } else {
+      console.error('safety email failed', res.error);
+      await releaseClaims(sb, key, [t.id], 'email');
+    }
+  }
+  return sent;
 }
 
 /**
@@ -256,27 +294,15 @@ async function leadersFor(userId: string): Promise<LeaderTarget[]> {
  */
 async function notifyLeadersOfSafety(userId: string): Promise<boolean> {
   if (!isEmailConfigured()) return false;
-  const targets = await leadersFor(userId);
+  const targets = await leadersFor(userId, await memberEmailOf());
   if (targets.length === 0) return false;
-  const sb = getSupabase();
   const key = `${userId}:safety:${weekKey(await zoneDayKey())}`;
-  const claimed = await claimMany(sb, key, targets.map((t) => t.id), 'email');
-  let sent = 0;
-  for (const t of targets) {
-    if (!claimed.has(t.id)) continue;
-    const slot = await takeEmailSlot('urgent');
-    if (!slot) {
-      await markMany(sb, key, [t.id], 'email', 'skipped_budget');
-      continue;
-    }
-    const mail = safetyLeaderMail({ leaderFirstName: t.firstName, groupName: t.groupName, openUrl: `${appUrl()}/dashboard/lead` });
-    const res = await sendOne({ ...mail, to: t.email }, `${key}:${t.id}`);
-    await markMany(sb, key, [t.id], 'email', res.ok ? 'sent' : 'failed');
-    if (res.ok) sent += 1;
-  }
+  const sent = await sendToLeaders(key, targets, (t) =>
+    safetyLeaderMail({ leaderFirstName: t.firstName, groupName: t.groupName, openUrl: `${appUrl()}/dashboard/lead` }),
+  );
   if (sent > 0) return true;
   // Nothing new went out: was a leader already told this week (an earlier entry)?
-  const { count } = await sb
+  const { count } = await getSupabase()
     .from('notification_deliveries')
     .select('id', { count: 'exact', head: true })
     .eq('dedupe_key', key)
@@ -284,34 +310,28 @@ async function notifyLeadersOfSafety(userId: string): Promise<boolean> {
   return (count ?? 0) > 0;
 }
 
-/** The member chooses to be known. First name only, once per entry. */
-export async function revealToLeaders(id: string): Promise<{ ok: boolean }> {
+/** The member chooses to be known. First name only, once per entry; a failed send can be retried. */
+export async function revealToLeaders(id: string): Promise<{ ok: boolean; sent: number }> {
   try {
     const { userId } = await auth();
-    if (!userId) return { ok: false };
+    if (!userId) return { ok: false, sent: 0 };
     const sb = getSupabase();
     const { data } = await sb.from('quiet_reflections').select('id, safety').eq('id', id).eq('clerk_user_id', userId).maybeSingle();
     const row = data as { id: string; safety: boolean } | null;
-    if (!row || !row.safety) return { ok: false };
-    if (!isEmailConfigured()) return { ok: false };
-    const [user, targets] = await Promise.all([currentUser(), leadersFor(userId)]);
+    if (!row || !row.safety) return { ok: false, sent: 0 };
+    if (!isEmailConfigured()) return { ok: false, sent: 0 };
+    const user = await currentUser();
     const firstName = user?.firstName || user?.username || 'A member';
+    const targets = await leadersFor(userId, user?.primaryEmailAddress?.emailAddress ?? '');
     const key = `${id}:safety_reveal`;
-    const claimed = await claimMany(sb, key, targets.map((t) => t.id), 'email');
-    for (const t of targets) {
-      if (!claimed.has(t.id)) continue;
-      const slot = await takeEmailSlot('urgent');
-      if (!slot) {
-        await markMany(sb, key, [t.id], 'email', 'skipped_budget');
-        continue;
-      }
-      const mail = safetyRevealMail({ leaderFirstName: t.firstName, memberFirstName: firstName, groupName: t.groupName });
-      const res = await sendOne({ ...mail, to: t.email }, `${key}:${t.id}`);
-      await markMany(sb, key, [t.id], 'email', res.ok ? 'sent' : 'failed');
-    }
-    return { ok: true };
+    const sent = await sendToLeaders(key, targets, (t) =>
+      safetyRevealMail({ leaderFirstName: t.firstName, memberFirstName: firstName, groupName: t.groupName }),
+    );
+    if (sent > 0) return { ok: true, sent };
+    const { count } = await sb.from('notification_deliveries').select('id', { count: 'exact', head: true }).eq('dedupe_key', key).eq('status', 'sent');
+    return { ok: (count ?? 0) > 0, sent: 0 };
   } catch (err) {
     console.error('revealToLeaders failed', err);
-    return { ok: false };
+    return { ok: false, sent: 0 };
   }
 }

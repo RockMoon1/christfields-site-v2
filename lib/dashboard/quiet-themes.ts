@@ -40,9 +40,12 @@ export async function groupThemes(memberIds: string[], nowMs: number = Date.now(
     for (const t of r.themes) counts.set(t, (counts.get(t) ?? 0) + 1);
   }
   if (people.size < MIN_SHARERS) return [];
+  // Pick the most common, then show them alphabetically: order must not leak counts.
   return [...counts.entries()]
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .slice(0, MAX_THEMES)
-    .map(([key]) => themeInfo(key))
+    .map(([key]) => key)
+    .sort((a, b) => a.localeCompare(b))
+    .map((key) => themeInfo(key))
     .filter((t): t is ThemeInfo => !!t);
 }

@@ -775,7 +775,8 @@ export async function getLeadOverview(): Promise<LeadOverview> {
           .not('series_id', 'is', null)
           .gte('starts_at', new Date(now).toISOString())
           .order('starts_at', { ascending: false }),
-        groupThemes(members.map((m) => m.userId), now),
+        // Leaders' own reflections must not help clear the three-person bar.
+        groupThemes(members.filter((m) => !m.isLeader).map((m) => m.userId), now),
       ]);
       const rows = (eventsRes.data as EventRow[] | null) ?? [];
       const ids = rows.map((e) => e.id);
@@ -875,17 +876,18 @@ export interface GroupPage {
   knownCount: number;
   /** When any member's connected calendar was last read. */
   lastRefreshedAt: string | null;
-  /** First names not seen for two weeks (present, or a yes to something that happened). Leader-only. */
-  notSeen: string[];
+  /** People not seen for two weeks (present, or a yes to something that happened). Leader-only. */
+  notSeen: { name: string; email: string }[];
 }
 
 /** Members (not leaders) who have not been in the room for two weeks. Works from day one. */
-async function notSeenFor(orgId: string, members: GroupMember[], nowMs: number): Promise<string[]> {
+async function notSeenFor(orgId: string, members: GroupMember[], nowMs: number): Promise<{ name: string; email: string }[]> {
   const sb = getSupabase();
   const { data: past } = await sb
     .from('events')
     .select('id, starts_at')
     .eq('org_id', orgId)
+    .eq('status', 'scheduled')
     .gte('starts_at', new Date(nowMs - 90 * 86_400_000).toISOString())
     .lte('starts_at', new Date(nowMs).toISOString())
     .limit(200);
@@ -903,7 +905,10 @@ async function notSeenFor(orgId: string, members: GroupMember[], nowMs: number):
     nowMs,
   });
   const quiet = new Set(notSeenLately(members.filter((m) => !m.isLeader), lastSeen, nowMs));
-  return members.filter((m) => quiet.has(m.userId)).map((m) => m.firstName).slice(0, 6);
+  return members
+    .filter((m) => quiet.has(m.userId))
+    .map((m) => ({ name: m.firstName, email: m.email }))
+    .slice(0, 6);
 }
 
 /** The most recent calendar read across these members (Google free/busy or a pasted link). */

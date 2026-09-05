@@ -78,7 +78,7 @@ as a table comment, which the covenant review asked for.
 
 ---
 
-### 1e. Migration 020 — Phase 4 (Scripture on posts, quiet question, rhythm)  ⬅ RUN BEFORE THE PHASE 4 DEPLOY
+### 1e. Migration 020 — Phase 4 (Scripture on posts, quiet question, rhythm)  ✅ DONE 2026-09-04
 
 Supabase → SQL Editor → New query → paste `db/migrations/020_more_into_it.sql` →
 Run. Additive and safe to re-run. The Phase 4 code writes the new event

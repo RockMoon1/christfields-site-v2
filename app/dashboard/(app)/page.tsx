@@ -9,7 +9,7 @@ import { whenInWords } from '@/lib/dashboard/format';
 import { googleTemplateUrl } from '@/lib/schedule/ics-export';
 import { appUrl } from '@/lib/dashboard/prefs';
 import { dayKeyInZone } from '@/lib/dashboard/timezone';
-import { verseForDay } from '@/lib/dashboard/verses';
+import { verseForDay, verseForTheme } from '@/lib/dashboard/verses';
 import { VerseCard } from '@/components/dashboard/VerseCard';
 
 /**
@@ -22,13 +22,15 @@ export default async function HomePage() {
   const zoneFor = (eventTz: string) => (feed.tz && feed.tz !== 'UTC' ? feed.tz : eventTz);
   const icsToken = (eventId: string, startsAt: string) => (userId ? mintIcsToken(eventId, userId, startsAt) : undefined);
   const dayKey = dayKeyInZone(feed.tz && feed.tz !== 'UTC' ? feed.tz : 'America/Denver');
-  const verse = verseForDay(dayKey);
+  // A reflection kept today changes the verse to one that fits what was written.
+  const themed = feed.todayTheme ? verseForTheme(feed.todayTheme, dayKey) : null;
+  const verse = themed ?? verseForDay(dayKey);
 
   return (
     <div className="mx-auto max-w-2xl">
       <ChangedStrip lines={feed.changed} tz={feed.tz} />
 
-      <VerseCard verse={verse} />
+      <VerseCard verse={verse} eyebrow={themed ? 'For today' : 'Today'} />
 
       {feed.slot?.kind === 'hello' && <HomeSlot card={feed.slot} firstName={feed.firstName} />}
 

@@ -75,6 +75,8 @@ export interface HomeFeed {
   next: FeedEvent | null;
   later: FeedEvent[];
   slot: HomeSlotCard | null;
+  /** The theme of a reflection kept today, so Home can show a verse that fits. */
+  todayTheme: string | null;
 }
 
 const EMPTY_FEED: HomeFeed = {
@@ -86,6 +88,7 @@ const EMPTY_FEED: HomeFeed = {
   next: null,
   later: [],
   slot: null,
+  todayTheme: null,
 };
 
 function orgNameMap(memberships: { orgId: string; orgName: string }[]): Map<string, string> {
@@ -142,7 +145,7 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     const until = new Date(now + WEEKS_AHEAD * 7 * 86_400_000).toISOString();
     const weekAgo = new Date(now - 7 * 86_400_000).toISOString();
 
-    const [eventsRes, changesRes, myRsvpRes, weeklyRes, quietRes, seenRes] = await Promise.all([
+    const [eventsRes, changesRes, myRsvpRes, weeklyRes, quietRes, seenRes, todayRes, pastRes] = await Promise.all([
       sb
         .from('events')
         .select('*')
@@ -182,6 +185,24 @@ export async function getHomeFeed(): Promise<HomeFeed> {
           .order('updated_at', { ascending: false })
           .limit(60),
       ]),
+      // Today's confirmed reflection, if any, for the verse on Home.
+      sb
+        .from('quiet_reflections')
+        .select('themes')
+        .eq('clerk_user_id', userId)
+        .eq('confirmed', true)
+        .eq('safety', false)
+        .gte('created_at', new Date(now - 24 * 3_600_000).toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      // Has any of this member's groups met yet? If not, nobody can be "away".
+      sb
+        .from('events')
+        .select('id', { count: 'exact', head: true })
+        .in('org_id', orgIds)
+        .eq('status', 'scheduled')
+        .lt('starts_at', new Date(now).toISOString()),
     ]);
 
     if (eventsRes.error) console.error('getHomeFeed: events failed', eventsRes.error);
@@ -227,10 +248,13 @@ export async function getHomeFeed(): Promise<HomeFeed> {
         ...(((goingRows.data as { event_id: string }[] | null) ?? []).map((r) => r.event_id)),
       ]),
     );
-    const eventStarts = new Map<string, string>(rows.map((e) => [e.id, e.starts_at]));
+    // Only gatherings that actually happened count; a yes to something later called off does not.
+    const eventStarts = new Map<string, string>(rows.filter((e) => e.status === 'scheduled').map((e) => [e.id, e.starts_at]));
     const missingStarts = seenEventIds.filter((id) => !eventStarts.has(id));
+    let seenLookupFailed = !!attRows.error || !!goingRows.error;
     if (missingStarts.length > 0) {
-      const { data } = await sb.from('events').select('id, starts_at').in('id', missingStarts);
+      const { data, error } = await sb.from('events').select('id, starts_at').in('id', missingStarts).eq('status', 'scheduled');
+      if (error) seenLookupFailed = true;
       for (const e of (data as { id: string; starts_at: string }[] | null) ?? []) eventStarts.set(e.id, e.starts_at);
     }
     const lastSeen = lastSeenByMember({
@@ -241,8 +265,11 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     }).get(userId);
     const joinedMs = Math.min(...memberships.map((m) => m.joinedAtMs || now));
     const cutoff = now - RHYTHM_DAYS * 86_400_000;
-    const awayAWhile = joinedMs < cutoff && (lastSeen === undefined || lastSeen < cutoff);
-    const rhythmDue = !!next && next.myStatus !== 'going' && awayAWhile && nudgeDue(prefs.rhythm_nudged_at ?? null, now);
+    const groupHasMet = (pastRes.count ?? 0) > 0;
+    const awayAWhile = groupHasMet && !seenLookupFailed && joinedMs < cutoff && (lastSeen === undefined || lastSeen < cutoff);
+    // Leaders run the room; the card is for members, and only about an event they have not answered.
+    const rhythmDue = !isLeader && !!next && next.myStatus === null && awayAWhile && nudgeDue(prefs.rhythm_nudged_at ?? null, now);
+    const todayTheme = ((todayRes.data as { themes: string[] } | null)?.themes ?? [])[0] ?? null;
 
     const dayKey = dayKeyInZone(tz && tz !== 'UTC' ? tz : 'America/Denver');
     const quietDue = hasAnswered && isEncryptionConfigured() && (quietRes.count ?? 0) === 0;
@@ -272,6 +299,7 @@ export async function getHomeFeed(): Promise<HomeFeed> {
       next: next ?? null,
       later: [...later, ...cancelledRecent],
       slot,
+      todayTheme,
     };
   } catch (err) {
     console.error('getHomeFeed failed', err);

@@ -181,19 +181,21 @@ export interface PushPlan {
 
 export interface PushRun {
   pushed: number;
+  /** Members whose device actually accepted a push this run. */
+  sent: string[];
   /** Members skipped for quiet hours (inline callers email them instead). */
   quiet: string[];
 }
 
 export async function runPush(ctx: PushContext, plan: PushPlan): Promise<PushRun> {
-  const none: PushRun = { pushed: 0, quiet: [] };
+  const none: PushRun = { pushed: 0, sent: [], quiet: [] };
   if (!isPushConfigured()) return none;
   const withSubs = plan.recipients.filter((m) => (ctx.subs.get(m.userId) ?? []).length > 0);
   if (withSubs.length === 0) return none;
 
   const quiet = plan.loud ? [] : withSubs.filter((m) => isQuietHour(ctx.nowMs, memberTz(ctx, m.userId)));
   const quietIds = new Set(ids(quiet));
-  const candidates = withSubs.filter((m) => !quietIds.has(m.userId));
+  let candidates = withSubs.filter((m) => !quietIds.has(m.userId));
 
   // Inline kinds run once: record the quiet skip so the leader strip stays honest.
   if (!plan.retryable && quiet.length > 0) {
@@ -201,19 +203,24 @@ export async function runPush(ctx: PushContext, plan: PushPlan): Promise<PushRun
     await markMany(ctx.sb, plan.key, Array.from(q), 'push', 'skipped_quiet');
   }
 
-  const claimed = await claimMany(ctx.sb, plan.key, ids(candidates), 'push');
-  let send = candidates.filter((m) => claimed.has(m.userId));
-
-  if (plan.ceiling && send.length > 0) {
-    const counts = await pushCountsSince(ctx.sb, ids(send), utcDayStartIso(ctx.nowMs), countsTowardCeiling);
-    const over = send.filter((m) => (counts.get(m.userId) ?? 0) >= REMINDER_PUSH_CEILING);
+  // The daily ceiling is decided BEFORE claiming, so a tick-driven kind leaves
+  // an over-ceiling member unclaimed and can reach them once the day rolls over.
+  if (plan.ceiling && candidates.length > 0) {
+    const counts = await pushCountsSince(ctx.sb, ids(candidates), utcDayStartIso(ctx.nowMs), countsTowardCeiling);
+    const over = candidates.filter((m) => (counts.get(m.userId) ?? 0) >= REMINDER_PUSH_CEILING);
     if (over.length > 0) {
-      await markMany(ctx.sb, plan.key, ids(over), 'push', 'skipped_budget');
+      if (!plan.retryable) {
+        const o = await claimMany(ctx.sb, plan.key, ids(over), 'push');
+        await markMany(ctx.sb, plan.key, Array.from(o), 'push', 'skipped_budget');
+      }
       const overIds = new Set(ids(over));
-      send = send.filter((m) => !overIds.has(m.userId));
+      candidates = candidates.filter((m) => !overIds.has(m.userId));
     }
   }
-  if (send.length === 0) return { pushed: 0, quiet: ids(quiet) };
+
+  const claimed = await claimMany(ctx.sb, plan.key, ids(candidates), 'push');
+  const send = candidates.filter((m) => claimed.has(m.userId));
+  if (send.length === 0) return { pushed: 0, sent: [], quiet: ids(quiet) };
 
   const byTz = new Map<string, PushSubscriptionRow[]>();
   for (const m of send) {
@@ -231,7 +238,7 @@ export async function runPush(ctx: PushContext, plan: PushPlan): Promise<PushRun
   const failedIds = ids(send.filter((m) => !okUsers.has(m.userId)));
   await markMany(ctx.sb, plan.key, sentIds, 'push', 'sent');
   await markMany(ctx.sb, plan.key, failedIds, 'push', 'failed');
-  return { pushed: sentIds.length, quiet: ids(quiet) };
+  return { pushed: sentIds.length, sent: sentIds, quiet: ids(quiet) };
 }
 
 /* ------------------------------------------------------------ email */

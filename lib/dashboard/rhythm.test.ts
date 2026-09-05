@@ -54,6 +54,12 @@ describe('quiet questions', () => {
     expect(weekOf('2026-01-01')).toBe(1);
     expect(weekKey('2026-09-02')).toBe(weekKey('2026-09-06'));
     expect(weekKey('2026-09-06')).not.toBe(weekKey('2026-09-07'));
+    // New Year does not split a week: Thu 2026-12-31 and Fri 2027-01-01 share ISO week 2026-W53.
+    expect(weekKey('2026-12-31')).toBe('2026-W53');
+    expect(weekKey('2027-01-01')).toBe('2026-W53');
+    expect(weekKey('2027-01-04')).toBe('2027-W01');
+    expect(weekKey('2028-01-01')).toBe('2027-W52');
+    expect(questionForWeek('2026-12-31')).toEqual(questionForWeek('2027-01-01'));
     expect(questionForWeek('2026-09-02')).toEqual(questionForWeek('2026-09-06'));
     expect(questionForWeek('2026-09-06').key).not.toBe(questionForWeek('2026-09-07').key);
     const keys = new Set(QUESTIONS.map((q) => q.key));

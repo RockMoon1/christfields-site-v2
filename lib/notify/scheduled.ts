@@ -176,7 +176,8 @@ export async function leaderBriefs(nowMs: number, deadline: () => boolean): Prom
     const silent = ctx.members.filter((m) => answerOf(ctx, m.userId) === 'none');
     const firstTimers = [...going, ...maybe].filter((m) => ctx.rsvps.get(m.userId)?.first_time);
     const [themes, prayersRes] = await Promise.all([
-      groupThemes(ctx.members.map((m) => m.userId), nowMs),
+      // Leaders' own reflections must not help clear the three-person bar.
+      groupThemes(ctx.members.filter((m) => !m.isLeader).map((m) => m.userId), nowMs),
       sb
         .from('community_prayers')
         .select('id', { count: 'exact', head: true })
@@ -236,29 +237,30 @@ export async function rhythmPush(nowMs: number, deadline: () => boolean): Promis
     if (!nextByOrg.has(e.org_id)) nextByOrg.set(e.org_id, e);
   }
   let sent = 0;
-  let orgsDone = 0;
+  // Every group with something coming up, inside the deadline; the dedupe key
+  // (org's next event + day) makes a second pass in the same hour a no-op.
   for (const next of nextByOrg.values()) {
-    if (deadline() || orgsDone >= 3) break;
-    orgsDone += 1;
+    if (deadline()) break;
     const ctx = await loadEventContext(next.id, nowMs);
     if (!ctx || ctx.members.length === 0) continue;
-    const memberIds = ctx.members.map((m) => m.userId);
     const since = new Date(nowMs - RHYTHM_LOOKBACK_DAYS * DAY).toISOString();
     const { data: pastEvents } = await sb
       .from('events')
       .select('id, starts_at')
       .eq('org_id', next.org_id)
+      .eq('status', 'scheduled')
       .gte('starts_at', since)
       .lte('starts_at', new Date(nowMs).toISOString())
       .limit(200);
     const eventStarts = new Map(((pastEvents as { id: string; starts_at: string }[] | null) ?? []).map((e) => [e.id, e.starts_at]));
+    // A group that has not met yet has nobody to miss.
+    if (eventStarts.size === 0) continue;
     const ids = [...eventStarts.keys()];
-    const [attRes, goingRes] = ids.length
-      ? await Promise.all([
-          sb.from('event_attendance').select('clerk_user_id, event_id').in('event_id', ids).eq('present', true),
-          sb.from('event_rsvps').select('clerk_user_id, event_id').in('event_id', ids).eq('status', 'going'),
-        ])
-      : [{ data: [] }, { data: [] }];
+    const [attRes, goingRes] = await Promise.all([
+      sb.from('event_attendance').select('clerk_user_id, event_id').in('event_id', ids).eq('present', true),
+      sb.from('event_rsvps').select('clerk_user_id, event_id').in('event_id', ids).eq('status', 'going'),
+    ]);
+    if (attRes.error || goingRes.error) continue; // unknown is not "away"
     const lastSeen = lastSeenByMember({
       attendance: (attRes.data as { clerk_user_id: string; event_id: string }[] | null) ?? [],
       going: (goingRes.data as { clerk_user_id: string; event_id: string }[] | null) ?? [],
@@ -268,7 +270,7 @@ export async function rhythmPush(nowMs: number, deadline: () => boolean): Promis
     const quiet = new Set(notSeenLately(ctx.members.filter((m) => !m.isLeader), lastSeen, nowMs));
     const recipients = ctx.members.filter((m) => {
       if (!quiet.has(m.userId)) return false;
-      if (answerOf(ctx, m.userId) === 'going') return false; // already coming to the next one
+      if (answerOf(ctx, m.userId) !== 'none') return false; // they already answered the next one, either way
       const prefs: MemberPrefsRow | undefined = ctx.prefs.get(m.userId);
       return nudgeDue(prefs?.rhythm_nudged_at ?? null, nowMs);
     });
@@ -288,16 +290,16 @@ export async function rhythmPush(nowMs: number, deadline: () => boolean): Promis
       ceiling: true,
       retryable: true,
     });
-    if (res.pushed > 0) {
-      // Mark everyone we tried so the fortnight clock restarts for them too.
+    if (res.sent.length > 0) {
+      // Only the people a device actually reached; everyone else keeps the Home card as their channel.
       const stamp = new Date(nowMs).toISOString();
       await sb
         .from('member_prefs')
         .upsert(
-          recipients.map((m) => ({ clerk_user_id: m.userId, rhythm_nudged_at: stamp, updated_at: stamp })),
+          res.sent.map((userId) => ({ clerk_user_id: userId, rhythm_nudged_at: stamp, updated_at: stamp })),
           { onConflict: 'clerk_user_id' },
         );
-      sent += res.pushed;
+      sent += res.sent.length;
     }
   }
   return sent;

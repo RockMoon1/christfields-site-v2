@@ -57,8 +57,23 @@ export default async function GroupPage({ searchParams }: { searchParams: Promis
       {page.notSeen.length > 0 && (
         <section className="mb-10 rounded-sm border border-border-sub bg-black-3 p-5">
           <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-gold">Not seen in a while</p>
-          <p className="mt-1 text-base text-ivory">{page.notSeen.join(', ')}</p>
-          <p className="mt-1 text-sm text-silver">
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {page.notSeen.map((p) => (
+              <li key={`${p.name}-${p.email}`}>
+                {p.email ? (
+                  <a
+                    href={`mailto:${p.email}?subject=${encodeURIComponent('Missed you')}`}
+                    className="inline-flex min-h-[44px] items-center rounded-sm border border-border-sub px-3 text-sm text-ivory hover:border-border-gold"
+                  >
+                    {p.name} <span className="ml-2 text-[11px] font-medium uppercase tracking-[0.1em] text-gold">Send a note</span>
+                  </a>
+                ) : (
+                  <span className="inline-flex min-h-[44px] items-center rounded-sm border border-border-sub px-3 text-sm text-ivory">{p.name}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-sm text-silver">
             Two weeks or more since they were in the room, or said yes to something that happened. Only you see this. A
             text from you beats anything the app can send.
           </p>
