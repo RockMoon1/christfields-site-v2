@@ -25,6 +25,7 @@ import { dayKeyInZone } from '@/lib/dashboard/timezone';
 import { whenInWords } from '@/lib/dashboard/format';
 import { questionForWeek, weekKey } from '@/lib/dashboard/questions';
 import { lastSeenByMember, nudgeDue, RHYTHM_DAYS } from '@/lib/dashboard/rhythm';
+import { isEncryptionConfigured } from '@/lib/security/crypto';
 
 /**
  * Member-facing schedule actions.
@@ -166,8 +167,20 @@ export async function getHomeFeed(): Promise<HomeFeed> {
         .gte('created_at', new Date(now - 7 * 86_400_000).toISOString()),
       // Where this member was last seen: marked present, or said yes to something that has happened.
       Promise.all([
-        sb.from('event_attendance').select('clerk_user_id, event_id').eq('clerk_user_id', userId).eq('present', true).limit(60),
-        sb.from('event_rsvps').select('clerk_user_id, event_id').eq('clerk_user_id', userId).eq('status', 'going').limit(60),
+        sb
+          .from('event_attendance')
+          .select('clerk_user_id, event_id')
+          .eq('clerk_user_id', userId)
+          .eq('present', true)
+          .order('marked_at', { ascending: false })
+          .limit(60),
+        sb
+          .from('event_rsvps')
+          .select('clerk_user_id, event_id')
+          .eq('clerk_user_id', userId)
+          .eq('status', 'going')
+          .order('updated_at', { ascending: false })
+          .limit(60),
       ]),
     ]);
 
@@ -232,7 +245,7 @@ export async function getHomeFeed(): Promise<HomeFeed> {
     const rhythmDue = !!next && next.myStatus !== 'going' && awayAWhile && nudgeDue(prefs.rhythm_nudged_at ?? null, now);
 
     const dayKey = dayKeyInZone(tz && tz !== 'UTC' ? tz : 'America/Denver');
-    const quietDue = hasAnswered && (quietRes.count ?? 0) === 0;
+    const quietDue = hasAnswered && isEncryptionConfigured() && (quietRes.count ?? 0) === 0;
 
     let slot: HomeSlotCard | null = null;
     if (!prefs.hello_seen) slot = { kind: 'hello', orgName: memberships[0]?.orgName ?? 'our group' };

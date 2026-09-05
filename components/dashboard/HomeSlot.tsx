@@ -137,15 +137,16 @@ export function HomeSlot({ card, firstName }: { card: HomeSlotCard; firstName: s
 /** Weekly, and "not this week" is remembered on this device only: nothing to store about a person for skipping a question. */
 function QuietSlot({ question, weekKey }: { question: string; weekKey: string }) {
   const storageKey = `cf_quiet_skip_${weekKey}`;
-  const [hidden, setHidden] = useState(false);
+  // null until the device has been asked, so a skipped card never flashes.
+  const [hidden, setHidden] = useState<boolean | null>(null);
   useEffect(() => {
     try {
-      if (localStorage.getItem(storageKey) === '1') setHidden(true);
+      setHidden(localStorage.getItem(storageKey) === '1');
     } catch {
-      // ignore
+      setHidden(false);
     }
   }, [storageKey]);
-  if (hidden) return null;
+  if (hidden !== false) return null;
   return (
     <Card>
       <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-gold">A quiet question</p>

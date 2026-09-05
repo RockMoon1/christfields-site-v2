@@ -25,32 +25,58 @@ export function QuietQuestion({ view }: { view: QuietView }) {
   const [body, setBody] = useState('');
   const [error, setError] = useState('');
   const [share, setShare] = useState(view.shareThemes);
-  const [result, setResult] = useState<{ id: string; themes: string[]; safety: boolean; verse: Verse | null } | null>(null);
+  const [result, setResult] = useState<{ id: string; themes: string[]; safety: boolean; notified: boolean; verse: Verse | null } | null>(null);
   const [picking, setPicking] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [themeError, setThemeError] = useState('');
   const label = (key: string) => view.themeChoices.find((t) => t.key === key)?.label ?? key;
 
   function keep() {
     setError('');
     startTransition(async () => {
-      const res = await saveReflection(view.question.key, body).catch(() => ({ ok: false as const, themes: [], safety: false, verse: null, error: 'Something went wrong.' }));
+      const res = await saveReflection(view.question.key, body).catch(() => ({
+        ok: false as const,
+        themes: [],
+        safety: false,
+        notified: false,
+        verse: null,
+        error: 'Something went wrong.',
+      }));
       if (!res.ok || !res.id) {
         setError(res.error ?? 'Could not keep that.');
         return;
       }
-      setResult({ id: res.id, themes: res.themes, safety: res.safety, verse: res.verse });
+      setResult({ id: res.id, themes: res.themes, safety: res.safety, notified: res.notified, verse: res.verse });
       setBody('');
     });
   }
 
   function toggleTheme(key: string) {
     if (!result) return;
-    const has = result.themes.includes(key);
-    const next = has ? result.themes.filter((t) => t !== key) : [...result.themes, key].slice(-2);
+    const prev = result.themes;
+    const has = prev.includes(key);
+    const next = has ? prev.filter((t) => t !== key) : [...prev, key].slice(-2);
+    setThemeError('');
     setResult({ ...result, themes: next });
     startTransition(async () => {
       const r = await confirmReflectionThemes(result.id, next).catch(() => ({ ok: false, verse: null }));
       if (r.ok) setResult((cur) => (cur ? { ...cur, verse: r.verse ?? cur.verse } : cur));
+      else {
+        setResult((cur) => (cur ? { ...cur, themes: prev } : cur));
+        setThemeError('Could not save that change. Try again.');
+      }
+    });
+  }
+
+  /** Done also means "yes, that word fits": only confirmed words can ever reach a leader. */
+  function finish() {
+    if (!result) return;
+    const current = result;
+    startTransition(async () => {
+      if (!current.safety) await confirmReflectionThemes(current.id, current.themes).catch(() => undefined);
+      setResult(null);
+      setPicking(false);
+      router.refresh();
     });
   }
 
@@ -103,8 +129,10 @@ export function QuietQuestion({ view }: { view: QuietView }) {
                 (the Suicide &amp; Crisis Lifeline) any time, day or night. If you are in danger right now, call 911.
               </p>
               <p className="mt-3 text-base leading-relaxed text-ivory-dim">
-                If someone is hurting you, you deserve to be safe. Your leaders have been told that someone in the group
-                needs a person this week. They do not know it is you, and they have none of your words.
+                If someone is hurting you, you deserve to be safe.{' '}
+                {result.notified
+                  ? 'Your leaders have been told that someone in the group needs a person this week. They do not know it is you, and they have none of your words.'
+                  : 'We could not reach a leader automatically right now. Please text your leader directly, or call or text 988.'}
               </p>
               {!revealed ? (
                 <button
@@ -150,7 +178,7 @@ export function QuietQuestion({ view }: { view: QuietView }) {
                         onClick={() => toggleTheme(key)}
                         aria-pressed={on}
                         className={cn(
-                          'min-h-[36px] rounded-full border px-3 text-xs',
+                          'min-h-[44px] rounded-full border px-4 text-sm',
                           on ? 'border-border-gold bg-gold/15 text-gold-lt' : 'border-border-sub text-silver hover:text-ivory',
                         )}
                       >
@@ -159,26 +187,26 @@ export function QuietQuestion({ view }: { view: QuietView }) {
                     );
                   })}
                   {!picking && (
-                    <button type="button" onClick={() => setPicking(true)} className="min-h-[36px] px-2 text-xs text-muted hover:text-silver">
+                    <button type="button" onClick={() => setPicking(true)} className="min-h-[44px] px-3 text-sm text-muted hover:text-silver">
                       Not quite?
                     </button>
                   )}
                 </div>
+                {themeError && <p className="mt-2 text-sm text-red-300">{themeError}</p>}
               </div>
               <p className="mt-4 text-xs leading-relaxed text-muted">
-                Only the word can reach your leader, and only as part of the whole group, never as yours.
+                Only the word can reach your leader, and only as part of the whole group, never as yours. Tapping Done
+                keeps the words shown.
               </p>
             </>
           )}
           <button
             type="button"
-            onClick={() => {
-              setResult(null);
-              router.refresh();
-            }}
-            className="mt-5 text-[11px] font-medium uppercase tracking-[0.1em] text-gold hover:text-gold-lt"
+            disabled={pending}
+            onClick={finish}
+            className="mt-5 inline-flex min-h-[44px] items-center rounded-sm border border-gold/45 px-5 text-[11px] font-medium uppercase tracking-[0.1em] text-gold hover:bg-gold hover:text-black disabled:opacity-60"
           >
-            Done
+            {result.safety ? 'Done' : 'That fits, done'}
           </button>
         </section>
       )}
@@ -223,7 +251,7 @@ export function QuietQuestion({ view }: { view: QuietView }) {
               <li key={r.id} className="rounded-sm border border-border-sub bg-black-3 p-4">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <p className="text-xs text-muted">
-                    {new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {r.dateText}
                     {r.question ? ` · ${r.question}` : ''}
                   </p>
                   <button
@@ -235,7 +263,7 @@ export function QuietQuestion({ view }: { view: QuietView }) {
                         router.refresh();
                       })
                     }
-                    className="text-[11px] font-medium uppercase tracking-[0.1em] text-muted hover:text-red-300"
+                    className="inline-flex min-h-[44px] items-center px-3 text-[11px] font-medium uppercase tracking-[0.1em] text-muted hover:text-red-300"
                   >
                     Delete
                   </button>

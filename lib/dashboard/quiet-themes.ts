@@ -21,6 +21,8 @@ export async function groupThemes(memberIds: string[], nowMs: number = Date.now(
       .select('clerk_user_id, themes')
       .in('clerk_user_id', memberIds)
       .eq('safety', false)
+      // Only words the member looked at and kept. A guess is never enough.
+      .eq('confirmed', true)
       .gte('created_at', since)
       .limit(500),
     sb.from('member_prefs').select('clerk_user_id, share_themes').in('clerk_user_id', memberIds),

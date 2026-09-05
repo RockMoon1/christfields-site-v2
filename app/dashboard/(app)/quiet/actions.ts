@@ -9,6 +9,7 @@ import { matchThemes, isThemeKey, THEMES } from '@/lib/dashboard/themes';
 import { questionForWeek, questionByKey, weekKey, type QuietQuestion } from '@/lib/dashboard/questions';
 import { verseForTheme, type Verse } from '@/lib/dashboard/verses';
 import { dayKeyInZone } from '@/lib/dashboard/timezone';
+import { dateInWords } from '@/lib/dashboard/format';
 import { getMemberTimeZone } from '@/lib/dashboard/timezone-server';
 import { ensureMemberPrefs, appUrl } from '@/lib/dashboard/prefs';
 import { claimMany, markMany } from '@/lib/notify/deliveries';
@@ -30,6 +31,8 @@ const FOUNDER_EMAIL = process.env.NOTIFY_EMAIL || 'proverbs@christfields2717.com
 export interface ReflectionView {
   id: string;
   createdAt: string;
+  /** "Thu, Sep 4" in the member's own zone, formatted here so the browser never disagrees. */
+  dateText: string;
   question: string;
   text: string;
   themes: string[];
@@ -48,9 +51,13 @@ export interface QuietView {
   ready: boolean;
 }
 
-async function zoneDayKey(): Promise<string> {
+async function memberZone(): Promise<string> {
   const tz = await getMemberTimeZone();
-  return dayKeyInZone(tz && tz !== 'UTC' ? tz : 'America/Denver');
+  return tz && tz !== 'UTC' ? tz : 'America/Denver';
+}
+
+async function zoneDayKey(): Promise<string> {
+  return dayKeyInZone(await memberZone());
 }
 
 export async function getQuiet(): Promise<QuietView> {
@@ -81,9 +88,11 @@ export async function getQuiet(): Promise<QuietView> {
     ]);
     const rows = (rowsRes.data as QuietReflectionRow[] | null) ?? [];
     const weekStart = Date.now() - 7 * 86_400_000;
+    const zone = await memberZone();
     const recent: ReflectionView[] = rows.map((r) => ({
       id: r.id,
       createdAt: r.created_at,
+      dateText: dateInWords(r.created_at, zone),
       question: questionByKey(r.question_key)?.text ?? '',
       text: decryptText(r.body_enc) ?? '',
       themes: r.themes,
@@ -110,6 +119,8 @@ export interface SaveResult {
   id?: string;
   themes: string[];
   safety: boolean;
+  /** For a safety entry: whether at least one leader email actually went out. */
+  notified: boolean;
   verse: Verse | null;
   error?: string;
 }
@@ -119,7 +130,7 @@ function verseFor(themes: string[], dayKey: string): Verse | null {
 }
 
 export async function saveReflection(questionKey: string, body: string): Promise<SaveResult> {
-  const none: SaveResult = { ok: false, themes: [], safety: false, verse: null };
+  const none: SaveResult = { ok: false, themes: [], safety: false, notified: false, verse: null };
   try {
     const { userId } = await auth();
     if (!userId) return { ...none, error: 'Not signed in.' };
@@ -146,10 +157,16 @@ export async function saveReflection(questionKey: string, body: string): Promise
       return { ...none, error: 'Could not keep that. Try once more.' };
     }
     const id = (data as { id: string }).id;
-    if (match.safety) await notifyLeadersOfSafety(userId).catch((err) => console.error('safety notice failed', err));
+    let notified = false;
+    if (match.safety) {
+      notified = await notifyLeadersOfSafety(userId).catch((err) => {
+        console.error('safety notice failed', err);
+        return false;
+      });
+    }
     revalidatePath('/dashboard/quiet');
     revalidatePath('/dashboard');
-    return { ok: true, id, themes: match.themes, safety: match.safety, verse: verseFor(match.themes, await zoneDayKey()) };
+    return { ok: true, id, themes: match.themes, safety: match.safety, notified, verse: verseFor(match.themes, await zoneDayKey()) };
   } catch (err) {
     console.error('saveReflection failed', err);
     return { ...none, error: 'Something went wrong.' };
@@ -233,14 +250,18 @@ async function leadersFor(userId: string): Promise<LeaderTarget[]> {
   return out;
 }
 
-/** One private email per leader per member-week. No words, no theme, no name. */
-async function notifyLeadersOfSafety(userId: string): Promise<void> {
-  if (!isEmailConfigured()) return;
+/**
+ * One private email per leader per member-week. No words, no theme, no name.
+ * Returns true when a leader has been reached this week (now or earlier).
+ */
+async function notifyLeadersOfSafety(userId: string): Promise<boolean> {
+  if (!isEmailConfigured()) return false;
   const targets = await leadersFor(userId);
-  if (targets.length === 0) return;
+  if (targets.length === 0) return false;
   const sb = getSupabase();
   const key = `${userId}:safety:${weekKey(await zoneDayKey())}`;
   const claimed = await claimMany(sb, key, targets.map((t) => t.id), 'email');
+  let sent = 0;
   for (const t of targets) {
     if (!claimed.has(t.id)) continue;
     const slot = await takeEmailSlot('urgent');
@@ -251,7 +272,16 @@ async function notifyLeadersOfSafety(userId: string): Promise<void> {
     const mail = safetyLeaderMail({ leaderFirstName: t.firstName, groupName: t.groupName, openUrl: `${appUrl()}/dashboard/lead` });
     const res = await sendOne({ ...mail, to: t.email }, `${key}:${t.id}`);
     await markMany(sb, key, [t.id], 'email', res.ok ? 'sent' : 'failed');
+    if (res.ok) sent += 1;
   }
+  if (sent > 0) return true;
+  // Nothing new went out: was a leader already told this week (an earlier entry)?
+  const { count } = await sb
+    .from('notification_deliveries')
+    .select('id', { count: 'exact', head: true })
+    .eq('dedupe_key', key)
+    .eq('status', 'sent');
+  return (count ?? 0) > 0;
 }
 
 /** The member chooses to be known. First name only, once per entry. */
