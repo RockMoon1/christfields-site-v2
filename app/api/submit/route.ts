@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { autoReplyHtml, autoReplyText, notificationHtml } from '@/lib/emails';
+import {
+  autoReplyHtml,
+  autoReplyText,
+  normalizePublicSubmissionFormName,
+  notificationHtml,
+  publicSubmissionLabel,
+} from '@/lib/emails';
 import { isBodyTooLarge, isCrossSite } from '@/lib/security/origin';
 import { takeRateLimit } from '@/lib/rate-limit';
 import { getSupabase } from '@/lib/supabase';
 
 /**
- * Form submission handler for the public site (waitlist + faithflow forms).
+ * Form submission handler for the public site (waitlist, faithflow, OSINT feedback).
  *
  * Every valid submission is first written to Supabase (public_submissions,
  * migration 012) as the durable primary record — "we read every message" must
@@ -152,7 +158,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const formName = String(data.formName || 'waitlist') === 'faithflow' ? 'faithflow' : 'waitlist';
+  const formName = normalizePublicSubmissionFormName(data.formName);
   const name = String(data.name || '').trim().slice(0, 100);
   const email = String(data.email || '').trim().slice(0, 254);
   const interest = String(data.interest || '').trim().slice(0, 80);
@@ -166,6 +172,7 @@ export async function POST(req: Request) {
   }
 
   const canEmail = Boolean(process.env.RESEND_API_KEY);
+  const formLabel = publicSubmissionLabel(formName);
 
   // Durable record first. Email is the notification of this row, not the
   // record itself.
@@ -203,9 +210,9 @@ export async function POST(req: Request) {
     from: FROM,
     to: NOTIFY,
     replyTo: email,
-    subject: `New ${formName === 'faithflow' ? 'FaithFlow' : 'waitlist'} submission from ${name}`,
+    subject: `New ${formLabel} from ${name}`,
     html: notificationHtml({ formName, name, email, interest, message }),
-    text: `New ${formName} submission\n\nName: ${name}\nEmail: ${email}\nInterest: ${interest || '(none)'}\n\nMessage:\n${message || '(none)'}`,
+    text: `New ${formLabel}\n\nName: ${name}\nEmail: ${email}\nInterest: ${interest || '(none)'}\n\nMessage:\n${message || '(none)'}`,
   });
   if (sendError) {
     // name/statusCode only: Resend validation messages can echo addresses,
@@ -236,6 +243,8 @@ export async function POST(req: Request) {
     subject:
       formName === 'faithflow'
         ? 'Thank you for reaching out to FaithFlow'
+        : formName === 'osint-feedback'
+          ? 'Thank you for reviewing the OSINT dashboard'
         : 'Welcome to Christ Fields',
     html: autoReplyHtml({ firstName, formName }),
     text: autoReplyText({ firstName, formName }),

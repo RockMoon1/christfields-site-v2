@@ -12,7 +12,28 @@
 
 interface AutoReplyVars {
   firstName: string;
-  formName: string;
+  formName: PublicSubmissionFormName;
+}
+
+export type PublicSubmissionFormName = 'waitlist' | 'faithflow' | 'osint-feedback';
+
+const PUBLIC_SUBMISSION_FORM_NAMES: readonly PublicSubmissionFormName[] = [
+  'waitlist',
+  'faithflow',
+  'osint-feedback',
+];
+
+export function normalizePublicSubmissionFormName(value: unknown): PublicSubmissionFormName {
+  const formName = String(value || 'waitlist');
+  return PUBLIC_SUBMISSION_FORM_NAMES.includes(formName as PublicSubmissionFormName)
+    ? (formName as PublicSubmissionFormName)
+    : 'waitlist';
+}
+
+export function publicSubmissionLabel(formName: PublicSubmissionFormName): string {
+  if (formName === 'faithflow') return 'FaithFlow';
+  if (formName === 'osint-feedback') return 'OSINT dashboard feedback';
+  return 'ScholarFlow waitlist';
 }
 
 export function autoReplyText({ firstName, formName }: AutoReplyVars): string {
@@ -29,6 +50,24 @@ export function autoReplyText({ firstName, formName }: AutoReplyVars): string {
       '"Let us consider how we may spur one another on toward love and good deeds, not giving up meeting together." Hebrews 10:24-25',
       '',
       'In the meantime, the Journal at https://christfields2717.com/journal is where we write about how the work is going.',
+      '',
+      'Lisandro',
+      'Christ Fields',
+      'proverbs@christfields2717.com',
+    ].join('\n');
+  }
+
+  if (formName === 'osint-feedback') {
+    return [
+      `Hi ${firstName},`,
+      '',
+      'Thank you for taking time to review the OSINT dashboard.',
+      '',
+      'Your note went straight to the Christ Fields inbox. Please keep the feedback round to synthetic or demo material only, with no real case names, private records, screenshots, or active-investigation details.',
+      '',
+      'What helps most: where the workflow felt unclear, what slowed you down, where the source-review language could be tighter, and anything that made you hesitate before trusting a result.',
+      '',
+      'You can reply to this email if you want to add context after the Discord thread moves on.',
       '',
       'Lisandro',
       'Christ Fields',
@@ -56,17 +95,28 @@ export function autoReplyText({ firstName, formName }: AutoReplyVars): string {
 
 export function autoReplyHtml({ firstName, formName }: AutoReplyVars): string {
   const isFaithFlow = formName === 'faithflow';
-  const heading = isFaithFlow ? 'Thank you for reaching out' : 'You’re in.';
+  const isOsintFeedback = formName === 'osint-feedback';
+  const heading = isFaithFlow
+    ? 'Thank you for reaching out'
+    : isOsintFeedback
+      ? 'Feedback received.'
+      : 'You’re in.';
   const intro = isFaithFlow
     ? 'Thank you for reaching out about FaithFlow. We read every message that comes through this form. Someone from Christ Fields will respond personally, usually within a few days.'
+    : isOsintFeedback
+      ? 'Thank you for taking time to review the OSINT dashboard. Your note went straight to the Christ Fields inbox.'
     : 'Thank you for joining the journey. Christ Fields is built slowly, on purpose. We will reach out when there is something real to share.';
   const body = isFaithFlow
     ? 'FaithFlow is one community, Iron and Ember, and it grows slowly on purpose. If joining is not the right fit right now, including by distance, we will tell you that honestly, and we will keep you in mind.'
+    : isOsintFeedback
+      ? 'Please keep this feedback round to synthetic or demo material only, with no real case names, private records, screenshots, or active-investigation details. What helps most is concrete friction: what confused you, what slowed you down, and what made you hesitate before trusting a result.'
     : 'New tools as they open. FaithFlow news as the community grows. Build progress as it happens. If you want to follow the work week by week, the Journal is the place.';
   const verse = isFaithFlow
     ? '“Let us consider how we may spur one another on toward love and good deeds, not giving up meeting together.”'
     : '“Commit your work to the Lord, and your plans will be established.”';
   const verseRef = isFaithFlow ? 'Hebrews 10:24–25' : 'Proverbs 16:3';
+  const ctaHref = isOsintFeedback ? 'https://christfields2717.com/osint-feedback' : 'https://christfields2717.com/journal';
+  const ctaLabel = isOsintFeedback ? 'Return to the feedback page' : 'Read the Journal &rarr;';
 
   return `<!doctype html>
 <html lang="en">
@@ -94,7 +144,7 @@ export function autoReplyHtml({ firstName, formName }: AutoReplyVars): string {
             <p style="margin:0 0 28px 0;font-size:16px;line-height:1.7;color:#3f4a44;">${body}</p>
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px 0;"><tr>
               <td bgcolor="#c9a548" style="background-color:#c9a548;border-radius:3px;">
-                <a href="https://christfields2717.com/journal" style="display:inline-block;padding:14px 24px;color:#1a160a;text-decoration:none;font-size:11px;letter-spacing:0.07em;text-transform:uppercase;font-weight:600;">Read the Journal &rarr;</a>
+                <a href="${ctaHref}" style="display:inline-block;padding:14px 24px;color:#1a160a;text-decoration:none;font-size:11px;letter-spacing:0.07em;text-transform:uppercase;font-weight:600;">${ctaLabel}</a>
               </td>
             </tr></table>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px 0;border-left:3px solid #c9a548;"><tr>
@@ -121,13 +171,13 @@ export function autoReplyHtml({ firstName, formName }: AutoReplyVars): string {
 }
 
 export function notificationHtml(v: {
-  formName: string;
+  formName: PublicSubmissionFormName;
   name: string;
   email: string;
   interest: string;
   message: string;
 }): string {
-  const label = v.formName === 'faithflow' ? 'FaithFlow' : 'ScholarFlow waitlist';
+  const label = publicSubmissionLabel(v.formName);
   const row = (k: string, val: string) =>
     `<tr>
       <td style="padding:6px 0;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#8a9a92;width:120px;vertical-align:top;">${k}</td>
