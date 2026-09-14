@@ -28,6 +28,7 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto max-w-2xl">
+      <h1 className="sr-only">Home</h1>
       <ChangedStrip lines={feed.changed} tz={feed.tz} />
 
       <VerseCard verse={verse} eyebrow={themed ? 'For today' : 'Today'} />

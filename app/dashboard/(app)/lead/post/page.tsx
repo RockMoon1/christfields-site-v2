@@ -39,7 +39,7 @@ export default async function PostPage({
         &larr; Lead
       </Link>
       <header className="mb-6">
-        <h2 className="font-display text-3xl font-light text-ivory">Post something</h2>
+        <h1 className="font-display text-3xl font-light text-ivory">Post something</h1>
         <p className="mt-1 text-sm text-silver">Under a minute. Everyone in the group hears about it.</p>
       </header>
       <PostForm

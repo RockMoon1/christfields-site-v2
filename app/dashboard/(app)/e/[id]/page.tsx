@@ -44,6 +44,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
         icsToken={icsToken}
         big
         linkToEvent={false}
+        headingLevel={1}
       />
 
       <div className="mt-6 space-y-6">

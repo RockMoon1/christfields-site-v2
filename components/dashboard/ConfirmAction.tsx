@@ -1,66 +1,125 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Button } from '@/components/Button';
+import { Notice } from '@/components/ui/Notice';
 
 /**
- * A destructive control that asks once before it acts.
- *
- * Deleting things here is permanent and there is no undo, so a single stray
- * tap should never be enough. The confirm state replaces the trigger in place
- * rather than opening a dialog, which keeps the page calm and works the same
- * on a phone.
+ * An inline confirmation for permanent actions. Focus enters on Keep, returns
+ * to the trigger on dismissal, and stays in place on failure. onConfirm must
+ * resolve only after success and reject on failure so retries remain possible.
  */
 export function ConfirmAction({
   onConfirm,
   label,
   confirmLabel = 'Delete',
   cancelLabel = 'Keep',
+  pendingLabel = 'Deleting…',
+  errorMessage = 'Could not delete that. Please try again.',
+  disabled = false,
   children,
   className = '',
 }: {
-  onConfirm: () => void;
-  /** Accessible name for the trigger, e.g. "Remove event". */
+  onConfirm: () => void | Promise<void>;
+  /** Accessible name for the trigger, e.g. "Delete reflection". */
   label: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  /** The trigger's visible content (usually an icon). */
-  children: React.ReactNode;
+  pendingLabel?: string;
+  errorMessage?: string;
+  disabled?: boolean;
+  children: ReactNode;
   className?: string;
 }) {
   const [confirming, setConfirming] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
+  const restoreFocus = useRef(false);
+  const inFlight = useRef(false);
 
-  if (confirming) {
-    return (
-      <span className="flex shrink-0 items-center gap-2 text-[10px]">
-        <button
-          type="button"
-          onClick={() => {
-            setConfirming(false);
-            onConfirm();
-          }}
-          className="rounded-sm border border-gold/40 px-2 py-1 uppercase tracking-[0.1em] text-gold transition-colors hover:bg-gold hover:text-black"
-        >
-          {confirmLabel}
-        </button>
-        <button
-          type="button"
-          onClick={() => setConfirming(false)}
-          className="rounded-sm border border-border-sub px-2 py-1 uppercase tracking-[0.1em] text-silver transition-colors hover:text-ivory"
-        >
-          {cancelLabel}
-        </button>
-      </span>
-    );
+  useEffect(() => {
+    if (confirming) cancelRef.current?.focus();
+    else if (restoreFocus.current) {
+      triggerRef.current?.focus();
+      restoreFocus.current = false;
+    }
+  }, [confirming]);
+
+  useEffect(() => {
+    if (error && !pending) confirmRef.current?.focus();
+  }, [error, pending]);
+
+  function dismiss() {
+    if (inFlight.current) return;
+    restoreFocus.current = true;
+    setError(null);
+    setConfirming(false);
+  }
+
+  async function confirm() {
+    if (inFlight.current || disabled) return;
+    inFlight.current = true;
+    setPending(true);
+    setError(null);
+    try {
+      await onConfirm();
+      restoreFocus.current = true;
+      setConfirming(false);
+    } catch {
+      setError(errorMessage);
+    } finally {
+      inFlight.current = false;
+      setPending(false);
+    }
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => setConfirming(true)}
-      aria-label={label}
-      className={className}
+    <div
+      className="inline-flex max-w-full flex-col items-start gap-2 align-middle"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && confirming && !inFlight.current) {
+          event.preventDefault();
+          event.stopPropagation();
+          dismiss();
+        }
+      }}
     >
-      {children}
-    </button>
+      {confirming ? (
+        <div role="group" aria-label={`Confirm: ${label}`} className="flex flex-wrap items-center gap-2">
+          <Button
+            ref={confirmRef}
+            fx={false}
+            variant="danger"
+            size="sm"
+            pending={pending}
+            pendingLabel={pendingLabel}
+            disabled={disabled}
+            onClick={confirm}
+          >
+            {confirmLabel}
+          </Button>
+          <Button ref={cancelRef} fx={false} variant="quiet" size="sm" disabled={pending} onClick={dismiss}>
+            {cancelLabel}
+          </Button>
+        </div>
+      ) : (
+        <Button
+          ref={triggerRef}
+          fx={false}
+          variant="quiet"
+          size="sm"
+          disabled={disabled}
+          onClick={() => { setError(null); setConfirming(true); }}
+          aria-label={label}
+          className={className}
+        >
+          {children}
+        </Button>
+      )}
+      <Notice message={error} />
+    </div>
   );
 }

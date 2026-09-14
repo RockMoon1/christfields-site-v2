@@ -20,16 +20,18 @@ export function TopBar({ isLeader = false }: { isLeader?: boolean }) {
   const title = titleFor(pathname);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border-sub bg-black-2 px-4 pt-[env(safe-area-inset-top)] md:px-6">
+    <header className="sticky top-0 z-30 bg-black-2 pt-[env(safe-area-inset-top)]">
+      {/* The safe-area padding sits outside the 64px content row. */}
+      <div className="flex h-16 items-center justify-between border-b border-border-sub px-4 md:px-6">
       <div className="flex min-w-0 items-center gap-3">
-        <Link href="/dashboard" className="flex shrink-0 items-center lg:hidden" aria-label="Home">
+        <Link href="/dashboard" className="flex min-h-11 min-w-11 shrink-0 items-center justify-center lg:hidden" aria-label="Home">
           <Image src="/assets/logo.png" alt="" width={28} height={28} />
         </Link>
-        <p className="hidden text-[10px] font-medium uppercase tracking-[0.22em] text-muted lg:block">
+        <p className="hidden text-meta font-medium uppercase tracking-[0.22em] text-muted lg:block">
           Christ Fields
         </p>
         <span className="hidden text-muted lg:inline">/</span>
-        <h1 className="truncate text-sm font-medium text-ivory">{title}</h1>
+        <p className="truncate text-sm font-medium text-ivory">{title}</p>
       </div>
 
       <div className="flex items-center gap-4">
@@ -37,6 +39,7 @@ export function TopBar({ isLeader = false }: { isLeader?: boolean }) {
           appearance={{
             elements: {
               avatarBox: 'h-8 w-8 ring-1 ring-border-gold',
+              userButtonTrigger: 'min-h-11 min-w-11 justify-center',
               userButtonPopoverCard: 'bg-black-2 border border-border-sub',
               userButtonPopoverActionButton: 'text-silver hover:text-ivory hover:bg-black-3',
               userButtonPopoverFooter: 'hidden',
@@ -50,6 +53,7 @@ export function TopBar({ isLeader = false }: { isLeader?: boolean }) {
             </UserButton.MenuItems>
           )}
         </UserButton>
+      </div>
       </div>
     </header>
   );

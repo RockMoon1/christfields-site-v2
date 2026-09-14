@@ -1,9 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState, useTransition } from 'react';
+import { useEffect, useId, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/Button';
+import { Field } from '@/components/ui/Field';
+import { Input } from '@/components/ui/Input';
+import { Notice } from '@/components/ui/Notice';
 import { SLOTS, SLOT_LABEL, SLOT_HINT, WEEKDAY_SHORT, weeklyKey, type Slot } from '@/lib/dashboard/availability';
 import {
   setWeekly,
@@ -34,6 +38,8 @@ export function AvailabilityBoard({ initial }: { initial: MyAvailability }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [weeklyFree, setWeeklyFree] = useState<Set<string>>(() => new Set(initial.weekly));
+  const [weeklyError, setWeeklyError] = useState('');
+  const [syncError, setSyncError] = useState('');
   const cal = initial.calendar;
   const google = initial.google;
 
@@ -47,10 +53,12 @@ export function AvailabilityBoard({ initial }: { initial: MyAvailability }) {
     startTransition(async () => {
       const res = await refreshCalendar(browserTz()).catch(() => ({ ok: false }));
       if (res.ok) router.refresh();
+      else setSyncError('Could not check your calendar. Please try again.');
     });
   }, [cal.connected, cal.lastSyncedAt, router]);
 
   function toggle(weekday: number, slot: Slot) {
+    setWeeklyError('');
     const key = weeklyKey(weekday, slot);
     const on = !weeklyFree.has(key);
     setWeeklyFree((prev) => {
@@ -62,6 +70,7 @@ export function AvailabilityBoard({ initial }: { initial: MyAvailability }) {
     startTransition(async () => {
       const res = await setWeekly(weekday, slot, on).catch(() => ({ ok: false }));
       if (!res.ok) {
+        setWeeklyError('Could not save that time. Your previous availability is still in place. Please try again.');
         setWeeklyFree((prev) => {
           const next = new Set(prev);
           if (on) next.delete(key);
@@ -82,12 +91,12 @@ export function AvailabilityBoard({ initial }: { initial: MyAvailability }) {
             ? 'Your calendar fills this in. Tap times below only if you want to narrow it down.'
             : 'Tap the times you are normally free. Tap again to clear.'}
         </p>
-        <div className="grid grid-cols-[52px_repeat(3,1fr)] gap-1.5">
+        <div className="grid grid-cols-[52px_repeat(3,minmax(0,1fr))] gap-1.5" aria-busy={isPending || undefined}>
           <div />
           {SLOTS.map((slot) => (
             <div key={slot} className="text-center">
-              <span className="block text-[11px] font-medium uppercase tracking-[0.12em] text-muted">{SLOT_LABEL[slot]}</span>
-              <span className="block text-[10px] text-muted">{SLOT_HINT[slot]}</span>
+              <span className="block text-sm font-medium text-silver">{SLOT_LABEL[slot]}</span>
+              <span className="block text-sm text-muted">{SLOT_HINT[slot]}</span>
             </div>
           ))}
           {WEEK_ORDER.map((weekday) => (
@@ -100,10 +109,11 @@ export function AvailabilityBoard({ initial }: { initial: MyAvailability }) {
                     key={slot}
                     type="button"
                     onClick={() => toggle(weekday, slot)}
+                    disabled={isPending}
                     aria-pressed={on}
                     aria-label={`${WEEKDAY_SHORT[weekday]} ${SLOT_LABEL[slot]} ${on ? 'free' : 'not free'}`}
                     className={cn(
-                      'min-h-[44px] rounded-sm border text-[11px] font-medium uppercase tracking-[0.08em] transition-colors',
+                      'min-h-[44px] min-w-11 rounded-sm border text-sm font-medium transition-colors duration-200 disabled:cursor-wait disabled:opacity-50',
                       on
                         ? 'border-border-gold bg-gold/20 text-gold-lt'
                         : 'border-border-sub bg-black-3 text-muted hover:border-border-gold',
@@ -116,13 +126,15 @@ export function AvailabilityBoard({ initial }: { initial: MyAvailability }) {
             </div>
           ))}
         </div>
+        <Notice message={weeklyError} className="mt-3" />
       </section>
 
       {google.configured && <GoogleBusyCard google={google} />}
 
-      <CalendarConnect cal={cal} isPending={isPending} startTransition={startTransition} router={router} googleOffered={google.configured} />
+      <CalendarConnect cal={cal} isPending={isPending} startTransition={startTransition} router={router}
+        googleOffered={google.configured} syncError={syncError} clearSyncError={() => setSyncError('')} />
 
-      <p className="text-xs leading-relaxed text-muted">
+      <p className="text-sm leading-relaxed text-muted">
         Calendars count all-day events (a trip, a day off) as free unless you mark them Busy in your calendar app.
       </p>
     </div>
@@ -133,8 +145,8 @@ function GoogleBusyCard({ google }: { google: MyAvailability['google'] }) {
   const on = google.connected && google.status === 'ok';
   return (
     <section className="rounded-sm border border-border-gold bg-gold/[0.04] p-6">
-      <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-gold">One tap</p>
-      <h3 className="font-display text-xl font-light text-ivory">Let Google fill this in</h3>
+      <p className="mb-2 text-meta font-medium uppercase tracking-[0.22em] text-gold">One tap</p>
+      <h2 className="font-display text-xl font-light text-ivory">Let Google fill this in</h2>
       <p className="mt-2 text-sm leading-relaxed text-silver">
         We check your Google Calendar for the next four weeks and keep only which mornings, afternoons, and evenings
         are busy. We only ever see free or busy. Never what it is.
@@ -143,14 +155,14 @@ function GoogleBusyCard({ google }: { google: MyAvailability['google'] }) {
         {on ? (
           <>
             <span className="text-sm text-gold-lt">Connected. We check regularly, usually every hour.</span>
-            <Link href="/dashboard/settings" className="text-[11px] font-medium uppercase tracking-[0.1em] text-muted hover:text-silver">
+            <Link href="/dashboard/settings" className="inline-flex min-h-11 items-center text-sm font-medium text-muted hover:text-silver">
               Manage on You &rarr;
             </Link>
           </>
         ) : (
           <a
             href="/api/google/connect?feature=busy&from=availability"
-            className="inline-flex min-h-[44px] items-center rounded-sm bg-gold px-4 text-[11px] font-medium uppercase tracking-[0.1em] text-black hover:bg-gold-lt"
+            className="inline-flex min-h-[44px] items-center rounded-sm bg-gold px-4 py-2 text-sm font-medium text-black transition-colors duration-200 hover:bg-gold-lt focus-visible:bg-gold-lt"
           >
             {google.connected ? 'Connect Google again' : 'Share free or busy from Google'}
           </a>
@@ -168,18 +180,49 @@ function CalendarConnect({
   startTransition,
   router,
   googleOffered,
+  syncError,
+  clearSyncError,
 }: {
   cal: MyAvailability['calendar'];
   isPending: boolean;
   startTransition: Transition;
   router: ReturnType<typeof useRouter>;
   googleOffered: boolean;
+  syncError: string;
+  clearSyncError: () => void;
 }) {
+  const fieldId = useId();
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'refresh' | 'disconnect' | null>(null);
+
+  function checkAgain() {
+    clearSyncError();
+    setError('');
+    setPendingAction('refresh');
+    startTransition(async () => {
+      const result = await refreshCalendar(browserTz()).catch(() => ({ ok: false }));
+      if (result.ok) router.refresh();
+      else setError('Could not check your calendar. Please try again.');
+      setPendingAction(null);
+    });
+  }
+
+  function disconnect() {
+    clearSyncError();
+    setError('');
+    setPendingAction('disconnect');
+    startTransition(async () => {
+      const result = await disconnectCalendar().catch(() => ({ ok: false }));
+      if (result.ok) router.refresh();
+      else setError('Could not disconnect your calendar. Please try again.');
+      setPendingAction(null);
+    });
+  }
 
   function connect() {
+    clearSyncError();
     setError('');
     if (!url.trim()) {
       setError('Paste your calendar link first.');
@@ -199,88 +242,83 @@ function CalendarConnect({
   if (cal.connected) {
     return (
       <section className="rounded-sm border border-border-sub bg-black-3 p-6">
-        <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-gold">Your calendar link is connected</p>
+        <p className="mb-2 text-meta font-medium uppercase tracking-[0.22em] text-gold">Your calendar link is connected</p>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="text-sm text-ivory">{cal.host ?? 'Your calendar'}</span>
           <span
             className={cn(
-              'rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em]',
+              'rounded-full px-2 py-0.5 text-sm font-medium',
               cal.status === 'ok'
                 ? 'bg-emerald-bright/15 text-emerald-bright'
                 : cal.status === 'error'
-                  ? 'bg-red-500/15 text-red-400'
+                  ? 'bg-danger-dk/30 text-danger-lt'
                   : 'bg-gold/15 text-gold',
             )}
           >
             {cal.status === 'ok' ? 'Working' : cal.status === 'error' ? 'Problem' : 'Checking'}
           </span>
         </div>
-        {cal.status === 'error' && cal.error && <p className="mt-2 text-xs text-red-400">{cal.error}</p>}
+        <Notice message={cal.status === 'error' ? cal.error : ''} className="mt-2" />
         <p className="mt-3 text-sm text-silver">
           Your busy times fill in on their own. We only read free or busy, never what it is.
         </p>
-        <div className="mt-4 flex gap-2">
-          <button
-            type="button"
-            onClick={() => startTransition(async () => { const r = await refreshCalendar(browserTz()).catch(() => ({ ok: false })); if (r.ok) router.refresh(); })}
-            disabled={isPending}
-            className="inline-flex min-h-[44px] items-center rounded-sm border border-gold/45 px-4 text-[11px] font-medium uppercase tracking-[0.1em] text-gold hover:bg-gold hover:text-black disabled:opacity-60"
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button fx={false} variant="ghost" size="sm"
+            onClick={checkAgain}
+            disabled={isPending} pending={isPending && pendingAction === 'refresh'} pendingLabel="Working…"
           >
-            {isPending ? 'Working…' : 'Check again'}
-          </button>
-          <button
-            type="button"
-            onClick={() => startTransition(async () => { await disconnectCalendar().catch(() => ({ ok: false })); router.refresh(); })}
+            Check again
+          </Button>
+          <Button fx={false} variant="quiet" size="sm"
+            onClick={disconnect}
             disabled={isPending}
-            className="inline-flex min-h-[44px] items-center rounded-sm border border-border-sub px-4 text-[11px] font-medium uppercase tracking-[0.1em] text-silver hover:text-ivory disabled:opacity-60"
+            pending={isPending && pendingAction === 'disconnect'} pendingLabel="Disconnecting…"
           >
             Disconnect
-          </button>
+          </Button>
         </div>
+        <Notice message={error || syncError} className="mt-3" />
       </section>
     );
   }
 
   return (
     <section className="rounded-sm border border-border-sub bg-black-3 p-6">
-      <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-gold">{googleOffered ? 'Any other calendar' : 'Optional'}</p>
-      <h3 className="font-display text-xl font-light text-ivory">{googleOffered ? 'Or paste a calendar link' : 'Let your calendar fill this in'}</h3>
+      <p className="mb-2 text-meta font-medium uppercase tracking-[0.22em] text-gold">{googleOffered ? 'Any other calendar' : 'Optional'}</p>
+      <h2 className="font-display text-xl font-light text-ivory">{googleOffered ? 'Or paste a calendar link' : 'Let your calendar fill this in'}</h2>
       <p className="mt-2 text-sm leading-relaxed text-silver">
         Paste your calendar&rsquo;s private link and your busy times fill in on their own. We only ever read
         free or busy, never what you are doing. Works with {googleOffered ? 'Apple, Outlook, and Google' : 'Google, Apple, and Outlook'}.
       </p>
 
       {!open ? (
-        <button
-          type="button"
+        <Button fx={false} variant="ghost" size="sm"
           onClick={() => setOpen(true)}
-          className="mt-4 inline-flex min-h-[44px] items-center rounded-sm border border-gold/45 px-4 text-[11px] font-medium uppercase tracking-[0.1em] text-gold hover:bg-gold hover:text-black"
+          className="mt-4"
         >
           Paste my calendar link
-        </button>
+        </Button>
       ) : (
-        <div className="mt-4">
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <input
+        <form className="mt-4" onSubmit={(event) => { event.preventDefault(); connect(); }}>
+          <Field id={fieldId} label="Calendar link" error={error}>
+            <Input
               type="text"
+              autoFocus
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://… your private calendar link"
-              className="min-h-[44px] flex-1 rounded-sm border border-border-sub bg-black-2 px-3 text-base text-ivory placeholder:text-muted focus:border-gold focus:outline-none"
-            />
-            <button
-              type="button"
-              onClick={connect}
               disabled={isPending}
-              className="inline-flex min-h-[44px] items-center justify-center rounded-sm bg-gold px-5 text-[11px] font-medium uppercase tracking-[0.1em] text-black hover:bg-gold-lt disabled:opacity-60"
+            />
+          </Field>
+            <Button fx={false} size="sm"
+              type="submit"
+              pending={isPending} pendingLabel="Connecting…"
             >
-              {isPending ? 'Connecting…' : 'Connect'}
-            </button>
-          </div>
-          {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
+              Connect
+            </Button>
           <details className="mt-4 text-sm text-silver">
-            <summary className="cursor-pointer text-gold hover:text-gold-lt">Where do I find my link?</summary>
-            <div className="mt-3 space-y-2 text-xs leading-relaxed text-silver">
+            <summary className="min-h-11 cursor-pointer py-3 text-gold hover:text-gold-lt">Where do I find my link?</summary>
+            <div className="mt-3 space-y-2 text-sm leading-relaxed text-silver">
               <p>
                 <span className="text-ivory">Google Calendar (computer):</span> Settings, click your calendar on the left,
                 Integrate calendar, copy the <span className="text-ivory">Secret address in iCal format</span>.
@@ -296,7 +334,7 @@ function CalendarConnect({
               <p className="text-muted">Keep this link private. Anyone with it can see your busy times.</p>
             </div>
           </details>
-        </div>
+        </form>
       )}
     </section>
   );

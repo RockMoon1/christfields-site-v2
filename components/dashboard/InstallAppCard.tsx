@@ -67,7 +67,7 @@ export function InstallAppCard() {
 
   return (
     <section className="mb-6 rounded-sm border border-border-sub bg-black-3 p-8">
-      <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.22em] text-gold">
+      <p className="mb-2 text-meta font-medium uppercase tracking-[0.22em] text-gold">
         Install the app
       </p>
       <h3 className="mb-3 font-display text-xl font-light text-ivory">
@@ -88,7 +88,7 @@ export function InstallAppCard() {
           onClick={install}
           disabled={pending}
           className={cn(
-            'inline-flex items-center gap-2 rounded-sm bg-gold px-5 py-3 text-xs font-medium uppercase tracking-[0.12em] text-black transition-colors',
+            'inline-flex min-h-11 items-center gap-2 rounded-sm bg-gold px-5 py-3 text-sm font-medium text-black transition-colors duration-200',
             pending ? 'cursor-not-allowed opacity-70' : 'hover:bg-gold-lt',
           )}
         >

@@ -11,7 +11,7 @@ export default async function LeadPage() {
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.24em] text-gold">Lead</p>
-          <h2 className="font-display text-3xl font-light text-ivory">This week</h2>
+          <h1 className="font-display text-3xl font-light text-ivory">This week</h1>
         </div>
         <Link
           href="/dashboard/lead/post"

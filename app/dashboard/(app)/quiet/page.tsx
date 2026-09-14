@@ -15,7 +15,7 @@ export default async function QuietPage() {
       </Link>
       <header className="mb-6">
         <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.22em] text-gold">A quiet question</p>
-        <h2 className="font-display text-3xl font-light text-ivory">Between you and God.</h2>
+        <h1 className="font-display text-3xl font-light text-ivory">Between you and God.</h1>
         <p className="mt-2 max-w-xl text-base leading-relaxed text-silver">
           Confess to one another and pray for one another, so that you may be healed. This is the first step: saying it
           somewhere safe. The rest happens in the room.

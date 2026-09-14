@@ -3,6 +3,8 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { disconnectGoogle } from '@/app/dashboard/(app)/settings/actions';
+import { Button } from '@/components/Button';
+import { Notice } from '@/components/ui/Notice';
 
 /**
  * The two Google consent cards on You. Each asks for exactly one thing, in
@@ -34,6 +36,7 @@ export function GoogleCards({ google, notice }: { google: GoogleStatus; notice?:
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [line, setLine] = useState<string | null>(notice ? NOTICES[notice] ?? null : null);
+  const [lineTone, setLineTone] = useState<'problem' | 'info'>(() => notice === 'error' ? 'problem' : 'info');
   if (!google.configured) return null;
   const connected = google.write || google.busy;
   // Anything but a healthy row means "connect again" fixes it.
@@ -42,7 +45,7 @@ export function GoogleCards({ google, notice }: { google: GoogleStatus; notice?:
   const connectButton = (feature: 'write' | 'busy', label: string) => (
     <a
       href={`/api/google/connect?feature=${feature}`}
-      className="inline-flex min-h-[44px] items-center rounded-sm bg-gold px-4 text-[11px] font-medium uppercase tracking-[0.1em] text-black hover:bg-gold-lt"
+      className="inline-flex min-h-[44px] items-center rounded-sm bg-gold px-4 py-2 text-sm font-medium text-black transition-colors duration-200 hover:bg-gold-lt focus-visible:bg-gold-lt"
     >
       {label}
     </a>
@@ -50,19 +53,14 @@ export function GoogleCards({ google, notice }: { google: GoogleStatus; notice?:
 
   return (
     <>
-      {line && (
-        <p className="mb-4 rounded-sm border border-border-gold bg-gold/[0.06] px-4 py-3 text-sm leading-relaxed text-ivory">{line}</p>
-      )}
-      {broken && (
-        <p className="mb-4 rounded-sm border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm leading-relaxed text-ivory">
-          {google.status === 'revoked'
+      <Notice message={line} tone={lineTone} className={line ? 'mb-4' : undefined} />
+      <Notice message={broken ? (google.status === 'revoked'
             ? 'Google disconnected us (you may have removed the access in your Google account). Connect again below when you like.'
-            : 'We lost our connection to your Google account. Connect again below to pick up where it left off.'}
-        </p>
-      )}
+            : 'We lost our connection to your Google account. Connect again below to pick up where it left off.') : ''}
+        className={broken ? 'mb-4' : undefined} />
 
       <section className="mb-6 rounded-sm border border-border-sub bg-black-3 p-6">
-        <h3 className="font-display text-xl font-light text-ivory">Put our events on your Google Calendar</h3>
+        <h2 className="font-display text-xl font-light text-ivory">Put our events on your Google Calendar</h2>
         <p className="mt-1 text-sm leading-relaxed text-silver">
           One tap and every plan appears on a calendar called Christ Fields inside your Google Calendar, updated when a
           leader changes or calls something off. We can only touch that one calendar, never your own.
@@ -77,7 +75,7 @@ export function GoogleCards({ google, notice }: { google: GoogleStatus; notice?:
       </section>
 
       <section className="mb-6 rounded-sm border border-border-sub bg-black-3 p-6">
-        <h3 className="font-display text-xl font-light text-ivory">Help your leader pick a time</h3>
+        <h2 className="font-display text-xl font-light text-ivory">Help your leader pick a time</h2>
         <p className="mt-1 text-sm leading-relaxed text-silver">
           Let us check your Google Calendar for the next four weeks so the best times show up for your leader. We only
           ever see free or busy. Never what it is.
@@ -92,24 +90,23 @@ export function GoogleCards({ google, notice }: { google: GoogleStatus; notice?:
       </section>
 
       {connected && (
-        <div className="-mt-2 mb-6 flex items-center justify-between gap-4">
-          <p className="text-xs text-muted">
+        <div className="-mt-2 mb-6 flex flex-wrap items-center justify-between gap-4">
+          <p className="text-sm text-muted">
             {google.lastError && !broken ? 'Our last check hit a snag; we will try again within the hour.' : ''}
           </p>
-          <button
-            type="button"
-            disabled={pending}
+          <Button fx={false} variant="danger" size="sm"
+            pending={pending} pendingLabel="Disconnecting"
             onClick={() =>
               startTransition(async () => {
                 const res = await disconnectGoogle().catch(() => ({ ok: false, calendarRemoved: null as boolean | null }));
+                setLineTone(!res.ok || res.calendarRemoved === false ? 'problem' : 'info');
                 setLine(!res.ok ? NOTICES.error : res.calendarRemoved === false ? NOTICES.disconnected_manual : NOTICES.disconnected);
                 router.refresh();
               })
             }
-            className="min-h-[44px] px-3 text-[11px] font-medium uppercase tracking-[0.1em] text-muted hover:text-red-300 disabled:opacity-60"
           >
-            {pending ? 'Disconnecting' : 'Disconnect Google'}
-          </button>
+            Disconnect Google
+          </Button>
         </div>
       )}
     </>

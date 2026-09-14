@@ -9,6 +9,31 @@ import { cancelEvent, markAttendance, markEveryoneCame, postThanks, nudgeEvent }
 import { noteLines } from '@/lib/dashboard/prompts';
 import { Face } from '@/components/dashboard/GoingFaces';
 
+type RosterKind = 'going' | 'maybe' | 'cant' | 'silent';
+
+// A stable component type keeps the focused roster button mounted on updates.
+function Count({ label, list, kind, open, onToggle }: {
+  label: string;
+  list: RosterName[];
+  kind: RosterKind;
+  open: RosterKind | null;
+  onToggle: (kind: RosterKind | null) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(open === kind ? null : kind)}
+      aria-expanded={open === kind}
+      className={cn(
+        'min-h-[44px] rounded-sm border px-3 text-left text-sm',
+        open === kind ? 'border-border-gold bg-gold/10 text-gold-lt' : 'border-border-sub text-silver hover:text-ivory',
+      )}
+    >
+      <span className="text-ivory">{list.length}</span> {label}
+    </button>
+  );
+}
+
 /**
  * What a leader sees under an event: who answered and who has not, first-timers,
  * gaps in the bring and ride lists, questions that might come up, who came,
@@ -17,7 +42,7 @@ import { Face } from '@/components/dashboard/GoingFaces';
 export function LeaderStrip({ view, whenText }: { view: LeaderEventView; whenText: string }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [open, setOpen] = useState<'going' | 'maybe' | 'cant' | 'silent' | null>(null);
+  const [open, setOpen] = useState<RosterKind | null>(null);
   const [copied, setCopied] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [reason, setReason] = useState('');
@@ -50,19 +75,6 @@ export function LeaderStrip({ view, whenText }: { view: LeaderEventView; whenTex
     });
   }
 
-  const Count = ({ label, list, kind }: { label: string; list: RosterName[]; kind: typeof open }) => (
-    <button
-      type="button"
-      onClick={() => setOpen(open === kind ? null : kind)}
-      aria-expanded={open === kind}
-      className={cn(
-        'min-h-[44px] rounded-sm border px-3 text-left text-sm',
-        open === kind ? 'border-border-gold bg-gold/10 text-gold-lt' : 'border-border-sub text-silver hover:text-ivory',
-      )}
-    >
-      <span className="text-ivory">{list.length}</span> {label}
-    </button>
-  );
   const openList = open === 'going' ? view.going : open === 'maybe' ? view.maybe : open === 'cant' ? view.cant : open === 'silent' ? view.silent : [];
 
   return (
@@ -70,10 +82,10 @@ export function LeaderStrip({ view, whenText }: { view: LeaderEventView; whenTex
       <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.22em] text-gold">You lead this</p>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Count label="in" list={view.going} kind="going" />
-        <Count label="not sure" list={view.maybe} kind="maybe" />
-        <Count label={view.silent.length === 1 ? 'has not answered' : 'have not answered'} list={view.silent} kind="silent" />
-        <Count label={view.cant.length === 1 ? 'cannot' : 'cannot'} list={view.cant} kind="cant" />
+        <Count label="in" list={view.going} kind="going" open={open} onToggle={setOpen} />
+        <Count label="not sure" list={view.maybe} kind="maybe" open={open} onToggle={setOpen} />
+        <Count label={view.silent.length === 1 ? 'has not answered' : 'have not answered'} list={view.silent} kind="silent" open={open} onToggle={setOpen} />
+        <Count label="cannot" list={view.cant} kind="cant" open={open} onToggle={setOpen} />
       </div>
       {open && (
         <p className="mt-2 text-sm leading-relaxed text-ivory-dim">

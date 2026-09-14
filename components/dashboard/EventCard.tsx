@@ -9,6 +9,7 @@ import type { RsvpFace } from '@/lib/schedule/public-event';
 import type { FeedEvent } from '@/app/dashboard/(app)/events/actions';
 import { setRsvp } from '@/app/dashboard/(app)/events/actions';
 import { SuccessCheck } from '@/components/motion/SuccessCheck';
+import { Notice } from '@/components/ui/Notice';
 import { GoingFaces } from './GoingFaces';
 import { AddToCalendar } from './AddToCalendar';
 import { PinIcon, CheckIcon } from './nav-data';
@@ -27,6 +28,7 @@ export function EventCard({
   big = false,
   showGroup = false,
   linkToEvent = true,
+  headingLevel = 2,
 }: {
   event: FeedEvent;
   whenText: string;
@@ -36,28 +38,35 @@ export function EventCard({
   big?: boolean;
   showGroup?: boolean;
   linkToEvent?: boolean;
+  headingLevel?: 1 | 2;
 }) {
+  const Heading = headingLevel === 1 ? 'h1' : 'h2';
   const theme = eventTheme(event.type);
   const [status, setStatus] = useState<EventRsvpStatus | null>(event.myStatus);
   const [faces, setFaces] = useState<RsvpFace[]>(event.faces);
   const [justAnswered, setJustAnswered] = useState(false);
+  const [answerError, setAnswerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const cancelled = event.status === 'cancelled';
 
   function choose(next: EventRsvpStatus) {
+    if (pending) return;
     const prevStatus = status;
     const prevFaces = faces;
+    setAnswerError(null);
     setStatus(next);
-    setJustAnswered(true);
+    setJustAnswered(false);
     startTransition(async () => {
       const res = await setRsvp(event.id, next).catch(() => ({ ok: false as const }));
       if (!res.ok) {
         setStatus(prevStatus);
         setFaces(prevFaces);
         setJustAnswered(false);
+        setAnswerError('Could not save your answer. Your previous answer is still in place. Please try again.');
         return;
       }
       if (res.faces) setFaces(res.faces);
+      setJustAnswered(true);
     });
   }
 
@@ -97,9 +106,9 @@ export function EventCard({
         )}
       </div>
 
-      <h2 className={cn('font-display font-light leading-tight text-ivory', big ? 'text-3xl md:text-4xl' : 'text-2xl')}>
+      <Heading className={cn('font-display font-light leading-tight text-ivory', big ? 'text-3xl md:text-4xl' : 'text-2xl')}>
         {title}
-      </h2>
+      </Heading>
 
       <p className={cn('mt-2 text-ivory-dim', big ? 'text-lg' : 'text-base')}>{whenText}</p>
       {event.location && (
@@ -180,6 +189,7 @@ export function EventCard({
           )}
         </>
       )}
+      <Notice message={answerError} />
     </article>
   );
 }

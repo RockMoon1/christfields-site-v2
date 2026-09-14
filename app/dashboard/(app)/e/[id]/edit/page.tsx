@@ -14,7 +14,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
     <div className="mx-auto max-w-2xl">
       <header className="mb-6">
         <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.24em] text-gold">{orgName}</p>
-        <h2 className="font-display text-3xl font-light text-ivory">Change it</h2>
+        <h1 className="font-display text-3xl font-light text-ivory">Change it</h1>
       </header>
       <PostForm
         mode="edit"

@@ -11,7 +11,7 @@ export default async function CommunityPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <header className="mb-8">
-        <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.22em] text-gold">We carry each other</p>
+        <p className="mb-2 text-meta font-medium uppercase tracking-[0.2em] text-gold">We carry each other</p>
         <h1 className="font-display text-4xl font-light text-ivory">Prayer wall</h1>
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-silver">
           Share what you are walking through, and stand with others in theirs.

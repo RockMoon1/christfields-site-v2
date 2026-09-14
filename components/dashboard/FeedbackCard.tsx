@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useTransition } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { useId, useRef, useState, useTransition } from 'react';
 import { cn } from '@/lib/utils';
 import { submitFeedback } from '@/app/dashboard/(app)/feedback/actions';
+import { Button } from '@/components/Button';
+import { Field } from '@/components/ui/Field';
+import { Textarea } from '@/components/ui/Textarea';
 
 const CATEGORIES = ['Idea', 'Something is confusing', 'Bug', 'Encouragement', 'Other'] as const;
 
@@ -13,6 +15,8 @@ const CATEGORIES = ['Idea', 'Something is confusing', 'Bug', 'Encouragement', 'O
  * in Settings without adding noise to the daily flow.
  */
 export function FeedbackCard() {
+  const fieldId = useId();
+  const hasSent = useRef(false);
   const [category, setCategory] = useState<string>('Idea');
   const [message, setMessage] = useState('');
   const [sent, setSent] = useState(false);
@@ -31,6 +35,7 @@ export function FeedbackCard() {
         error: 'Could not send right now. Please try again.',
       }));
       if (res.ok) {
+        hasSent.current = true;
         setSent(true);
         setMessage('');
       } else {
@@ -41,39 +46,35 @@ export function FeedbackCard() {
 
   return (
     <section className="mb-6 rounded-sm border border-border-sub bg-black-3 p-8">
-      <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.22em] text-gold">
+      <p className="mb-2 text-meta font-medium uppercase tracking-[0.22em] text-gold">
         Help shape this
       </p>
-      <h3 className="mb-3 font-display text-xl font-light text-ivory">
+      <h2 className="mb-3 font-display text-xl font-light text-ivory">
         Tell us what to build next
-      </h3>
+      </h2>
       <p className="mb-5 max-w-xl text-sm leading-relaxed text-silver">
         This is built for you and the people you walk with. If something is confusing, missing, or
         would help you grow, say so. It goes straight to Lisandro.
       </p>
 
-      <AnimatePresence mode="wait">
+      <p role="status" className="sr-only">{sent ? 'Feedback sent.' : ''}</p>
         {sent ? (
-          <motion.div
-            key="thanks"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
+          <div
             className="rounded-sm border border-border-gold bg-gold/[0.06] p-5"
           >
             <p className="font-display text-lg font-light text-gold-lt">Thank you. We read every one.</p>
             <p className="mt-1 text-sm text-silver">
               Your note is on its way. It genuinely shapes what we build.
             </p>
-            <button
-              type="button"
+            <Button fx={false} variant="ghost" size="sm" autoFocus
               onClick={() => setSent(false)}
-              className="mt-4 text-[11px] font-medium uppercase tracking-[0.1em] text-gold transition-colors hover:text-gold-lt"
+              className="mt-4"
             >
               Send another
-            </button>
-          </motion.div>
+            </Button>
+          </div>
         ) : (
-          <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <form onSubmit={(event) => { event.preventDefault(); send(); }}>
             {/* Category chips */}
             <div className="mb-4 flex flex-wrap gap-2">
               {CATEGORIES.map((c) => (
@@ -81,9 +82,10 @@ export function FeedbackCard() {
                   key={c}
                   type="button"
                   onClick={() => setCategory(c)}
+                  disabled={pending}
                   aria-pressed={category === c}
                   className={cn(
-                    'rounded-full border px-3 py-1.5 text-[11px] font-medium transition-colors',
+                    'min-h-11 min-w-11 rounded-full border px-3 py-2 text-sm font-medium transition-colors duration-200 disabled:cursor-wait disabled:opacity-50',
                     category === c
                       ? 'border-border-gold bg-gold/15 text-gold-lt'
                       : 'border-border-sub text-silver hover:border-border-gold hover:text-ivory',
@@ -94,31 +96,29 @@ export function FeedbackCard() {
               ))}
             </div>
 
-            <textarea
+            <Field id={fieldId} label="Your feedback" error={error}>
+            <Textarea
+              autoFocus={hasSent.current}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="What would make this better for you?"
               rows={4}
               maxLength={2000}
-              className="w-full rounded-sm border border-border-sub bg-black-2 px-3 py-2 text-sm text-ivory placeholder:text-muted focus:border-gold focus:outline-none"
+              disabled={pending}
             />
+            </Field>
 
-            {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
-
-            <div className="mt-4 flex items-center gap-3">
-              <button
-                type="button"
-                onClick={send}
-                disabled={pending}
-                className="rounded-sm bg-gold px-5 py-2.5 text-[11px] font-medium uppercase tracking-[0.1em] text-black transition-colors hover:bg-gold-lt disabled:opacity-60"
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Button fx={false} size="sm"
+                type="submit"
+                pending={pending} pendingLabel="Sending…"
               >
-                {pending ? 'Sending…' : 'Send feedback'}
-              </button>
-              <span className="text-xs text-muted">Goes straight to Lisandro.</span>
+                Send feedback
+              </Button>
+              <span className="text-sm text-muted">Goes straight to Lisandro.</span>
             </div>
-          </motion.div>
+          </form>
         )}
-      </AnimatePresence>
     </section>
   );
 }

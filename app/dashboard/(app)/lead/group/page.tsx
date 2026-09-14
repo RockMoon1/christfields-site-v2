@@ -25,7 +25,7 @@ export default async function GroupPage({ searchParams }: { searchParams: Promis
       </Link>
       <header className="mb-6">
         <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.24em] text-gold">Your group</p>
-        <h2 className="font-display text-3xl font-light text-ivory">{page.orgName}</h2>
+        <h1 className="font-display text-3xl font-light text-ivory">{page.orgName}</h1>
         {orgs.length > 1 && (
           <div className="mt-3 flex flex-wrap gap-2">
             {orgs.map((o) => (

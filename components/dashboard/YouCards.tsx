@@ -1,32 +1,41 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useId, useState, useTransition } from 'react';
 import { cn } from '@/lib/utils';
 import { setEmailReminders } from '@/app/dashboard/(app)/settings/actions';
+import { Button } from '@/components/Button';
+import { Input } from '@/components/ui/Input';
+import { Notice } from '@/components/ui/Notice';
 
 /** The one email switch. */
 export function EmailToggle({ initial }: { initial: boolean }) {
   const [on, setOn] = useState(initial);
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState('');
 
   function toggle() {
+    setError('');
     const next = !on;
     setOn(next);
     startTransition(async () => {
       const res = await setEmailReminders(next).catch(() => ({ ok: false }));
-      if (!res.ok) setOn(!next);
+      if (!res.ok) {
+        setOn(!next);
+        setError('Could not save your email preference. Your previous setting is still in place. Please try again.');
+      }
     });
   }
 
   return (
-    <button
+    <div><button
       type="button"
       role="switch"
       aria-checked={on}
       onClick={toggle}
       disabled={pending}
+      aria-busy={pending || undefined}
       className={cn(
-        'inline-flex min-h-[44px] items-center gap-3 rounded-sm border px-4 text-sm transition-colors',
+        'inline-flex min-h-[44px] items-center gap-3 rounded-sm border px-4 py-2 text-sm transition-colors duration-200 disabled:cursor-wait disabled:opacity-50',
         on ? 'border-border-gold bg-gold/15 text-gold-lt' : 'border-border-sub text-silver',
       )}
     >
@@ -42,37 +51,49 @@ export function EmailToggle({ initial }: { initial: boolean }) {
         />
       </span>
       {on ? 'Emails are on' : 'Emails are off'}
-    </button>
+    </button><Notice message={error} className="mt-3" /></div>
   );
 }
 
 /** Copy a link with one tap; falls back to a selectable field. */
 export function CopyLink({ url, label = 'Copy my calendar link' }: { url: string; label?: string }) {
+  const id = useId();
   const [copied, setCopied] = useState(false);
+  const [copying, setCopying] = useState(false);
+  const [error, setError] = useState('');
   async function copy() {
+    setError('');
+    setCopying(true);
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
       setCopied(false);
+      setError('Could not copy the link. Select the calendar link above and copy it.');
+    } finally {
+      setCopying(false);
     }
   }
   return (
-    <div className="flex flex-col gap-2 sm:flex-row">
-      <input
+    <div>
+      <label htmlFor={id} className="mb-2 block text-sm font-medium text-ivory">Calendar link</label>
+      <div className="flex flex-col gap-2 sm:flex-row">
+      <Input
+        id={id}
         readOnly
         value={url}
         onFocus={(e) => e.currentTarget.select()}
-        className="min-h-[44px] flex-1 rounded-sm border border-border-sub bg-black-2 px-3 text-sm text-ivory-dim focus:border-gold focus:outline-none"
+        className="min-w-0 flex-1 text-ivory-dim"
       />
-      <button
-        type="button"
+      <Button fx={false} size="sm"
         onClick={copy}
-        className="inline-flex min-h-[44px] items-center justify-center rounded-sm bg-gold px-4 text-[11px] font-medium uppercase tracking-[0.1em] text-black hover:bg-gold-lt"
+        pending={copying} pendingLabel="Copying…"
       >
         {copied ? 'Copied' : label}
-      </button>
+      </Button>
+      </div>
+      <Notice message={error || (copied ? 'Calendar link copied.' : '')} tone={error ? 'problem' : 'saved'} className="mt-3" />
     </div>
   );
 }

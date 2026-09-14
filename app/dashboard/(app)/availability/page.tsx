@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { AvailabilityBoard } from '@/components/dashboard/AvailabilityBoard';
 import { getMyAvailability } from './actions';
+import { Notice } from '@/components/ui/Notice';
 
 const NOTICES: Record<string, string> = {
   busy: 'Connected. Your leader can now see when you are free. Only free or busy, never what it is.',
@@ -23,19 +24,17 @@ export default async function AvailabilityPage({ searchParams }: { searchParams:
 
   return (
     <div className="mx-auto max-w-2xl">
-      <Link href="/dashboard/settings" className="mb-4 inline-flex min-h-[44px] items-center text-[11px] font-medium uppercase tracking-[0.1em] text-muted hover:text-silver">
+      <Link href="/dashboard/settings" className="mb-4 inline-flex min-h-[44px] min-w-11 items-center text-sm font-medium text-muted hover:text-silver">
         &larr; You
       </Link>
       <header className="mb-6">
-        <h2 className="font-display text-3xl font-light text-ivory">When are you usually free?</h2>
+        <h1 className="font-display text-3xl font-light text-ivory">When are you usually free?</h1>
         <p className="mt-2 max-w-xl text-base leading-relaxed text-silver">
           Your leader sees only that you are free, and only on the best times. Never what you are doing.
         </p>
       </header>
 
-      {notice && (
-        <p className="mb-6 rounded-sm border border-border-gold bg-gold/[0.06] px-4 py-3 text-sm leading-relaxed text-ivory">{notice}</p>
-      )}
+      <Notice message={notice} tone={sp.google === 'error' ? 'problem' : 'info'} className={notice ? 'mb-6' : undefined} />
 
       <AvailabilityBoard initial={initial} />
     </div>
