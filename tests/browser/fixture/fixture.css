@@ -1,0 +1,10 @@
+@source "../../../components";
+
+:root { --font-inter: Inter, Arial, sans-serif; --font-cormorant: "Cormorant Garamond", Georgia, serif; }
+.fixture-banner { padding: 1rem; border-bottom: 1px solid #c9a548; font-size: 14px; }
+.fixture-controls { display: flex; flex-wrap: wrap; gap: 12px; padding: 16px; background: #131a16; }
+.fixture-controls button { min-height: 44px; padding: 8px 14px; border: 1px solid #7e8c84; }
+.fixture-controls output { width: 100%; overflow-wrap: anywhere; font-size: 13px; }
+.fixture-main { padding: 24px 16px; max-width: 1024px; margin: auto; }
+.fixture-exclusions { padding: 12px 16px; border-bottom: 1px solid #3a423e; font-size: 13px; }
+[data-testid="safe-area-shell"] > header { padding-top: 47px; }
