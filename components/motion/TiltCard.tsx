@@ -1,7 +1,9 @@
 'use client';
 
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
 import { type ReactNode, useRef } from 'react';
-import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react';
+import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
 
 interface TiltCardProps {
   children: ReactNode;
@@ -29,24 +31,19 @@ export function TiltCard({ children, className = '', max = 6 }: TiltCardProps) {
   const rotateX = useTransform(sy, [-0.5, 0.5], [max, -max]);
   const rotateY = useTransform(sx, [-0.5, 0.5], [-max, max]);
 
-  if (reduceMotion) {
-    return <div className={className}>{children}</div>;
-  }
-
   return (
     <motion.div
       ref={ref}
       className={className}
       style={{
-        rotateX,
-        rotateY,
+        rotateX: reduceMotion ? 0 : rotateX,
+        rotateY: reduceMotion ? 0 : rotateY,
         transformPerspective: 1000,
         transformStyle: 'preserve-3d',
-        willChange: 'transform',
       }}
       onMouseMove={(e) => {
         const el = ref.current;
-        if (!el) return;
+        if (!el || reduceMotion) return;
         const rect = el.getBoundingClientRect();
         const px = (e.clientX - rect.left) / rect.width - 0.5;
         const py = (e.clientY - rect.top) / rect.height - 0.5;

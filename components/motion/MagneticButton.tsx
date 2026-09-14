@@ -1,7 +1,9 @@
 'use client';
 
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
 import { type ReactNode, useRef } from 'react';
-import { motion, useMotionValue, useReducedMotion, useSpring } from 'motion/react';
+import { motion, useMotionValue, useSpring } from 'motion/react';
 
 interface MagneticButtonProps {
   children: ReactNode;
@@ -26,18 +28,14 @@ export function MagneticButton({ children, strength = 0.25, className = '' }: Ma
   const sx = useSpring(x, { stiffness: 180, damping: 15, mass: 0.4 });
   const sy = useSpring(y, { stiffness: 180, damping: 15, mass: 0.4 });
 
-  if (reduceMotion) {
-    return <span className={className}>{children}</span>;
-  }
-
   return (
     <motion.span
       ref={ref}
       className={className}
-      style={{ x: sx, y: sy, display: 'inline-block', willChange: 'transform' }}
+      style={{ x: reduceMotion ? 0 : sx, y: reduceMotion ? 0 : sy, display: 'inline-block' }}
       onMouseMove={(e) => {
         const el = ref.current;
-        if (!el) return;
+        if (!el || reduceMotion) return;
         const rect = el.getBoundingClientRect();
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;

@@ -1,5 +1,7 @@
 'use client';
 
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
 import Image from 'next/image';
 import { motion } from 'motion/react';
 
@@ -23,13 +25,15 @@ interface LogoProps {
  * intentional enough to "wake up" the brand each time the logo renders.
  */
 export function Logo({ size = 72, showText = false, className = '' }: LogoProps) {
+  const reduceMotion = useReducedMotion();
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <motion.div
+        data-motion-reveal
         className="logo-fire-wrap"
         style={{ width: size, height: size }}
-        initial={{ opacity: 0, scale: 0.78 }}
-        animate={{
+        initial={reduceMotion ? false : { opacity: 0, scale: 0.78 }}
+        animate={reduceMotion ? { opacity: 1, scale: 1, filter: 'none' } : {
           opacity: 1,
           scale: 1,
           filter: [
@@ -38,7 +42,7 @@ export function Logo({ size = 72, showText = false, className = '' }: LogoProps)
             'brightness(1) drop-shadow(0 0 0 transparent)',
           ],
         }}
-        transition={{
+        transition={reduceMotion ? { duration: 0 } : {
           opacity: { duration: 0.45, ease: 'easeOut' },
           scale: { duration: 0.7, ease: [0.22, 1, 0.36, 1] },
           filter: { duration: 1.1, times: [0, 0.45, 1], ease: 'easeOut' },

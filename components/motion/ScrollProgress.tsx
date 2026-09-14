@@ -1,5 +1,7 @@
 'use client';
 
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
 import { motion, useScroll, useSpring } from 'motion/react';
 
 /**
@@ -9,6 +11,7 @@ import { motion, useScroll, useSpring } from 'motion/react';
  * Sits at z-[101] so it stays above the sticky nav (z-100).
  */
 export function ScrollProgress() {
+  const reduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
@@ -18,7 +21,7 @@ export function ScrollProgress() {
 
   return (
     <motion.div
-      style={{ scaleX, transformOrigin: '0% 50%' }}
+      style={{ scaleX: reduceMotion ? scrollYProgress : scaleX, transformOrigin: '0% 50%' }}
       className="pointer-events-none fixed inset-x-0 top-0 z-[101] h-[2px] bg-gradient-to-r from-gold via-gold-lt to-gold"
       aria-hidden
     />

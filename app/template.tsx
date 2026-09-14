@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'motion/react';
+import { useReducedMotion } from '@/lib/use-reduced-motion';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { isAppPath } from '@/components/motion/MarketingFx';
@@ -25,6 +26,7 @@ let sweepPlayed = false;
  */
 export default function Template({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const reduce = useReducedMotion();
   const app = isAppPath(pathname);
   // Captured once per mount with a pure initializer (Strict Mode safe).
   const [showSweep] = useState(() => !sweepPlayed && !app);
@@ -37,14 +39,14 @@ export default function Template({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {showSweep && !sweepDone && (
+      {showSweep && !sweepDone && !reduce && (
         <motion.div
           aria-hidden
           initial={{ x: '-100%' }}
           animate={{ x: '110%' }}
           transition={{ duration: 1.1, ease: [0.65, 0, 0.35, 1] }}
           onAnimationComplete={() => setSweepDone(true)}
-          className="pointer-events-none fixed inset-y-0 left-0 z-[150] w-full"
+          className="pointer-events-none fixed inset-y-0 left-0 z-[150] w-full motion-reduce:hidden"
           style={{
             background:
               'linear-gradient(90deg, transparent 0%, rgba(201, 165, 72, 0.0) 18%, rgba(228, 201, 122, 0.32) 50%, rgba(201, 165, 72, 0.0) 82%, transparent 100%)',

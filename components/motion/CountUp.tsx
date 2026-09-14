@@ -1,5 +1,7 @@
 'use client';
 
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
 import { useEffect, useRef, useState } from 'react';
 import { useInView } from 'motion/react';
 
@@ -28,12 +30,13 @@ export function CountUp({
   suffix = '',
   className = '',
 }: CountUpProps) {
+  const reduceMotion = useReducedMotion();
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, margin: '0px 0px -15% 0px' });
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    if (!isInView) return;
+    if (!isInView || reduceMotion) return;
 
     const start = performance.now();
     let raf: number;
@@ -52,13 +55,14 @@ export function CountUp({
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [isInView, to, duration]);
+  }, [isInView, to, duration, reduceMotion]);
 
   return (
     <span ref={ref} className={className}>
-      {prefix}
-      {count}
-      {suffix}
+      <span className="sr-only">{prefix}{to}{suffix}</span>
+      {/* The final value is readable before hydration under reduced motion. */}
+      <span aria-hidden className="motion-reduce:hidden">{prefix}{count}{suffix}</span>
+      <span aria-hidden className="hidden motion-reduce:inline">{prefix}{to}{suffix}</span>
     </span>
   );
 }

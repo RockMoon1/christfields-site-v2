@@ -1,6 +1,8 @@
 'use client';
 
-import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring } from 'motion/react';
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
+import { motion, useMotionTemplate, useMotionValue, useSpring } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 
 interface HeroSpotlightProps {

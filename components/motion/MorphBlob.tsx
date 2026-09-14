@@ -1,6 +1,9 @@
 'use client';
 
-import { motion } from 'motion/react';
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
+import { motion, useInView } from 'motion/react';
+import { useRef } from 'react';
 
 interface MorphBlobProps {
   /** CSS color for the blob. */
@@ -21,8 +24,12 @@ export function MorphBlob({
   size = 500,
   className = '',
 }: MorphBlobProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const reduceMotion = useReducedMotion();
+  const inView = useInView(ref, { margin: '100px' });
   return (
     <motion.div
+      ref={ref}
       aria-hidden
       className={`pointer-events-none absolute rounded-full ${className}`}
       style={{
@@ -31,15 +38,13 @@ export function MorphBlob({
         background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
         filter: 'blur(60px)',
       }}
-      // Only transform props (scale/x/y) animate — they run on the compositor.
-      // The borderRadius morph was dropped: it forces a paint every frame and is
-      // invisible under the 60px blur anyway.
-      animate={{
+      // Animate only while visible. The radial material is static under reduce.
+      animate={reduceMotion || !inView ? { scale: 1, x: 0, y: 0 } : {
         scale: [1, 1.15, 0.95, 1.08, 1],
         x: [0, 30, -20, 15, 0],
         y: [0, -25, 15, -10, 0],
       }}
-      transition={{
+      transition={reduceMotion || !inView ? { duration: 0 } : {
         duration: 20,
         repeat: Infinity,
         ease: 'easeInOut',

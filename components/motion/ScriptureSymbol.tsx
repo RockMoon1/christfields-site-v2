@@ -1,5 +1,7 @@
 'use client';
 
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
 import { motion, useInView } from 'motion/react';
 import { useRef } from 'react';
 
@@ -19,15 +21,17 @@ export function ScriptureSymbol({
 }: ScriptureSymbolProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: '-40px' });
+  const reduceMotion = useReducedMotion();
 
   return (
     <motion.span
+      data-motion-reveal
       ref={ref}
       aria-hidden
       className={className}
-      initial={{ opacity: 0, y: 12, scale: 0.9, filter: 'brightness(0.5)' }}
+      initial={reduceMotion ? false : { opacity: 0, y: 12, scale: 0.9, filter: 'brightness(0.5)' }}
       animate={
-        inView
+        reduceMotion ? { opacity: 1, y: 0, scale: 1, filter: 'none' } : inView
           ? {
               opacity: 1,
               y: 0,
@@ -40,7 +44,7 @@ export function ScriptureSymbol({
             }
           : undefined
       }
-      transition={{
+      transition={reduceMotion ? { duration: 0 } : {
         opacity: { duration: 0.6, delay },
         y: { duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] },
         scale: { duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] },

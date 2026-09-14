@@ -1,7 +1,9 @@
 'use client';
 
-import { motion } from 'motion/react';
-import { type ReactNode } from 'react';
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
+import { motion, useInView } from 'motion/react';
+import { type ReactNode, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 interface SectionHeaderProps {
@@ -37,8 +39,8 @@ interface SectionHeaderProps {
  * 3. any gold <em> inside the heading catches a one-shot shimmer
  *    (`.cf-em-shimmer` in globals.css) after it settles.
  *
- * Reduced motion is honored through Motion; the shimmer is gated by the
- * prefers-reduced-motion block in globals.css.
+ * Reduced motion presents every element immediately; CSS also keeps the
+ * server-rendered content visible before hydration.
  */
 export function SectionHeader({
   eyebrow,
@@ -50,6 +52,9 @@ export function SectionHeader({
   titleClassName = '',
   ledeClassName = '',
 }: SectionHeaderProps) {
+  const reduceMotion = useReducedMotion();
+  const headingMaskRef = useRef<HTMLDivElement>(null);
+  const headingInView = useInView(headingMaskRef, { once: true, margin: '0px 0px -10% 0px' });
   const centered = align === 'center';
   const MotionHeading = motion[Heading];
 
@@ -64,28 +69,34 @@ export function SectionHeader({
         >
           <motion.span
             aria-hidden
-            initial={{ scaleX: 0 }}
+            data-motion-reveal
+            initial={reduceMotion ? false : { scaleX: 0 }}
+            animate={reduceMotion ? { scaleX: 1 } : undefined}
             whileInView={{ scaleX: 1 }}
             viewport={{ once: true, margin: '0px 0px -10% 0px' }}
-            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: reduceMotion ? 0 : 0.9, ease: [0.22, 1, 0.36, 1] }}
             style={{ transformOrigin: centered ? 'right center' : 'left center' }}
             className="h-px w-8 bg-gradient-to-r from-transparent to-gold/70"
           />
           <motion.p
-            initial={{ opacity: 0, y: 8 }}
+            data-motion-reveal
+            initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+            animate={reduceMotion ? { opacity: 1, y: 0 } : undefined}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '0px 0px -10% 0px' }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
-            className="font-display text-xs font-medium uppercase tracking-[0.24em] text-gold"
+            transition={{ duration: reduceMotion ? 0 : 0.6, ease: [0.22, 1, 0.36, 1], delay: reduceMotion ? 0 : 0.15 }}
+            className="font-body text-meta font-medium uppercase tracking-[0.2em] text-gold"
           >
             {eyebrow}
           </motion.p>
           <motion.span
             aria-hidden
-            initial={{ scaleX: 0 }}
+            data-motion-reveal
+            initial={reduceMotion ? false : { scaleX: 0 }}
+            animate={reduceMotion ? { scaleX: 1 } : undefined}
             whileInView={{ scaleX: 1 }}
             viewport={{ once: true, margin: '0px 0px -10% 0px' }}
-            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: reduceMotion ? 0 : 0.9, ease: [0.22, 1, 0.36, 1] }}
             style={{ transformOrigin: 'left center' }}
             className={cn(
               'h-px w-8 bg-gradient-to-l from-transparent to-gold/70',
@@ -95,14 +106,16 @@ export function SectionHeader({
         </div>
       )}
 
-      <div className="overflow-hidden">
+      {/* Observe the stationary mask: the heading starts entirely outside its
+          clipped bounds, so observing the heading itself never triggers. */}
+      <div ref={headingMaskRef} className="overflow-hidden">
         <MotionHeading
-          initial={{ y: '105%' }}
-          whileInView={{ y: '0%' }}
-          viewport={{ once: true, margin: '0px 0px -10% 0px' }}
-          transition={{ duration: 0.95, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+          data-motion-reveal
+          initial={reduceMotion ? false : { y: '105%' }}
+          animate={{ y: reduceMotion || headingInView ? '0%' : '105%' }}
+          transition={{ duration: reduceMotion ? 0 : 0.95, ease: [0.22, 1, 0.36, 1], delay: reduceMotion ? 0 : 0.1 }}
           className={cn(
-            'cf-heading-shimmer font-display text-[clamp(2.1rem,4.6vw,3.4rem)] font-light leading-[1.12] text-ivory will-change-transform',
+            'cf-heading-shimmer font-display text-display-md font-light text-ivory',
             titleClassName,
           )}
         >
@@ -112,10 +125,12 @@ export function SectionHeader({
 
       {lede && (
         <motion.div
-          initial={{ opacity: 0, y: 14 }}
+          data-motion-reveal
+          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+          animate={reduceMotion ? { opacity: 1, y: 0 } : undefined}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '0px 0px -10% 0px' }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.35 }}
+          transition={{ duration: reduceMotion ? 0 : 0.7, ease: [0.22, 1, 0.36, 1], delay: reduceMotion ? 0 : 0.35 }}
           className={cn(
             'mt-5 max-w-2xl text-base leading-relaxed text-ivory-dim md:text-lg',
             centered && 'mx-auto',

@@ -1,6 +1,9 @@
 'use client';
 
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
 import { useRef, useState, type CSSProperties, type ReactNode, type MouseEvent } from 'react';
+import { motion, useMotionTemplate, useMotionValue } from 'motion/react';
 
 interface GlowCardProps {
   children: ReactNode;
@@ -26,31 +29,35 @@ export function GlowCard({
   style,
 }: GlowCardProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const reduceMotion = useReducedMotion();
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const background = useMotionTemplate`radial-gradient(${glowSize}px circle at ${x}px ${y}px, ${glowColor}, transparent 70%)`;
   const [active, setActive] = useState(false);
 
   function handleMove(e: MouseEvent) {
-    if (!ref.current) return;
+    if (!ref.current || reduceMotion) return;
     const rect = ref.current.getBoundingClientRect();
-    setPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    x.set(e.clientX - rect.left);
+    y.set(e.clientY - rect.top);
   }
 
   return (
     <div
       ref={ref}
       onMouseMove={handleMove}
-      onMouseEnter={() => setActive(true)}
+      onMouseEnter={() => !reduceMotion && setActive(true)}
       onMouseLeave={() => setActive(false)}
       className={`relative overflow-hidden ${className}`}
       style={style}
     >
       {/* Glow layer */}
-      <div
+      <motion.div
         aria-hidden
-        className="pointer-events-none absolute inset-0 z-0 transition-opacity duration-300"
+        className="pointer-events-none absolute inset-0 z-0 transition-opacity duration-200 motion-reduce:transition-none"
         style={{
-          opacity: active ? 1 : 0,
-          background: `radial-gradient(${glowSize}px circle at ${pos.x}px ${pos.y}px, ${glowColor}, transparent 70%)`,
+          opacity: active && !reduceMotion ? 1 : 0,
+          background,
           mixBlendMode: 'plus-lighter',
         }}
       />

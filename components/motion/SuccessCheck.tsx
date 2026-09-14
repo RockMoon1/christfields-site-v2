@@ -1,5 +1,7 @@
 'use client';
 
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
 import { motion } from 'motion/react';
 
 interface SuccessCheckProps {
@@ -13,19 +15,20 @@ interface SuccessCheckProps {
  * check draws in, then a subtle pulse rings out. Used for form success states.
  */
 export function SuccessCheck({ size = 64, className = '' }: SuccessCheckProps) {
+  const reduceMotion = useReducedMotion();
   const r = size / 2 - 4;
   const circumference = 2 * Math.PI * r;
 
   return (
     <div className={`relative inline-flex items-center justify-center ${className}`}>
       {/* Pulse ring */}
-      <motion.div
+      {!reduceMotion && <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1.6, opacity: [0, 0.4, 0] }}
         transition={{ delay: 0.8, duration: 1.2, ease: 'easeOut' }}
         className="absolute rounded-full border border-gold"
         style={{ width: size, height: size }}
-      />
+      />}
 
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} fill="none">
         {/* Circle outline draws in */}
@@ -37,9 +40,9 @@ export function SuccessCheck({ size = 64, className = '' }: SuccessCheckProps) {
           strokeWidth={2}
           className="text-gold"
           strokeDasharray={circumference}
-          strokeDashoffset={circumference}
+          strokeDashoffset={reduceMotion ? 0 : circumference}
           animate={{ strokeDashoffset: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: reduceMotion ? 0 : 0.6, ease: [0.22, 1, 0.36, 1] }}
         />
         {/* Checkmark draws in after circle */}
         <motion.path
@@ -49,9 +52,9 @@ export function SuccessCheck({ size = 64, className = '' }: SuccessCheckProps) {
           strokeLinecap="round"
           strokeLinejoin="round"
           className="text-gold"
-          pathLength={0}
+          pathLength={reduceMotion ? 1 : 0}
           animate={{ pathLength: 1 }}
-          transition={{ delay: 0.5, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ delay: reduceMotion ? 0 : 0.5, duration: reduceMotion ? 0 : 0.4, ease: [0.22, 1, 0.36, 1] }}
         />
       </svg>
     </div>

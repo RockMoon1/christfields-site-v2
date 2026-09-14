@@ -1,5 +1,7 @@
 'use client';
 
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
 import { motion, type Variants } from 'motion/react';
 
 interface TextSplitProps {
@@ -74,11 +76,14 @@ export function TextSplit({
   mask = false,
   stagger,
 }: TextSplitProps) {
+  const reduceMotion = useReducedMotion();
+  if (reduceMotion) return <span className={`inline-block ${className}`}>{text}</span>;
   const tokens = by === 'word' ? text.split(/(\s+)/).filter((t) => t.length > 0) : text.split('');
   const gap = stagger ?? (by === 'word' ? 0.055 : 0.035);
 
   return (
     <motion.span
+      data-motion-reveal
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: '0px 0px -10% 0px' }}
@@ -104,7 +109,7 @@ export function TextSplit({
               className="inline-block overflow-hidden align-bottom"
               style={{ whiteSpace: 'nowrap' }}
             >
-              <motion.span variants={maskToken} className="inline-block will-change-transform">
+              <motion.span data-motion-token variants={maskToken} className="inline-block">
                 {token}
               </motion.span>
             </span>
@@ -112,6 +117,7 @@ export function TextSplit({
         }
         return (
           <motion.span
+            data-motion-token
             key={`${token}-${i}`}
             custom={blur}
             variants={fadeToken}

@@ -1,6 +1,8 @@
 'use client';
 
-import { motion, useMotionTemplate, useMotionValue, useReducedMotion } from 'motion/react';
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
+import { motion, useMotionTemplate, useMotionValue } from 'motion/react';
 import { type ReactNode, useRef, useState } from 'react';
 
 interface CardSpotlightProps {
@@ -38,19 +40,15 @@ export function CardSpotlight({
 
   const background = useMotionTemplate`radial-gradient(${size}px circle at ${x}px ${y}px, rgba(228, 201, 122, ${intensity}), transparent 70%)`;
 
-  if (reduceMotion) {
-    return <div className={className}>{children}</div>;
-  }
-
   return (
     <div
       ref={ref}
       className={`relative ${className}`}
-      onMouseEnter={() => setHover(true)}
+      onMouseEnter={() => !reduceMotion && setHover(true)}
       onMouseLeave={() => setHover(false)}
       onMouseMove={(e) => {
         const el = ref.current;
-        if (!el) return;
+        if (!el || reduceMotion) return;
         const rect = el.getBoundingClientRect();
         x.set(e.clientX - rect.left);
         y.set(e.clientY - rect.top);
@@ -65,7 +63,7 @@ export function CardSpotlight({
         className="pointer-events-none absolute inset-0 rounded-[inherit] transition-opacity duration-500"
         style={{
           background,
-          opacity: hover ? 1 : 0,
+          opacity: hover && !reduceMotion ? 1 : 0,
           mixBlendMode: 'plus-lighter',
         }}
       />

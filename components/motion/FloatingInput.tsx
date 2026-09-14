@@ -1,7 +1,10 @@
 'use client';
 
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
 import { motion } from 'motion/react';
 import { useId, useState, type InputHTMLAttributes } from 'react';
+import { cn } from '@/lib/utils';
 
 interface FloatingInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'placeholder'> {
   label: string;
@@ -15,14 +18,15 @@ interface FloatingInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>,
  * Stays accessible: a real <label htmlFor=id> wraps the floating text,
  * the input has the matching id, and clicking the label focuses the input.
  */
-export function FloatingInput({ label, id: idProp, onChange, onFocus, onBlur, ...rest }: FloatingInputProps) {
+export function FloatingInput({ label, id: idProp, onChange, onFocus, onBlur, className, ...rest }: FloatingInputProps) {
+  const reduceMotion = useReducedMotion();
   const autoId = useId();
   const id = idProp || `field-${autoId}`;
 
   const [focused, setFocused] = useState(false);
   const [hasValue, setHasValue] = useState(Boolean(rest.defaultValue));
 
-  const floated = focused || hasValue;
+  const floated = focused || (rest.value !== undefined ? String(rest.value).length > 0 : hasValue);
 
   return (
     <div className="relative">
@@ -42,19 +46,19 @@ export function FloatingInput({ label, id: idProp, onChange, onFocus, onBlur, ..
           setHasValue(e.target.value.length > 0);
           onChange?.(e);
         }}
-        className="peer w-full rounded-sm border border-border-sub bg-black-3 px-4 pb-2 pt-6 text-sm text-ivory transition-colors focus:border-gold focus:outline-none"
+        className={cn('peer w-full rounded-sm border border-border-sub bg-black-3 px-4 pb-2 pt-6 text-base text-ivory [color-scheme:dark] transition-colors duration-200 focus:border-gold', className)}
       />
       <motion.label
         htmlFor={id}
         initial={false}
         animate={{
           y: floated ? -10 : 0,
-          scale: floated ? 0.78 : 1,
+          scale: floated ? 0.8125 : 1,
           color: focused ? '#C9A548' : floated ? '#E4C97A' : '#8A9A92',
         }}
-        transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: reduceMotion ? 0 : 0.18, ease: [0.22, 1, 0.36, 1] }}
         style={{ transformOrigin: 'left center' }}
-        className="pointer-events-none absolute left-4 top-[1.05rem] origin-left text-sm font-normal"
+        className="pointer-events-none absolute left-4 top-[1.05rem] origin-left text-base font-normal"
       >
         {label}
       </motion.label>

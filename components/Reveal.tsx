@@ -1,5 +1,7 @@
 'use client';
 
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
 import { motion, type Variants } from 'motion/react';
 import { type ReactNode } from 'react';
 
@@ -35,7 +37,8 @@ interface RevealProps {
  * TextSplit / SectionHeader instead, so the page has three distinct
  * entrance grammars rather than one.
  *
- * Honors prefers-reduced-motion automatically through Motion.
+ * Reduced motion renders the final state immediately, including clip paths
+ * and opacity, which MotionConfig does not suppress on its own.
  */
 export function Reveal({
   children,
@@ -47,8 +50,15 @@ export function Reveal({
   as = 'div',
   variant = 'fade',
 }: RevealProps) {
+  const reduceMotion = useReducedMotion();
+  const MotionEl = motion[as];
+
   const variants: Variants =
-    variant === 'clip'
+    reduceMotion
+      ? {
+          visible: { opacity: 1, y: 0, scale: 1, clipPath: 'none', filter: 'none', transition: { duration: 0 } },
+        }
+      : variant === 'clip'
       ? {
           hidden: {
             opacity: 0,
@@ -72,12 +82,12 @@ export function Reveal({
           },
         };
 
-  const MotionEl = motion[as];
-
   return (
     <MotionEl
-      initial="hidden"
-      whileInView="visible"
+      data-motion-reveal
+      initial={reduceMotion ? false : 'hidden'}
+      animate={reduceMotion ? 'visible' : undefined}
+      whileInView={reduceMotion ? undefined : 'visible'}
       viewport={{ once, margin: '0px 0px -40px 0px' }}
       variants={variants}
       className={className}

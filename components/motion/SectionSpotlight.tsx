@@ -1,5 +1,7 @@
 'use client';
 
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
 import { useEffect, useRef } from 'react';
 import { motion, useMotionValue, useSpring } from 'motion/react';
 
@@ -16,6 +18,7 @@ export function SectionSpotlight({
   color?: string;
   size?: number;
 }) {
+  const reduceMotion = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const x = useMotionValue(-9999);
   const y = useMotionValue(-9999);
@@ -24,6 +27,7 @@ export function SectionSpotlight({
   const opacity = useMotionValue(0);
 
   useEffect(() => {
+    if (reduceMotion) return;
     const parent = ref.current?.parentElement;
     if (!parent || typeof window === 'undefined') return;
     if (window.matchMedia('(hover: none)').matches) return; // touch: skip
@@ -42,19 +46,21 @@ export function SectionSpotlight({
       parent.removeEventListener('mousemove', onMove);
       parent.removeEventListener('mouseleave', onLeave);
     };
-  }, [x, y, opacity]);
+  }, [x, y, opacity, reduceMotion]);
+
+  if (reduceMotion) return null;
 
   return (
     <motion.div ref={ref} aria-hidden style={{ opacity }} className="pointer-events-none absolute inset-0 -z-0">
       <motion.div
         className="absolute rounded-full"
         style={{
-          left: sx,
-          top: sy,
+          left: -size / 2,
+          top: -size / 2,
           width: size,
           height: size,
-          x: '-50%',
-          y: '-50%',
+          x: sx,
+          y: sy,
           background: `radial-gradient(circle, ${color}, transparent 70%)`,
           mixBlendMode: 'plus-lighter',
         }}

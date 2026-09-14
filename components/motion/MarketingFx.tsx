@@ -22,7 +22,8 @@ export function MarketingFx() {
   return (
     <>
       <ScrollToTop />
-      <ScrollProgress />
+      {/* Articles own their reading indicator; avoid two competing bars. */}
+      {!pathname.startsWith('/journal/') && <ScrollProgress />}
       <EmberCursor />
     </>
   );

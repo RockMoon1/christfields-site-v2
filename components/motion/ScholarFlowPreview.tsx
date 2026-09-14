@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
+import { useRef, useState } from 'react';
+import { motion, useInView } from 'motion/react';
 
 const focusRows = [
   { label: 'Deep study block', value: '78%', color: 'from-gold to-gold-lt' },
@@ -27,6 +29,9 @@ type TaskState = (typeof TASK_STATES)[number];
  */
 export function ScholarFlowPreview() {
   const reduceMotion = useReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref);
+  const animateDecorations = !reduceMotion && inView;
   const [taskStates, setTaskStates] = useState<TaskState[]>(['Active', 'Ready', 'Next']);
 
   function cycleTask(i: number) {
@@ -38,7 +43,7 @@ export function ScholarFlowPreview() {
   }
 
   return (
-    <div className="cf-glass relative overflow-hidden rounded-md p-5 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+    <div ref={ref} className="cf-glass relative overflow-hidden rounded-md p-5 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(201,165,72,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(201,165,72,0.04)_1px,transparent_1px)] bg-[size:38px_38px] opacity-60"
@@ -48,11 +53,11 @@ export function ScholarFlowPreview() {
         aria-hidden
         className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-lt to-transparent"
         animate={
-          reduceMotion
-            ? { opacity: 0.4 }
+          !animateDecorations
+            ? { opacity: 0.4, x: 0 }
             : { opacity: [0.18, 0.9, 0.18], x: ['-24%', '24%', '-24%'] }
         }
-        transition={{ duration: 5.8, repeat: Infinity, ease: 'easeInOut' }}
+        transition={animateDecorations ? { duration: 5.8, repeat: Infinity, ease: 'easeInOut' } : { duration: 0 }}
       />
 
       <div className="relative">
@@ -70,14 +75,14 @@ export function ScholarFlowPreview() {
               aria-hidden
               className="absolute inset-0 rounded-full border border-gold/40"
               animate={
-                reduceMotion ? { opacity: 0.25 } : { scale: [1, 1.45], opacity: [0.4, 0] }
+                !animateDecorations ? { opacity: 0.25, scale: 1 } : { scale: [1, 1.45], opacity: [0.4, 0] }
               }
-              transition={{ duration: 3.6, repeat: Infinity, ease: 'easeOut' }}
+              transition={animateDecorations ? { duration: 3.6, repeat: Infinity, ease: 'easeOut' } : { duration: 0 }}
             />
             <motion.div
               className="flex h-12 w-12 items-center justify-center rounded-full border border-gold/35 bg-gold/10 text-xs font-semibold text-gold-lt"
-              animate={reduceMotion ? undefined : { scale: [1, 1.04, 1] }}
-              transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut' }}
+              animate={animateDecorations ? { scale: [1, 1.04, 1] } : { scale: 1 }}
+              transition={animateDecorations ? { duration: 3.6, repeat: Infinity, ease: 'easeInOut' } : { duration: 0 }}
             >
               AI
             </motion.div>
@@ -104,11 +109,15 @@ export function ScholarFlowPreview() {
                   </div>
                   <div className="h-1.5 overflow-hidden rounded-full bg-black-4">
                     <motion.div
+                      data-motion-reveal
+                      data-preview-fill
                       className={`h-full rounded-full bg-gradient-to-r ${row.color}`}
-                      initial={{ width: '12%' }}
-                      whileInView={{ width: row.value }}
+                      style={{ width: row.value, transformOrigin: 'left center' }}
+                      initial={reduceMotion ? false : { scaleX: 0.12 }}
+                      animate={reduceMotion ? { scaleX: 1 } : undefined}
+                      whileInView={{ scaleX: 1 }}
                       viewport={{ once: true }}
-                      transition={{ duration: 1.1, delay: 0.15 + i * 0.12 }}
+                      transition={reduceMotion ? { duration: 0 } : { duration: 1.1, delay: 0.15 + i * 0.12 }}
                     />
                   </div>
                 </div>
@@ -119,13 +128,15 @@ export function ScholarFlowPreview() {
           <div className="space-y-3">
             {TASKS.map((task, i) => (
               <motion.button
+                data-motion-reveal
                 key={task.title}
                 onClick={() => cycleTask(i)}
                 className="group block w-full rounded-sm border border-border-sub bg-black/30 p-3 text-left transition-colors hover:border-border-gold"
-                initial={{ opacity: 0, x: 24 }}
+                initial={reduceMotion ? false : { opacity: 0, x: 24 }}
+                animate={reduceMotion ? { opacity: 1, x: 0 } : undefined}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.65, delay: 0.1 + i * 0.08 }}
+                transition={reduceMotion ? { duration: 0 } : { duration: 0.65, delay: 0.1 + i * 0.08 }}
                 whileHover={reduceMotion ? undefined : { x: 4 }}
               >
                 <div className="flex items-center justify-between gap-3">
@@ -157,11 +168,13 @@ export function ScholarFlowPreview() {
         </div>
 
         <motion.div
+          data-motion-reveal
           className="mt-4 rounded-sm border border-gold/20 bg-gold/[0.06] p-4"
-          initial={{ opacity: 0, y: 16 }}
+          initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+          animate={reduceMotion ? { opacity: 1, y: 0 } : undefined}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.7, delay: 0.35 }}
+          transition={reduceMotion ? { duration: 0 } : { duration: 0.7, delay: 0.35 }}
         >
           <p className="mb-1 text-[10px] uppercase tracking-[0.18em] text-gold">
             Guidance

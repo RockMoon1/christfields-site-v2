@@ -1,7 +1,8 @@
 'use client';
 
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
 import { useEffect, useRef } from 'react';
-import { useReducedMotion } from 'motion/react';
 
 interface Particle {
   x: number;
@@ -119,6 +120,8 @@ export function EmberCursor() {
       window.removeEventListener('mousemove', onMove);
     };
   }, [reduceMotion]);
+
+  if (reduceMotion) return null;
 
   return (
     <canvas

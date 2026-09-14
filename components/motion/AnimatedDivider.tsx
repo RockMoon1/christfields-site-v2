@@ -1,5 +1,7 @@
 'use client';
 
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
 import { motion } from 'motion/react';
 
 interface AnimatedDividerProps {
@@ -17,13 +19,16 @@ interface AnimatedDividerProps {
  * it a warm glow without making it loud.
  */
 export function AnimatedDivider({ className = '' }: AnimatedDividerProps) {
+  const reduceMotion = useReducedMotion();
   return (
     <div className={`relative w-full overflow-hidden ${className}`} aria-hidden>
       <motion.div
-        initial={{ scaleX: 0, opacity: 0 }}
+        data-motion-reveal
+        initial={reduceMotion ? false : { scaleX: 0, opacity: 0 }}
+        animate={reduceMotion ? { scaleX: 1, opacity: 1 } : undefined}
         whileInView={{ scaleX: 1, opacity: 1 }}
         viewport={{ once: true, margin: '0px 0px -8% 0px' }}
-        transition={{
+        transition={reduceMotion ? { duration: 0 } : {
           scaleX: { duration: 1.4, ease: [0.22, 1, 0.36, 1] },
           opacity: { duration: 0.6, ease: 'easeOut' },
         }}

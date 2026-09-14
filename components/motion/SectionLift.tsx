@@ -1,5 +1,7 @@
 'use client';
 
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
 import { motion } from 'motion/react';
 import type { ReactNode } from 'react';
 
@@ -21,14 +23,17 @@ export function SectionLift({
   /** Optional anchor id, so the section rail can scroll here. */
   id?: string;
 }) {
+  const reduceMotion = useReducedMotion();
   return (
     <motion.div
+      data-motion-reveal
       id={id}
       className={className}
-      initial={{ opacity: 0, y: 36 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 36 }}
+      animate={reduceMotion ? { opacity: 1, y: 0 } : undefined}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '0px 0px -90px 0px' }}
-      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: reduceMotion ? 0 : 0.7, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
     </motion.div>
