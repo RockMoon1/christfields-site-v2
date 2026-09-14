@@ -1,0 +1,1184 @@
+[
+  {
+    "refs": [
+      "Proverbs 27:17"
+    ],
+    "boundary": "Proverbs 27:1-22",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Wisdom voice addressing the learner; the individual proverb names a man and his friend.",
+    "genre": "Wisdom saying",
+    "textStates": "The comparison concerns the effect one friend has on another. Nearby sayings include faithful wounds and earnest counsel (verses 6 and 9).",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Friendship and mutual growth fit the site's theme. The proverb does not specify this organization, a compulsory meeting schedule, or a method of confrontation.",
+    "crossReferences": [
+      {
+        "ref": "Proverbs 27:6",
+        "relationship": "Nearby complementary image: faithful friendship can include painful correction."
+      },
+      {
+        "ref": "Proverbs 27:9",
+        "relationship": "Nearby complementary saying explicitly values earnest counsel from a friend."
+      }
+    ],
+    "uncertainties": [
+      "Marketing wording is not the pinned WEB wording. Keep the bare brand heading by the user's decision, but review each referenced quotation separately."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Proverbs 16:3"
+    ],
+    "boundary": "Proverbs 16:1-9",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Wisdom voice addressing the learner.",
+    "genre": "Wisdom saying",
+    "textStates": "Committing deeds to Yahweh appears among sayings about motives, righteousness, and God's direction of human plans.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "A submission-success message may encourage trust. It must not imply that submitting a form, joining the ministry, or launching a product guarantees success.",
+    "crossReferences": [
+      {
+        "ref": "Proverbs 16:9",
+        "relationship": "Nearby qualification: people plan a course, while Yahweh directs their steps."
+      },
+      {
+        "ref": "Proverbs 27:1",
+        "relationship": "A contrasting warning against presuming to control tomorrow."
+      }
+    ],
+    "uncertainties": [
+      "The pinned source reads 'your plans shall succeed'; the earlier proposed WEB wording 'shall be established' is not this snapshot. 'Yahweh' must not be silently changed."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Hebrews 10:24-25",
+      "Hebrews 10:25"
+    ],
+    "boundary": "Hebrews 10:19-39",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Letter writer addressing fellow believers; the author is not identified by name in this passage.",
+    "genre": "Exhortation within a letter",
+    "textStates": "Mutual encouragement and assembling occur after confidence through Jesus' sacrifice, and before warnings and a recollection of suffering. The approaching Day gives the exhortation its horizon.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Gathering and mutual encouragement fit. Attendance at a particular Christ Fields group is a ministry application, not the passage's named requirement.",
+    "crossReferences": [
+      {
+        "ref": "Acts 2:42-47",
+        "relationship": "Narrative example of believers sharing teaching, meals, prayer, and resources; it is an example rather than an identical command."
+      },
+      {
+        "ref": "Hebrews 13:16",
+        "relationship": "The same letter also connects community life with doing good and sharing."
+      }
+    ],
+    "uncertainties": [
+      "Do not detach attendance from encouragement or use the quotation to pressure someone to remain in an unsafe setting. Many existing excerpts omit the final exhortation and Day clause."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Galatians 6:1",
+      "Galatians 6:2",
+      "Galatians 6:9",
+      "Galatians 6:10"
+    ],
+    "boundary": "Galatians 6:1-10",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Letter writer addressing brothers and those called spiritual.",
+    "genre": "Letter exhortation",
+    "textStates": "Gentle restoration includes self-watchfulness; burden-bearing stands alongside examining one's own work. Doing good extends to all, especially the household of faith.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Mutual care and practical help fit. A care response is an application, not an exhaustive crisis protocol or a promise of secrecy.",
+    "crossReferences": [
+      {
+        "ref": "Galatians 6:5",
+        "relationship": "Balances shared burdens with personal responsibility within the same argument."
+      },
+      {
+        "ref": "1 Peter 5:2-3",
+        "relationship": "A complementary constraint on care and leadership: willing service without domination."
+      }
+    ],
+    "uncertainties": [
+      "The passage does not authorize coercive disclosure, unlimited availability, or shifting another person's responsibility entirely to a volunteer."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Acts 2:42",
+      "Acts 2:46-47"
+    ],
+    "boundary": "Acts 2:37-47",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Narrator describing hearers who responded to Peter's Pentecost address in Jerusalem.",
+    "genre": "Narrative summary",
+    "textStates": "The community receives teaching, shares fellowship, meals, prayer, possessions, and praise after repentance and baptism.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "The site can learn from this example of shared life. A modern small group is not simply identical to the whole Jerusalem assembly.",
+    "crossReferences": [
+      {
+        "ref": "Acts 2:38-41",
+        "relationship": "Explains how the gathering community forms in the narrative."
+      },
+      {
+        "ref": "Hebrews 10:24-25",
+        "relationship": "Related exhortation to mutual encouragement and assembling; a different literary setting."
+      }
+    ],
+    "uncertainties": [
+      "Distinguish description from a universal requirement for a particular platform, group size, or meeting format. Exact existing marketing text differs from this WEB source."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Ecclesiastes 4:9",
+      "Ecclesiastes 4:9-10",
+      "Ecclesiastes 4:12"
+    ],
+    "boundary": "Ecclesiastes 4:4-12",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Reflective wisdom speaker observing toil and isolation.",
+    "genre": "Wisdom reflection",
+    "textStates": "The solitary worker's dissatisfaction leads into the practical benefits of companionship: labor, help after a fall, warmth, and defense.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "A community illustration fits the practical comparison.",
+    "crossReferences": [
+      {
+        "ref": "Ecclesiastes 4:8",
+        "relationship": "The solitary laborer supplies the immediate problem to which companionship responds."
+      },
+      {
+        "ref": "Proverbs 27:17",
+        "relationship": "A related wisdom image of benefit through another person, not a direct quotation relationship."
+      }
+    ],
+    "uncertainties": [
+      "The third cord is not explicitly identified as God, Christ, a marriage partner, or the Trinity. Do not add those claims as though the text stated them."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Matthew 18:15",
+      "Matthew 18:20"
+    ],
+    "boundary": "Matthew 18:15-20",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Jesus addressing his disciples in the surrounding discourse.",
+    "genre": "Gospel discourse",
+    "textStates": "The passage concerns a brother's sin, witnesses, the assembly, binding and releasing, and agreement in prayer. Verse 20 concludes this sequence.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "A general gathering may draw encouragement, but its literary setting should remain visible. Private conversation can be wise beyond this setting.",
+    "crossReferences": [
+      {
+        "ref": "Matthew 18:21-35",
+        "relationship": "Peter's forgiveness question and the following parable continue the discourse on relationships and mercy."
+      },
+      {
+        "ref": "Galatians 6:1",
+        "relationship": "Related instruction makes restoration gentle and self-watchful."
+      }
+    ],
+    "uncertainties": [
+      "The readiness scenario explicitly says the disagreement 'was not sin'; applying this correction procedure as a direct command there overstates the text. The passage is not a required minimum number for Jesus to be present."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Matthew 18:21-22"
+    ],
+    "boundary": "Matthew 18:21-35",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Jesus answering Peter's question about repeated forgiveness.",
+    "genre": "Gospel dialogue and parable",
+    "textStates": "Jesus exceeds Peter's proposed limit and tells a parable about a forgiven debtor refusing mercy.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "The site's refusal to rush forgiveness while not ignoring it is a pastoral application.",
+    "crossReferences": [
+      {
+        "ref": "Matthew 18:15-20",
+        "relationship": "The preceding section addresses correction, showing that mercy and addressing wrongdoing are both in view."
+      }
+    ],
+    "uncertainties": [
+      "Forgiveness does not by itself establish restored access, institutional trust, or an obligation to ignore continuing danger. Those applications require separate reasoning."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Matthew 11:28",
+      "Matthew 11:28-30"
+    ],
+    "boundary": "Matthew 11:25-30",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Jesus, after addressing the Father, inviting the burdened to himself.",
+    "genre": "Gospel prayer and invitation",
+    "textStates": "Rest is joined to taking Jesus' yoke and learning from his gentleness; it is not isolated from discipleship.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Welcoming tired people and encouraging rest fits when the invitation remains Jesus' invitation.",
+    "crossReferences": [
+      {
+        "ref": "Luke 14:25-33",
+        "relationship": "Another discipleship discourse emphasizes its cost; it qualifies an interpretation of rest as having no demands."
+      }
+    ],
+    "uncertainties": [
+      "Do not present joining this ministry as equivalent to coming to Jesus. Preserve verses 29–30 when explaining the invitation."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Philippians 4:6",
+      "Philippians 4:6-7",
+      "Philippians 4:8"
+    ],
+    "boundary": "Philippians 4:2-9",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Letter writer addressing the Philippian community, including named coworkers in conflict.",
+    "genre": "Letter exhortation",
+    "textStates": "Gentleness, prayer with thanksgiving, peace in Christ, and practices of thought and conduct form one sequence.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Encouraging prayer and support fits the text.",
+    "crossReferences": [
+      {
+        "ref": "Philippians 4:2-3",
+        "relationship": "The immediate address includes practical assistance with conflict among coworkers."
+      },
+      {
+        "ref": "Galatians 6:2",
+        "relationship": "A complementary call for community support alongside individual prayer."
+      }
+    ],
+    "uncertainties": [
+      "Do not turn anxiety into proof of spiritual failure or promise that prayer instantly removes distress. This passage is not a diagnosis or a replacement for care."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Philippians 4:11-12",
+      "Philippians 4:13",
+      "Philippians 4:19"
+    ],
+    "boundary": "Philippians 4:10-20",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Letter writer thanking the Philippians for material support.",
+    "genre": "Letter thanksgiving",
+    "textStates": "Strength through Christ is discussed in the experience of hunger, abundance, need, and contentment. The writer values their participation in affliction.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Encouragement under difficulty is appropriate.",
+    "crossReferences": [
+      {
+        "ref": "Philippians 4:14-18",
+        "relationship": "The gifts and sharing in affliction make the material context explicit."
+      },
+      {
+        "ref": "2 Corinthians 12:9-10",
+        "relationship": "Related emphasis on divine strength within weakness, not the removal of every limitation."
+      }
+    ],
+    "uncertainties": [
+      "Do not use verse 13 as an unrestricted promise of achievement, or verse 19 as a sales or financial-success promise."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Jeremiah 29:11",
+      "Jeremiah 29:12-13"
+    ],
+    "boundary": "Jeremiah 29:1-14",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Yahweh's message transmitted in Jeremiah's letter to captives taken from Jerusalem to Babylon.",
+    "genre": "Prophetic letter",
+    "textStates": "The recipients are told to settle, seek the city's peace, reject false reassurance, and await the promised return after seventy years.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "The theme nudge about faithfulness in ordinary life fits the letter better than an immediate personal-success promise.",
+    "crossReferences": [
+      {
+        "ref": "Jeremiah 29:5-7",
+        "relationship": "Shows the ordinary building, planting, family life, and prayer asked of the original recipients."
+      },
+      {
+        "ref": "Jeremiah 29:8-10",
+        "relationship": "Contrasts the promise with false prophets and a long period of waiting."
+      }
+    ],
+    "uncertainties": [
+      "The 'you' is a displaced community in the text. Modern individual application must be labelled; the passage does not disclose a member's career plan. No exact modern chronology is inferred."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "1 Corinthians 10:13"
+    ],
+    "boundary": "1 Corinthians 10:1-22",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Letter writer warning the Corinthian believers by Israel's wilderness examples.",
+    "genre": "Letter argument and admonition",
+    "textStates": "The examples warn about evil desire, idolatry, sexual immorality, testing, and grumbling. The promise is followed by the instruction to flee idolatry.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Encouragement to resist temptation and seek practical help fits this setting.",
+    "crossReferences": [
+      {
+        "ref": "1 Corinthians 10:12",
+        "relationship": "The preceding verse warns confident people against assuming they cannot fall."
+      },
+      {
+        "ref": "1 Corinthians 10:14",
+        "relationship": "The following instruction identifies a concrete response: flee idolatry."
+      }
+    ],
+    "uncertainties": [
+      "It does not say that every form of trauma or suffering is bearable without assistance. The lust/temptation tag collision is recorded but remains deferred."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Colossians 3:23",
+      "Colossians 3:23-24"
+    ],
+    "boundary": "Colossians 3:18-4:1",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Letter writer addressing household members, then servants and masters.",
+    "genre": "Household instruction within a letter",
+    "textStates": "Work for the Lord appears in instructions to servants; masters are then required to provide what is just and equal under their own heavenly Master.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "A modern work-ethic analogy must acknowledge the original unequal household context.",
+    "crossReferences": [
+      {
+        "ref": "Colossians 4:1",
+        "relationship": "Places obligations of justice on masters, a necessary qualification to extracting servants' obedience."
+      },
+      {
+        "ref": "Colossians 3:17",
+        "relationship": "A broader instruction about word and deed provides a less setting-specific connection."
+      }
+    ],
+    "uncertainties": [
+      "Do not equate ancient servitude with ordinary employment or use the verse to excuse exploitation, unsafe work, or unrestricted employer demands. The site's journal sentence is not exact WEB."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "1 Peter 5:2-3",
+      "1 Peter 5:6-7",
+      "1 Peter 5:10"
+    ],
+    "boundary": "1 Peter 5:1-11",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Writer speaking as a fellow elder to elders, younger people, and the community.",
+    "genre": "Letter exhortation",
+    "textStates": "Leadership is willing and exemplary rather than dominating; humility, care, vigilance, and suffering follow.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Humble leadership and care are fitting applications.",
+    "crossReferences": [
+      {
+        "ref": "Hebrews 13:17",
+        "relationship": "Related leadership text includes leaders' obligation to give account."
+      },
+      {
+        "ref": "Galatians 6:1",
+        "relationship": "Complementary instruction about gentle restoration and self-watchfulness."
+      }
+    ],
+    "uncertainties": [
+      "Do not identify every modern volunteer role with the passage's elders without explanation. Hope after suffering is not a guarantee of immediate relief."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "James 3:1"
+    ],
+    "boundary": "James 3:1-12",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Letter writer addressing brothers, including potential teachers.",
+    "genre": "Wisdom exhortation within a letter",
+    "textStates": "The warning about teachers leads into an extended treatment of speech and the harm of the tongue.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "The readiness invitation appropriately treats teaching as serious responsibility.",
+    "crossReferences": [
+      {
+        "ref": "James 3:13-18",
+        "relationship": "The next section describes wisdom through gentleness, peace, and mercy."
+      },
+      {
+        "ref": "2 Timothy 2:14-19",
+        "relationship": "Related concern that teaching can either serve truth or harm hearers."
+      }
+    ],
+    "uncertainties": [
+      "Keep the caution connected to speech and conduct rather than using it as a status filter. Existing public wording varies across translations."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Psalm 46:10"
+    ],
+    "boundary": "Psalm 46:1-11",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Psalmic community voice, including a divine declaration in verse 10.",
+    "genre": "Psalm of confidence",
+    "textStates": "God is refuge amid upheaval, raging nations, and the ending of war. Stillness acknowledges God's exaltation over the nations.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Quiet reflection may be an application if the wider conflict and divine rule remain visible.",
+    "crossReferences": [
+      {
+        "ref": "Psalm 46:8-9",
+        "relationship": "Immediately frames the divine declaration through the ending of weapons and war."
+      }
+    ],
+    "uncertainties": [
+      "Do not reduce this to a breathing technique or imply that emotional calm is the verse's entire meaning."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Lamentations 3:22-23",
+      "Lamentations 3:23",
+      "Lamentations 3:25-26",
+      "Lamentations 3:32"
+    ],
+    "boundary": "Lamentations 3:19-33",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "First-person lamenting voice recalling affliction and expressing hope.",
+    "genre": "Poetic lament",
+    "textStates": "Hope in Yahweh's compassion is spoken from remembered misery, grief, and waiting.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "The morning reminder can comfort without erasing suffering.",
+    "crossReferences": [
+      {
+        "ref": "Lamentations 3:19-21",
+        "relationship": "The preceding recollection explains that this hope is voiced within affliction."
+      },
+      {
+        "ref": "Lamentations 3:31-33",
+        "relationship": "The following lines hold grief and compassion together."
+      }
+    ],
+    "uncertainties": [
+      "A fragment beginning 'They' depends on verse 22. Do not silently substitute 'His mercies' as verbatim verse 23 or imply that a bad morning disproves faithfulness."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Zephaniah 3:17"
+    ],
+    "boundary": "Zephaniah 3:9-20",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Prophetic address to Zion, Israel, and Jerusalem, with Yahweh's speech.",
+    "genre": "Restoration oracle",
+    "textStates": "Rejoicing follows removal of judgments and appears alongside a humble remnant, the gathering of the displaced, and restoration.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Personal encouragement must be identified as an application of a communal promise.",
+    "crossReferences": [
+      {
+        "ref": "Zephaniah 3:14-16",
+        "relationship": "Names Zion, Israel, and Jerusalem and supplies the immediate promise."
+      },
+      {
+        "ref": "Zephaniah 3:19-20",
+        "relationship": "Expands the promise to gathering and restoring the displaced."
+      }
+    ],
+    "uncertainties": [
+      "The site fragment removes the named communal audience. Do not present the original 'you' as simply any individual visiting the site."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Psalm 1:1-2",
+      "Psalm 1:2",
+      "Psalm 1:2-3"
+    ],
+    "boundary": "Psalm 1:1-6",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Wisdom psalm voice contrasting two ways of life.",
+    "genre": "Wisdom psalm",
+    "textStates": "Delight in Yahweh's law and sustained meditation are contrasted with wickedness; the tree bears fruit in season.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Encouraging deliberate Scripture reading fits.",
+    "crossReferences": [
+      {
+        "ref": "Psalm 1:4-6",
+        "relationship": "The concluding contrast and judgment are part of the psalm's argument."
+      },
+      {
+        "ref": "Matthew 7:24-27",
+        "relationship": "A thematic parallel connects hearing and doing; it is not a direct quotation of this psalm."
+      }
+    ],
+    "uncertainties": [
+      "Do not turn the tree into a guarantee of business success or imply that a modern app streak is the passage's measure of righteousness."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Matthew 7:24",
+      "Matthew 7:24-25"
+    ],
+    "boundary": "Matthew 7:21-29",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Jesus concluding teaching heard by disciples and crowds.",
+    "genre": "Gospel discourse and comparison",
+    "textStates": "The wise builder hears Jesus' words and does them. The contrast follows a warning that impressive religious claims do not substitute for doing the Father's will.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Building a foundation for Christian life fits when the foundation is obedience to Jesus.",
+    "crossReferences": [
+      {
+        "ref": "Luke 6:46-49",
+        "relationship": "A parallel teaching likewise contrasts calling Jesus Lord with doing what he says."
+      }
+    ],
+    "uncertainties": [
+      "Do not identify the ministry program or website itself as the saving rock, or omit doing in favor of merely consuming content."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Philippians 1:6"
+    ],
+    "boundary": "Philippians 1:1-11",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Paul and Timothy named in the opening, addressing the Philippian saints.",
+    "genre": "Letter thanksgiving and prayer",
+    "textStates": "Confidence in God's work is associated with gospel partnership, shared grace, love, knowledge, and discernment.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Encouragement about growth should retain the communal and gospel setting.",
+    "crossReferences": [
+      {
+        "ref": "Philippians 1:5-7",
+        "relationship": "The surrounding verses connect the good work with gospel partnership and shared grace."
+      },
+      {
+        "ref": "Philippians 2:12-13",
+        "relationship": "A related passage joins God's work with the community's response."
+      }
+    ],
+    "uncertainties": [
+      "This is not a promise that every individual initiative or chosen product will be finished successfully."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Philippians 2:3-4",
+      "Philippians 2:5-7"
+    ],
+    "boundary": "Philippians 2:1-11",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Letter writer addressing the community.",
+    "genre": "Letter exhortation leading into a Christ-focused passage",
+    "textStates": "Humility and concern for others are grounded in Christ's self-humbling and the following exaltation.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Humble leadership and mutual consideration fit.",
+    "crossReferences": [
+      {
+        "ref": "Philippians 2:5-11",
+        "relationship": "Provides the explicitly Christ-focused grounding for the preceding exhortation."
+      },
+      {
+        "ref": "1 Peter 5:2-3",
+        "relationship": "Related leadership instruction opposes domination."
+      }
+    ],
+    "uncertainties": [
+      "The marketing citation 2:3–4 currently supplies mainly verse 3; verify both verses or honestly identify the excerpt. Do not use humility to erase a person's legitimate needs."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "1 Corinthians 3:6"
+    ],
+    "boundary": "1 Corinthians 3:1-17",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Letter writer addressing a community divided over teachers.",
+    "genre": "Letter argument using farming and building images",
+    "textStates": "Paul and Apollos are servants; God gives growth. The argument challenges factions and identifies Christ as the foundation.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Crediting God for community growth fits the journal's theme.",
+    "crossReferences": [
+      {
+        "ref": "1 Corinthians 3:4-9",
+        "relationship": "Explains why the farming image is used: to challenge rivalry over human leaders."
+      },
+      {
+        "ref": "1 Corinthians 3:10-17",
+        "relationship": "The building image adds accountability and the foundation of Christ."
+      }
+    ],
+    "uncertainties": [
+      "Do not treat organizational size as proof of divine approval. Existing journal wording differs from the pinned WEB punctuation and word 'increase'."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Habakkuk 2:2"
+    ],
+    "boundary": "Habakkuk 2:1-5",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Yahweh answering the prophet's waiting complaint.",
+    "genre": "Prophetic dialogue",
+    "textStates": "The prophet is told to record a vision tied to an appointed time and to wait for its fulfillment.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Using writing imagery for a journal is an analogy.",
+    "crossReferences": [
+      {
+        "ref": "Habakkuk 2:3-4",
+        "relationship": "The waiting and faith language identifies what the written vision concerns."
+      }
+    ],
+    "uncertainties": [
+      "The site's business or creative vision is not identified with this divine oracle. Keep that distinction explicit; do not portray the verse as a command to publish company plans."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Luke 14:28"
+    ],
+    "boundary": "Luke 14:25-35",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Jesus addressing large crowds traveling with him.",
+    "genre": "Gospel discipleship discourse with examples",
+    "textStates": "Tower-building and going to war illustrate counting the cost of discipleship, including bearing the cross and renouncing possessions.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "A readiness reflection may use the cost analogy if it remains an analogy.",
+    "crossReferences": [
+      {
+        "ref": "Matthew 11:28-30",
+        "relationship": "Another discipleship invitation joins rest with taking Jesus' yoke."
+      }
+    ],
+    "uncertainties": [
+      "A membership covenant is not identical to becoming Jesus' disciple. Avoid making signing the organization's covenant a test of allegiance to Christ."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Mark 6:7"
+    ],
+    "boundary": "Mark 6:6-13",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Narrator describing Jesus commissioning the Twelve.",
+    "genre": "Gospel mission narrative",
+    "textStates": "Jesus sends the Twelve in pairs with authority over unclean spirits and specific journey instructions.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Two leaders may be a prudent ministry policy informed by this example.",
+    "crossReferences": [
+      {
+        "ref": "Mark 6:8-11",
+        "relationship": "Other instructions from the same mission show why selective universalizing requires argument."
+      }
+    ],
+    "uncertainties": [
+      "The narrative does not by itself establish an exceptionless rule for every group or volunteer role. State the policy as the ministry's decision rather than a direct universal command."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Hebrews 13:17",
+      "Acts 5:29"
+    ],
+    "boundary": "Hebrews 13:7-21",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Letter writer addressing believers; the paired Acts passage depicts Peter and the apostles before the council.",
+    "genre": "Letter exhortation; paired narrative",
+    "textStates": "Hebrews calls for cooperation with leaders who must give account. Acts describes refusing an order to stop teaching in Jesus' name.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Accountable leadership and obedience to God can inform policy, but mapping the Table to these leaders is an interpretive step.",
+    "crossReferences": [
+      {
+        "ref": "Acts 5:27-32",
+        "relationship": "Explains the precise conflict in the paired text: an order to stop apostolic teaching."
+      },
+      {
+        "ref": "1 Peter 5:1-4",
+        "relationship": "Complementary leadership instruction rejects domination and calls for example."
+      }
+    ],
+    "uncertainties": [
+      "Preserve the Acts qualification. Do not present the Table as possessing unrestricted authority or require silence about harm. The shortened Hebrews quote removes the leaders' accountability clause."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Luke 15:4"
+    ],
+    "boundary": "Luke 15:1-7",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Jesus responding to criticism from Pharisees and scribes about welcoming sinners.",
+    "genre": "Gospel parable",
+    "textStates": "The lost sheep story culminates in heaven's joy over repentance, in response to complaints that Jesus eats with sinners.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Following up kindly with someone absent can be a pastoral analogy.",
+    "crossReferences": [
+      {
+        "ref": "Luke 15:1-2",
+        "relationship": "Names the criticism that prompts the story."
+      },
+      {
+        "ref": "Luke 15:7",
+        "relationship": "States the parable's comparison to joy over repentance."
+      }
+    ],
+    "uncertainties": [
+      "Three missed meetings are not equivalent to being the parable's lost sinner. The passage does not authorize persistent unwanted contact or overriding a request for space."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "1 Corinthians 15:3-4"
+    ],
+    "boundary": "1 Corinthians 15:1-11",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Letter writer reminding the Corinthians of the received and proclaimed gospel.",
+    "genre": "Letter argument recounting received testimony",
+    "textStates": "Christ's death for sins, burial, resurrection according to the Scriptures, and appearances ground the reminder.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "The doctrine item should faithfully represent the received testimony.",
+    "crossReferences": [
+      {
+        "ref": "1 Corinthians 15:5-11",
+        "relationship": "Continues the testimony with appearances and the shared proclamation."
+      }
+    ],
+    "uncertainties": [
+      "Its existing purported WEB quotation omits the second 'according to the Scriptures' and changes the ending. Do not imply a verbatim whole passage where an edited excerpt is supplied."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "2 Timothy 2:15"
+    ],
+    "boundary": "2 Timothy 2:8-19",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Letter writer addressing Timothy within a charge about faithful teaching.",
+    "genre": "Letter instruction",
+    "textStates": "Handling the word of truth is contrasted with destructive disputes, empty chatter, and false teaching about resurrection.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Careful Bible work fits. Applying the verse to general study software is an analogy.",
+    "crossReferences": [
+      {
+        "ref": "2 Timothy 2:16-18",
+        "relationship": "Identifies the sort of false teaching and harm that the charge resists."
+      },
+      {
+        "ref": "James 3:1-12",
+        "relationship": "Related warning about teachers' speech and accountability."
+      }
+    ],
+    "uncertainties": [
+      "It does not certify the accuracy of an AI tool or say that diligence guarantees flawless interpretation. Several current excerpts omit the workman clause."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "2 Timothy 3:16",
+      "2 Timothy 3:16-17"
+    ],
+    "boundary": "2 Timothy 3:10-17",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Letter writer addressing Timothy and recalling his instruction and persecution.",
+    "genre": "Letter instruction",
+    "textStates": "The Scriptures are connected to wisdom for salvation through faith in Christ, teaching, correction, righteousness, and equipping for good work.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "The site's commitment to Scripture has direct support here.",
+    "crossReferences": [
+      {
+        "ref": "2 Timothy 3:14-15",
+        "relationship": "Describes Timothy's received teaching and the Scriptures' relation to salvation."
+      },
+      {
+        "ref": "2 Timothy 3:17",
+        "relationship": "States the purpose of the preceding list of uses."
+      }
+    ],
+    "uncertainties": [
+      "The passage's scope and implications for a developed doctrine of Scripture should be distinguished from the clauses it states. A verse ending in a comma continues into verse 17; do not repair the stored punctuation."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Psalm 15:4"
+    ],
+    "boundary": "Psalm 15:1-5",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Psalmic question and answer concerning dwelling in Yahweh's sanctuary.",
+    "genre": "Ethical psalm",
+    "textStates": "Keeping a costly oath appears among truthful speech, refusal of slander, integrity toward neighbors, and refusal of bribery.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Reliability can inform a voluntary commitment.",
+    "crossReferences": [
+      {
+        "ref": "Psalm 15:2-3",
+        "relationship": "Integrity includes treatment of other people, not merely keeping institutional commitments."
+      }
+    ],
+    "uncertainties": [
+      "The passage does not establish unlimited attendance, forbid withdrawal from an unsafe setting, or validate every organizational promise. Existing text is a modified excerpt."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Psalm 51:6",
+      "Psalm 51:10",
+      "Psalm 51:17"
+    ],
+    "boundary": "Psalm 51:1-17",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Penitent speaker addressing God.",
+    "genre": "Penitential psalm",
+    "textStates": "The speaker seeks mercy, cleansing, inner truth, a renewed heart, and a restored voice.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Honesty and repentance fit the site's theme.",
+    "crossReferences": [
+      {
+        "ref": "Psalm 51:1-4",
+        "relationship": "Places inner truth within confession and a plea for mercy."
+      },
+      {
+        "ref": "Psalm 51:16-17",
+        "relationship": "Returns to contrition rather than outward religious performance."
+      }
+    ],
+    "uncertainties": [
+      "The psalm addresses God; it does not impose disclosure of private details to leaders or guarantee that an organization is safe. Distinguish inward truth from compelled transparency."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  },
+  {
+    "refs": [
+      "Romans 8:1"
+    ],
+    "boundary": "Romans 8:1-17",
+    "status": "context-reviewed-with-concerns",
+    "reviewedBy": "Codex, source-based first review; independent/founder review pending",
+    "reviewScope": "The numbered literary passage and listed relationships were read; this is not a claim of completed historical or denominational review.",
+    "speakerAudience": "Letter writer explaining life in Christ and the Spirit.",
+    "genre": "Letter argument",
+    "textStates": "No condemnation is followed by the Spirit's liberating work, a contrast with flesh, adoption, and shared suffering.",
+    "historicalReconstruction": "The setting stated above is drawn from the cited literary text. No independently established date, reconstructed event sequence, or consensus about disputed authorship is asserted.",
+    "interpretationAndApplication": "Grace toward those in Christ fits; avoiding shame-based app metrics is a pastoral application.",
+    "crossReferences": [
+      {
+        "ref": "Romans 8:12-17",
+        "relationship": "Explains life in the Spirit, adoption, and suffering within the same argument."
+      },
+      {
+        "ref": "Galatians 6:1",
+        "relationship": "Shows that gentle correction and grace need not be opposed."
+      }
+    ],
+    "uncertainties": [
+      "The pinned WEB has an additional clause in verse 1. Preserve the source's text and notes instead of harmonizing silently with another translation. 'No condemnation' should not be used to deny accountability for harm."
+    ],
+    "sources": [
+      {
+        "url": "https://github.com/seven1m/open-bibles/blob/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+        "description": "Pinned provider source; exact numbered boundary also cached in chapters.json."
+      }
+    ],
+    "publicationDecision": "Preserve current wording and selection. Resolve stated concerns before approving revised quotation or contextual framing for publication."
+  }
+]

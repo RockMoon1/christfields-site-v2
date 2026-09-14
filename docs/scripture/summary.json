@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-09-08T04:12:17.601Z",
+  "corpusEntries": 522,
+  "corpusSha256": "9dcb283004a5514307b8d7f3b63954b9f5045cef3d0b6d4ac5b9e9eff688f3c1",
+  "sourceSnapshot": "5ffa2626f170a109a4a96afc90775c06f0821cb4ba81ed34e63663e085708d68",
+  "corpusSourceMatches": 522,
+  "corpusSourceDifferences": 0,
+  "curlyQuoteFlags": 83,
+  "continuationPunctuationFlags": 38,
+  "authoredFilesScanned": 218,
+  "referenceOccurrences": 164,
+  "extractedQuotations": 112,
+  "claimCandidates": 203,
+  "reviewedPassageRecords": 35,
+  "corpusWithContextReview": 39,
+  "remainingCorpusContextReview": 483,
+  "stage5Ready": false,
+  "limitations": [
+    "Reference/claim extraction is an inventory aid, not proof of semantic exhaustiveness.",
+    "Some JSX split across nodes requires manual quotation pairing.",
+    "No runtime member-entered text or private files were accessed.",
+    "Source matching and cached chapters do not constitute a complete hermeneutic review.",
+    "Current UI changes may move source line numbers; file hashes identify this scan."
+  ]
+}

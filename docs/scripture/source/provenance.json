@@ -1,0 +1,11 @@
+{
+  "url": "https://raw.githubusercontent.com/seven1m/open-bibles/7768dacf2653164dd036d14a2d3f877d925015d3/eng-web.usfx.xml",
+  "revision": "7768dacf2653164dd036d14a2d3f877d925015d3",
+  "retrievedAt": "2026-09-08T03:36:30.568Z",
+  "sha256": "5ffa2626f170a109a4a96afc90775c06f0821cb4ba81ed34e63663e085708d68",
+  "bytes": 6210746,
+  "translation": "World English Bible",
+  "edition": "Classic family; pinned provider source snapshot. Not asserted identical to current eBible 2020 stable edition.",
+  "license": "Public domain Bible text; https://ebible.org/eng-web/copyright.htm",
+  "providerDocumentation": "https://bible-api.com/"
+}

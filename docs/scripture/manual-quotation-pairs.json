@@ -1,0 +1,18 @@
+[
+  {"ref":"Habakkuk 2:2","text":"“Write the vision; make it plain on tablets, so he may run who reads it.”","file":"app/journal/page.tsx","line":152},
+  {"ref":"Luke 14:28","text":"“Which of you, desiring to build a tower, doesn’t first sit down and count the cost?”","file":"app/leaders/readiness/page.tsx","line":68},
+  {"ref":"Proverbs 27:17","text":"Iron sharpens iron.","file":"components/Footer.tsx","line":61},
+  {"ref":"Proverbs 27:17","text":"As iron sharpens iron.","file":"components/Footer.tsx","line":110},
+  {"ref":"Ecclesiastes 3:1","text":"“There is a season for everything, and a time for every purpose under heaven.”","file":"components/leaders/ReadinessForm.tsx","line":921},
+  {"ref":"Luke 16:10","text":"“Whoever is faithful with very little is also faithful with much.”","file":"components/leaders/ReadinessForm.tsx","line":948},
+  {"ref":"Proverbs 27:17","text":"“As iron sharpens iron, so one person sharpens another.”","file":"components/sections/Hero.tsx","line":37},
+  {"ref":"Proverbs 27:17","text":"As iron sharpens iron, so one person sharpens another. Friction, sometimes. Always toward growth.","file":"components/sections/PracticesScroll.tsx","line":70},
+  {"ref":"Proverbs 27:17","text":"“As iron sharpens iron, so one person sharpens another.”","file":"components/sections/Vision.tsx","line":70},
+  {"ref":"Proverbs 27:17","text":"“As iron sharpens iron, so one person sharpens another.”","file":"components/sections/faithflow/ActiveGroups.tsx","line":63},
+  {"ref":"Proverbs 27:17","text":"“As iron sharpens iron, so one person sharpens another.”","file":"components/sections/faithflow/DashboardPreview.tsx","line":207},
+  {"ref":"Lamentations 3:23","text":"“They are new every morning. Great is your faithfulness.”","file":"components/sections/faithflow/DashboardPreview.tsx","line":188},
+  {"ref":"James 3:1","text":"“Not many of you should become teachers, my brothers and sisters, because you know that we who teach will be judged more strictly.”","file":"components/sections/faithflow/FutureLeaders.tsx","line":81},
+  {"ref":"Hebrews 10:24-25","text":"“Let us consider how we may spur one another on toward love and good deeds, not giving up meeting together.”","file":"lib/emails.ts","line":67},
+  {"ref":"Proverbs 16:3","text":"“Commit your work to the Lord, and your plans will be established.”","file":"lib/emails.ts","line":68},
+  {"ref":"Proverbs 27:17","text":"“As iron sharpens iron, so one person sharpens another.”","file":"lib/emails.ts","line":521}
+]
