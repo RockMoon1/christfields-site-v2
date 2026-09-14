@@ -1,5 +1,7 @@
 'use client';
 
+import { useReducedMotion } from '@/lib/use-reduced-motion';
+
 import { motion } from 'motion/react';
 import { Container } from '../Container';
 import { Reveal } from '../Reveal';
@@ -46,8 +48,9 @@ const values: Value[] = [
 const NUMERALS = ['I', 'II', 'III', 'IV', 'V'];
 
 export function Values() {
+  const reduceMotion = useReducedMotion();
   return (
-    <section id="values" className="bg-black-2 py-[110px]">
+    <section id="values" className="bg-black-2 py-section">
       <Container>
         <SectionHeader
           align="left"
@@ -67,7 +70,7 @@ export function Values() {
               <GlowCard
                 glowColor="rgba(201, 165, 72, 0.10)"
                 glowSize={260}
-                className="group h-full cursor-default rounded-sm transition-transform duration-500 hover:-translate-y-1"
+                className="group h-full cursor-default rounded-sm"
               >
                 <div className="relative h-full px-6 pb-6 pt-12">
                   {/* Ghost numeral in outlined type — visible at rest everywhere. */}
@@ -81,10 +84,12 @@ export function Values() {
                   {/* Gold hairline draws itself in as the item enters view. */}
                   <motion.span
                     aria-hidden
-                    initial={{ scaleX: 0 }}
+                    data-motion-reveal
+                    initial={reduceMotion ? false : { scaleX: 0 }}
+                    animate={reduceMotion ? { scaleX: 1 } : undefined}
                     whileInView={{ scaleX: 1 }}
                     viewport={{ once: true, margin: '0px 0px -10% 0px' }}
-                    transition={{
+                    transition={reduceMotion ? { duration: 0 } : {
                       duration: 1,
                       ease: [0.22, 1, 0.36, 1],
                       delay: 0.15 + i * 0.08,
@@ -93,10 +98,10 @@ export function Values() {
                     className="mb-5 block h-px bg-gradient-to-r from-gold/80 via-gold/35 to-transparent"
                   />
 
-                  <h3 className="mb-3 font-display text-2xl font-light text-ivory transition-colors duration-300 group-hover:text-gold-lt">
+                  <h3 className="mb-3 font-display text-2xl font-light text-ivory transition-colors duration-200 group-hover:text-gold-lt group-focus-within:text-gold-lt">
                     {value.name}
                   </h3>
-                  <p className="text-sm leading-relaxed text-silver transition-colors duration-300 group-hover:text-ivory-dim">
+                  <p className="text-sm leading-relaxed text-silver transition-colors duration-200 group-hover:text-ivory-dim group-focus-within:text-ivory-dim">
                     {value.body}
                   </p>
                 </div>

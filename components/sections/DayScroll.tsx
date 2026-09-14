@@ -29,6 +29,8 @@ interface Beat {
   title: string;
   line: string;
   accent: string;
+  /** Preserve the decorative accent while giving small labels enough contrast. */
+  textColor?: string;
 }
 
 const BEATS: Beat[] = [
@@ -49,6 +51,7 @@ const BEATS: Beat[] = [
     title: 'Come and rest.',
     line: 'When it gets heavy, stop. Sabbath is not one day a year. Rest is a Person, and you can come to him right now.',
     accent: '#a64453',
+    textColor: '#bf7581',
   },
   {
     time: 'Afternoon',
@@ -67,6 +70,7 @@ const BEATS: Beat[] = [
     title: 'Look back with him.',
     line: 'A gentle examen. Where was the light, where was it hard, and what do you carry into tomorrow.',
     accent: '#7e6ba8',
+    textColor: '#927fb9',
   },
 ];
 
@@ -123,8 +127,8 @@ function BeatItem({ beat, index, total, progress, reduce }: BeatItemProps) {
         />
       </span>
       <p
-        className="mb-1 text-[11px] font-medium uppercase tracking-[0.24em]"
-        style={{ color: beat.accent }}
+        className="mb-1 text-meta font-medium uppercase tracking-[0.24em]"
+        style={{ color: beat.textColor ?? beat.accent }}
       >
         {beat.time}
       </p>

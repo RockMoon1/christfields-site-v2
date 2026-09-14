@@ -33,6 +33,8 @@ interface Practice {
   body: string;
   ref: string;
   color: string;
+  /** Text needs stronger contrast than the decorative stripe and dot. */
+  textColor?: string;
 }
 
 const PRACTICES: Practice[] = [
@@ -49,6 +51,7 @@ const PRACTICES: Practice[] = [
     body: 'You cannot fake your way through a group like this. The people next to you eventually know, and that is the point.',
     ref: 'Psalm 51:6',
     color: '#2d6a4f',
+    textColor: 'var(--color-emerald-bright)',
   },
   {
     name: 'Scripture',
@@ -152,7 +155,7 @@ export function PracticesScroll() {
               {/* Visible on every viewport — touch users need this hint the most. */}
               <span
                 aria-hidden
-                className="whitespace-nowrap text-[11px] uppercase tracking-[0.2em] text-muted"
+                className="whitespace-nowrap text-sm uppercase tracking-[0.2em] text-muted"
               >
                 Scroll &rarr;
               </span>
@@ -162,17 +165,20 @@ export function PracticesScroll() {
         />
       </Container>
 
-      {/* Edge-faded horizontal scroller. */}
+      {/* Keep the fade inside the gutter: percentage stops faded settled text on wide screens. */}
       <div
         className="relative"
         style={{
           WebkitMaskImage:
-            'linear-gradient(to right, transparent, black 6%, black 94%, transparent)',
-          maskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)',
+            'linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent)',
+          maskImage: 'linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent)',
         }}
       >
         <div
           ref={railRef}
+          // The outer mask clips an outward ring. Keep keyboard focus inside
+          // the 28px gutter, beyond the 24px fade (also on narrow screens).
+          style={{ outlineOffset: '-28px' }}
           onScroll={syncProgress}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -215,8 +221,8 @@ export function PracticesScroll() {
                 <p className="mt-2 font-display text-lg italic text-ivory-dim">{p.line}</p>
                 <p className="mt-4 flex-1 text-sm leading-relaxed text-silver">{p.body}</p>
                 <p
-                  className="mt-6 text-[10px] font-medium uppercase tracking-[0.18em]"
-                  style={{ color: p.color }}
+                  className="mt-6 text-meta font-medium uppercase tracking-[0.18em]"
+                  style={{ color: p.textColor ?? p.color }}
                 >
                   {p.ref}
                 </p>

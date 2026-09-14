@@ -1,23 +1,10 @@
-'use client';
-
-import { useRef } from 'react';
-import { motion, useReducedMotion, useScroll, useTransform, type MotionValue } from 'motion/react';
+import { Container } from '../Container';
 
 /**
- * A cinematic band of Scripture, two rows drifting in opposite directions.
- *
- * Two motions are layered:
- *  - a continuous CSS slide (the .cf-marquee classes in globals.css) so the
- *    verses are always visibly moving, and
- *  - a scroll-linked slide on the wrapper: as you scroll the page, the rows
- *    push further sideways and reveal more verses.
- *
- * Edge-faded so phrases emerge and dissolve. The CSS animation auto-stops under
- * prefers-reduced-motion; the scroll slide is gated here too. Pure ornament.
- *
- * The verse set is themeable per page: the home band speaks broadly, while
- * FaithFlow gets community scriptures and ScholarFlow gets wisdom/skill ones,
- * so each page's band carries that page's heart. Defaults stay the home set.
+ * Static, selectable reading band. Keep the legacy export and paired-array
+ * props so the home, FaithFlow, and ScholarFlow pages retain their exact copy.
+ * Wording and references are not verified or rewritten by this presentation
+ * component; quotation and edition review remain a separate, gated task.
  */
 
 const LINE_ONE = [
@@ -42,90 +29,48 @@ const LINE_TWO = [
   'Zephaniah 3:17',
 ];
 
-function Row({
-  items,
-  direction,
-  scrollX,
-}: {
-  items: string[];
-  direction: 'left' | 'right';
-  scrollX: MotionValue<string>;
-}) {
-  // Duplicate the track so the CSS -50% slide loops seamlessly.
-  const track = [...items, ...items];
-
-  return (
-    <div className="flex overflow-hidden">
-      {/* Outer wrapper: scroll-linked sideways slide. */}
-      <motion.div style={{ x: scrollX }} className="flex">
-        {/* Inner track: continuous CSS slide (always moving). */}
-        <div
-          className={`flex shrink-0 items-center gap-10 whitespace-nowrap pr-10 md:gap-16 md:pr-16 ${
-            direction === 'left' ? 'cf-marquee' : 'cf-marquee-reverse'
-          }`}
-        >
-          {track.map((item, i) => {
-            const isRef = /\d/.test(item);
-            return (
-              <span key={`${item}-${i}`} className="flex items-center gap-10 md:gap-16">
-                <span
-                  className={
-                    isRef
-                      ? 'font-display text-2xl font-light italic text-gold/70 md:text-4xl'
-                      : 'font-display text-2xl font-light text-ivory/85 md:text-4xl'
-                  }
-                >
-                  {item}
-                </span>
-                <span aria-hidden className="text-gold/40">
-                  &bull;
-                </span>
-              </span>
-            );
-          })}
-        </div>
-      </motion.div>
-    </div>
-  );
+function pairPhrases(items: string[]) {
+  const pairs: { phrase: string; reference?: string }[] = [];
+  for (let i = 0; i < items.length; i += 2) {
+    // Keep an unmatched final phrase visible instead of silently dropping it.
+    pairs.push({ phrase: items[i], reference: items[i + 1] });
+  }
+  return pairs;
 }
 
 export function ScriptureMarquee({
   lineOne = LINE_ONE,
   lineTwo = LINE_TWO,
 }: {
-  /** Alternating phrase/reference pairs for the top row. */
+  /** Alternating phrase/reference pairs, rendered first in source order. */
   lineOne?: string[];
-  /** Alternating phrase/reference pairs for the bottom row. */
+  /** Alternating phrase/reference pairs, rendered after lineOne. */
   lineTwo?: string[];
 }) {
-  const reduced = useReducedMotion();
-  const ref = useRef<HTMLElement>(null);
-
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ['start end', 'end start'],
-  });
-
-  // Opposite-direction sideways slides driven by scroll. Generous range so the
-  // scroll clearly whips the verses across. Disabled under reduced-motion.
-  const xOne = useTransform(scrollYProgress, [0, 1], reduced ? ['0%', '0%'] : ['18%', '-18%']);
-  const xTwo = useTransform(scrollYProgress, [0, 1], reduced ? ['0%', '0%'] : ['-18%', '18%']);
+  const phrases = [...pairPhrases(lineOne), ...pairPhrases(lineTwo)];
 
   return (
     <section
-      ref={ref}
-      aria-hidden
-      className="relative overflow-hidden border-y border-border-sub/60 bg-black-2 py-10 md:py-14"
-      style={{
-        WebkitMaskImage:
-          'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
-        maskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
-      }}
+      aria-label="Scripture"
+      data-scripture-band=""
+      className="select-text border-y border-border-sub bg-black-2 py-12 md:py-16"
     >
-      <div className="flex flex-col gap-5 md:gap-7">
-        <Row items={lineOne} direction="left" scrollX={xOne} />
-        <Row items={lineTwo} direction="right" scrollX={xTwo} />
-      </div>
+      <Container>
+        <div className="grid gap-x-10 gap-y-9 sm:grid-cols-2 lg:grid-cols-4">
+          {phrases.map(({ phrase, reference }, index) => (
+            <figure key={`${phrase}-${reference ?? ''}-${index}`} className="m-0 flex min-w-0 flex-col items-start">
+              <blockquote className="max-w-[26ch] flex-1">
+                <p className="font-display text-2xl font-light leading-snug text-ivory">{phrase}</p>
+              </blockquote>
+              {reference !== undefined && (
+                <figcaption className="mt-3 font-body text-meta font-medium uppercase tracking-[0.18em] text-gold">
+                  {reference}
+                </figcaption>
+              )}
+            </figure>
+          ))}
+        </div>
+      </Container>
     </section>
   );
 }

@@ -119,7 +119,7 @@ function TileInner({ tile }: { tile: Tile }) {
   return (
     <GlowCard
       glowColor={tile.glow}
-      className={`group h-full rounded-md border shadow-[0_18px_60px_rgba(0,0,0,0.45)] transition-[border-color,transform] duration-300 hover:-translate-y-1 ${
+      className={`h-full rounded-md border shadow-[0_18px_60px_rgba(0,0,0,0.45)] transition-[border-color,transform] duration-200 motion-safe:group-hover/tile:-translate-y-1 group-focus-visible/tile:border-gold ${
         tile.borderClass ?? 'border-border-sub hover:border-border-gold'
       }`}
       style={{ background: tile.surface ?? 'var(--color-black-2, #101512)' }}
@@ -127,11 +127,11 @@ function TileInner({ tile }: { tile: Tile }) {
       <div className="flex h-full flex-col p-7 md:p-8">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-px scale-x-0 bg-gradient-to-r from-transparent via-gold-lt to-transparent opacity-0 transition duration-500 group-hover:scale-x-100 group-hover:opacity-100"
+          className="pointer-events-none absolute inset-x-0 top-0 h-px scale-x-0 bg-gradient-to-r from-transparent via-gold-lt to-transparent opacity-0 transition-[transform,opacity] duration-200 group-hover/tile:scale-x-100 group-hover/tile:opacity-100 group-focus-visible/tile:scale-x-100 group-focus-visible/tile:opacity-100 group-focus-visible/tile:duration-0 motion-reduce:transition-none"
         />
         {tile.badge && (
           <span
-            className={`mb-4 inline-block w-fit rounded-sm border px-3 py-1 text-[10px] font-medium uppercase tracking-[0.15em] ${
+            className={`mb-4 inline-block w-fit rounded-sm border px-3 py-1 text-sm font-medium uppercase tracking-[0.1em] ${
               badgeStyles[tile.badgeTone ?? 'dev']
             }`}
           >
@@ -155,9 +155,9 @@ function TileInner({ tile }: { tile: Tile }) {
 
         {/* Honest status + access: who it's for and the real door right now. */}
         <div className="mt-auto pt-6">
-          {tile.forWho && <p className="text-xs leading-relaxed text-silver">{tile.forWho}</p>}
+          {tile.forWho && <p className="text-sm leading-relaxed text-silver">{tile.forWho}</p>}
           {tile.access && (
-            <p className="mt-2 flex items-start gap-2 text-xs font-medium leading-relaxed">
+            <p className="mt-2 flex items-start gap-2 text-sm font-medium leading-relaxed">
               <span
                 aria-hidden
                 className={`mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full ${accessDot[tile.accessTone ?? 'soon']}`}
@@ -168,7 +168,7 @@ function TileInner({ tile }: { tile: Tile }) {
           {tile.href && (
             // Always visible: these tiles are the doors to each field's page,
             // so the action hint must not hide behind hover.
-            <span className="mt-4 inline-block text-[11px] font-medium uppercase tracking-[0.12em] text-gold transition-transform duration-300 group-hover:translate-x-0.5">
+            <span className="mt-4 inline-block text-sm font-medium uppercase tracking-[0.1em] text-gold transition-[transform,color] duration-200 motion-safe:group-hover/tile:translate-x-0.5 group-focus-visible/tile:text-gold-lt">
               {tile.ctaLabel ?? 'Open'} &rarr;
             </span>
           )}
@@ -185,7 +185,7 @@ function TileShell({ tile, children }: { tile: Tile; children: ReactNode }) {
     return <div className="h-full">{children}</div>;
   }
   return (
-    <Link href={tile.href} prefetch className="block h-full">
+    <Link href={tile.href} prefetch className="group/tile block h-full rounded-md">
       {children}
     </Link>
   );
@@ -193,7 +193,7 @@ function TileShell({ tile, children }: { tile: Tile; children: ReactNode }) {
 
 export function BentoGrid() {
   return (
-    <section id="projects" className="py-[110px]">
+    <section id="projects" className="py-section">
       <Container>
         <SectionHeader
           align="left"

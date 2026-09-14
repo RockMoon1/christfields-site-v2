@@ -9,7 +9,6 @@ import { BentoGrid } from '@/components/sections/BentoGrid';
 import { DayScroll } from '@/components/sections/DayScroll';
 import { JourneyScroll } from '@/components/sections/JourneyScroll';
 import { PracticesScroll } from '@/components/sections/PracticesScroll';
-import { StatsBand } from '@/components/sections/StatsBand';
 import { Values } from '@/components/sections/Values';
 import { Vision } from '@/components/sections/Vision';
 
@@ -31,14 +30,13 @@ export default function HomePage() {
       <SectionRail />
       <main id="main">
         <Hero />
-        <ScriptureMarquee />
         <Vision />
-        <StatsBand />
+        <BentoGrid />
         <JourneyScroll />
         <PracticesScroll />
         <DayScroll />
         <AnimatedDivider />
-        <BentoGrid />
+        <ScriptureMarquee />
         <AnimatedDivider />
         <Values />
         <AnimatedDivider />

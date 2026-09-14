@@ -14,9 +14,8 @@ interface JournalArticleProps {
  * The bar tracks scroll within the article itself, not the whole page, so
  * it fills based on how much of the post has actually been read.
  *
- * Entrance motion now lives at the block level (ProseBlock / ScriptureQuote
- * in mdxComponents), so the wrapper itself stays still: the prose breathes
- * paragraph by paragraph instead of fading in as one slab.
+ * Prose and quotations render immediately as selectable text. This is the
+ * article's only progress indicator; reading never waits on entrance motion.
  */
 export function JournalArticle({ children }: JournalArticleProps) {
   const articleRef = useArticleRef();
@@ -24,7 +23,7 @@ export function JournalArticle({ children }: JournalArticleProps) {
   return (
     <>
       <PostReadingProgress targetRef={articleRef} />
-      <article ref={articleRef} className="mx-auto max-w-2xl">
+      <article ref={articleRef} className="mx-auto max-w-[65ch] text-base md:text-lg">
         {children}
       </article>
     </>
