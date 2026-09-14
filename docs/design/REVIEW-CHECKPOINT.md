@@ -1,5 +1,33 @@
 # Christ Fields implementation checkpoint
 
+14 September, subsequent release authorization: the founder asked to push the
+completed member-event, leader-control and posting-form batches. The
+[event/leader release checkpoint](RELEASE-2026-09-14-EVENT-LEADER.md) records the
+ten-file production scope and the matching 102 browser / 58 unit test evidence.
+Earlier uncommitted-status statements below describe the pre-release checkpoints.
+
+14 September, leader forms: [Posting-form review](POST-FORM-REVIEW.md) covers
+PostForm and WhoIsFree. Readable fields, validation/focus, pending-save guards
+and availability request/retry handling pass 20 new browser checks. All 102
+combined dashboard tests, 58 unit tests, types, tables and production build
+pass. Eight frozen-instrument screenshot pairs support the two-file batch;
+earlier member and leader sources remain intact. All three post-release batches
+are uncommitted and unpublished. Page shells/prefill, care and Scripture remain open.
+
+14 September, next UI batch: [Leader event controls](LEADER-EVENT-REVIEW.md) adds
+readable leader actions, truthful failed-save feedback, draft/focus recovery and
+refreshed attendance. One production file changed; the preceding member batch is
+intact. All 82 combined dashboard browser tests, 58 unit tests, type/table checks
+and production build pass. Both new batches remain uncommitted and unpublished.
+Two pre-existing service-result limitations are logged in that handoff for separate work.
+
+14 September, after the release: [Member event review](MEMBER-EVENT-REVIEW.md)
+records the next separate, uncommitted batch. It improves RSVP/calendar, planning,
+bring lists and rides using OMC execution, independent review and verification.
+All 66 combined dashboard browser checks, 58 unit tests, type/table checks and the
+production build pass. Actual-page synthetic fixtures were inspected at 390/1280;
+authenticated behavior remains unverified. Leader tools, care and Scripture remain open.
+
 Latest update, 14 September: the founder authorized committing and pushing the completed work. The [release checkpoint](RELEASE-2026-09-14.md) records scope and fresh verification: 51 dashboard browser tests, 25 public browser tests, 58 unit tests, type/table checks and production build. Earlier handoffs below retain their historical review status and evidence; the remaining plan is still open.
 
 9 September: [Dashboard Batch 3b](DASHBOARD-BATCH3B-REVIEW.md) covers prayer-wall labels, readable controls, touch targets, immediate content and conditional focus recovery. Its two-file review slice has eight before/after screenshot pairs from one frozen instrument. All 51 combined synthetic browser tests, 58 unit tests, type/table checks and production build pass. The handoff records the fixture boundary; Claude's independent review remains pending.

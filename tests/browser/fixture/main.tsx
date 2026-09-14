@@ -145,12 +145,12 @@ function Notices() {
 function App() {
   const query = new URLSearchParams(window.location.search);
   const which = query.get('case') ?? 'foundations';
-  const dashboardPage = which === 'settings' || which === 'availability' || which === 'community-page';
+  const dashboardPage = which === 'settings' || which === 'availability' || which === 'community-page' || which === 'event-page';
   return <MotionConfig reducedMotion="user">
     <div className="fixture-banner">Browser fixture · synthetic data · no real accounts, prayers, notifications, or contacts</div>
     <FixtureControls />
     {dashboardPage ? <>
-      <p className="fixture-exclusions">Actual page JSX with synthetic actions and data. PushSettingsCard, TimeZoneSync, PushSync, Clerk account interactions, authentication and server rendering are excluded.{which !== 'community-page' && ' Install instructions are shown, but no installation prompt is supplied.'}</p>
+      <p className="fixture-exclusions">Actual page JSX with synthetic actions and data. PushSettingsCard, TimeZoneSync, PushSync, Clerk account interactions, authentication and server rendering are excluded.{which === 'event-page' ? ' Leader tools, token minting, calendar downloads and notifications are excluded. Refresh rereads synthetic data only.' : which !== 'community-page' && ' Install instructions are shown, but no installation prompt is supplied.'}</p>
       <DashboardPageFixture which={which} shell={query.get('shell') === '1'} />
     </> :
     <main className="fixture-main" data-testid="fixture-content">

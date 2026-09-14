@@ -10,6 +10,11 @@ const fixtureRoot = path.join(repoRoot, 'tests/browser/fixture');
 const fixtureFile = (name) => path.join(fixtureRoot, name);
 const logoBytes = fs.readFileSync(path.join(repoRoot, 'public/assets/logo.png'));
 const aliases = [
+  { find: '@/app/dashboard/(app)/lead/actions', replacement: fixtureFile('post-actions.ts') },
+  { find: '@/components/lead/LeaderStrip', replacement: fixtureFile('excluded-leader.tsx') },
+  { find: '@clerk/nextjs/server', replacement: fixtureFile('event-server.ts') },
+  ...['prefs', 'timezone-server'].map(name => ({ find: `@/lib/dashboard/${name}`, replacement: fixtureFile('event-server.ts') })),
+  { find: '@/lib/notify/tokens', replacement: fixtureFile('event-server.ts') },
   { find: '@/app/dashboard/(app)/community/actions', replacement: fixtureFile('actions.ts') },
   { find: '@/app/dashboard/(app)/events/actions', replacement: fixtureFile('actions.ts') },
   { find: '@/app/dashboard/(app)/settings/actions', replacement: fixtureFile('actions.ts') },
@@ -17,7 +22,7 @@ const aliases = [
   { find: '@/app/dashboard/(app)/feedback/actions', replacement: fixtureFile('actions.ts') },
   { find: '@/components/dashboard/PushSetup', replacement: fixtureFile('excluded-push.tsx') },
   { find: '@clerk/nextjs', replacement: fixtureFile('clerk.tsx') },
-  { find: 'next/navigation', replacement: fixtureFile('next-navigation.ts') },
+  { find: 'next/navigation', replacement: fixtureFile('post-navigation.ts') },
   { find: 'next/link', replacement: fixtureFile('next-link.tsx') },
   { find: 'next/image', replacement: fixtureFile('next-image.tsx') },
   { find: '@', replacement: repoRoot },
@@ -89,6 +94,7 @@ const server = await createServer({
   }, {
     name: 'fixture-service-boundary', enforce: 'pre',
     resolveId(source, importer) {
+      if (['../../events/actions', '../../lead/actions'].includes(source) && importer?.split('?')[0].replaceAll('\\', '/').endsWith('/app/dashboard/(app)/e/[id]/page.tsx')) return fixtureFile('actions.ts');
       if (source === './actions' && mockedAsyncPages.has(importer?.split('?')[0].replaceAll('\\', '/'))) {
         return fixtureFile('actions.ts');
       }

@@ -1,6 +1,7 @@
 /** Browser-only synthetic action boundary. This module never imports a service. */
 import type { GoogleStatus } from '@/components/dashboard/GoogleCards';
 import type { Slot } from '@/lib/dashboard/availability';
+import type { EventDetail } from '@/app/dashboard/(app)/events/actions';
 type PendingAction = { name: string; resolve: () => void; reject: () => void };
 const pending: PendingAction[] = [];
 const calls: Record<string, number> = {};
@@ -163,3 +164,70 @@ export async function refreshCalendar(_tz: string): Promise<{ ok: boolean; error
   return result.ok ? result : { ok: false, error: 'Could not check that calendar right now.' };
 }
 export async function disconnectCalendar(): Promise<{ ok: boolean }> { return outcome('calendar-disconnect'); }
+
+// Member event scenarios use only structural data; refreshed JSX rereads this
+// store so slot successes can be checked without pretending to test RSC transport.
+let memberEvent: EventDetail | undefined;
+export async function getEvent(_id: string): Promise<EventDetail> {
+  if (memberEvent) return memberEvent;
+  const query = new URLSearchParams(window.location.search);
+  const variant = query.get('variant') ?? 'answered';
+  memberEvent = {
+    id: 'fixture-event', orgId: 'fixture-group', orgName: 'Cedar table',
+    title: variant === 'long' ? 'An evening together with neighbours from across the whole community' : 'Supper at the long table',
+    type: (query.get('type') ?? 'gathering') as EventDetail['type'],
+    startsAt: '2026-09-15T00:00:00Z', endsAt: '2026-09-15T02:00:00Z', tz: 'America/Denver',
+    location: variant === 'long' ? 'The community room beside the riverside garden, west entrance on Montgomery Avenue' : 'Cedar community room',
+    description: 'Bring yourself and something to share. There is room at the table, whether this is your first evening or your fiftieth.',
+    memberNote: 'What has brought you a little joy this week?\nWho helped you feel at home recently?',
+    status: variant === 'cancelled' ? 'cancelled' : 'scheduled', cancelReason: variant === 'cancelled' ? 'The room is unavailable. We will find another evening.' : '', cancelledAt: null,
+    version: 1, seriesId: null, ridesEnabled: true,
+    scriptureRef: '', scriptureText: '', scriptureWhy: '', discussion: '',
+    myStatus: variant === 'member' ? null : 'going',
+    faces: [{ displayName: variant === 'long' ? 'Alexandria-Montgomery' : 'Alex', imageUrl: '', status: 'going' }, { displayName: 'Jordan', imageUrl: '', status: 'going' }, { displayName: 'Sam', imageUrl: '', status: 'maybe' }],
+    going: 2, maybe: 1, myPlan: 'after_work', canLead: false, withinDay: variant !== 'later',
+    slots: [
+      { id: 'bring-open', kind: 'bring', label: variant === 'long' ? 'A generous bowl of roasted vegetables with ingredients written out for everyone' : 'Something green for the table', capacity: 1, taken: 0, claims: [] },
+      { id: 'bring-full', kind: 'bring', label: 'Bread to share', capacity: 1, taken: 1, claims: [{ displayName: 'Jordan', qty: 1, mine: false }] },
+      { id: 'bring-mine', kind: 'bring', label: 'A pitcher of something cool', capacity: 1, taken: 1, claims: [{ displayName: 'You', qty: 1, mine: true }] },
+      { id: 'ride-open', kind: 'ride', label: 'From the library with Alex', capacity: 3, taken: 1, claims: [{ displayName: 'Sam', qty: 1, mine: false }] },
+    ],
+  };
+  return memberEvent;
+}
+export async function getLeaderEvent(): Promise<null> { return null; }
+async function eventOutcome(name: string) {
+  // Exercise both the real returned-failure contract and a transport rejection.
+  if (new URLSearchParams(window.location.search).get('transport') === 'throw') {
+    await runFixtureAction(name);
+    return { ok: true };
+  }
+  return outcome(name);
+}
+export async function setPlan(_eventId: string, plan: string) {
+  const result = await eventOutcome('plan');
+  if (result.ok) (await getEvent(_eventId)).myPlan = plan;
+  return result;
+}
+export async function claimSlot(id: string, qty: number) {
+  const result = await eventOutcome('claim');
+  if (result.ok) {
+    const slot = (await getEvent('fixture-event')).slots.find(slot => slot.id === id)!;
+    slot.claims.push({ displayName: 'You', qty, mine: true }); slot.taken += qty;
+  }
+  return result;
+}
+export async function unclaimSlot(id: string) {
+  const result = await eventOutcome('unclaim');
+  if (result.ok) {
+    const slot = (await getEvent('fixture-event')).slots.find(slot => slot.id === id)!;
+    slot.taken -= slot.claims.filter(claim => claim.mine).reduce((sum, claim) => sum + claim.qty, 0);
+    slot.claims = slot.claims.filter(claim => !claim.mine);
+  }
+  return result;
+}
+export async function offerRide(_eventId: string, seats: number, from: string) {
+  const result = await eventOutcome('ride');
+  if (result.ok) (await getEvent(_eventId)).slots.push({ id: 'ride-offered', kind: 'ride', label: from ? `From ${from} with You` : 'With You', capacity: seats, taken: 0, claims: [] });
+  return result;
+}
