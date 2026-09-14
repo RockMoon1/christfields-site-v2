@@ -10,7 +10,7 @@ export function Starters({ note }: { note: string }) {
   if (lines.length === 0) return null;
   return (
     <section className="rounded-sm border-l-2 border-gold/60 bg-black-3/60 px-5 py-4">
-      <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.22em] text-gold">
+      <p className="mb-2 text-meta font-medium uppercase tracking-[0.2em] text-gold">
         {lines.length === 1 ? 'Something you could ask someone' : 'Two things you could ask someone'}
       </p>
       <ul className="space-y-1.5">

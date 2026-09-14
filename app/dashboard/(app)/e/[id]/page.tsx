@@ -33,7 +33,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="mx-auto max-w-2xl">
-      <Link href="/dashboard" className="mb-4 inline-flex min-h-[44px] items-center text-[11px] font-medium uppercase tracking-[0.1em] text-muted hover:text-silver">
+      <Link href="/dashboard" className="mb-4 inline-flex min-h-[44px] items-center text-sm font-medium uppercase tracking-[0.1em] text-muted transition-colors duration-200 hover:text-silver focus-visible:text-silver">
         &larr; Home
       </Link>
 

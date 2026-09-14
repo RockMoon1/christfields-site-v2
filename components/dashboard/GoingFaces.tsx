@@ -10,7 +10,7 @@ export function GoingFaces({ faces, compact = false }: { faces: RsvpFace[]; comp
   const going = faces.filter((f) => f.status === 'going');
   const maybe = faces.filter((f) => f.status === 'maybe');
   if (going.length === 0 && maybe.length === 0) {
-    return <p className={compact ? 'text-xs text-muted' : 'text-sm text-muted'}>Nobody has answered yet. Be the first.</p>;
+    return <p className="text-sm text-muted">Nobody has answered yet. Be the first.</p>;
   }
 
   const shown = going.slice(0, compact ? 4 : 6);
@@ -24,21 +24,21 @@ export function GoingFaces({ faces, compact = false }: { faces: RsvpFace[]; comp
   if (going.length > 0 && maybe.length > 0) line += `, ${maybe.length} not sure`;
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex -space-x-2">
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="flex shrink-0 -space-x-2">
         {shown.map((f, i) => (
           <Face key={`${f.displayName}-${i}`} face={f} size={compact ? 26 : 32} />
         ))}
         {rest > 0 && (
           <span
-            className="flex items-center justify-center rounded-full border border-black-2 bg-black-4 text-[10px] font-medium text-ivory-dim"
+            className="flex shrink-0 items-center justify-center rounded-full border border-black-2 bg-black-4 text-meta font-medium text-ivory-dim"
             style={{ width: compact ? 26 : 32, height: compact ? 26 : 32 }}
           >
             +{rest}
           </span>
         )}
       </div>
-      <p className={compact ? 'text-xs text-ivory-dim' : 'text-sm text-ivory-dim'}>{line}</p>
+      <p className="min-w-0 flex-1 basis-40 text-sm text-ivory-dim [overflow-wrap:anywhere]">{line}</p>
     </div>
   );
 }
@@ -58,7 +58,7 @@ export function Face({ face, size = 32 }: { face: { displayName: string; imageUr
         alt={face.displayName || ''}
         width={size}
         height={size}
-        className="rounded-full border border-black-2 object-cover"
+        className="shrink-0 rounded-full border border-black-2 object-cover"
         style={{ width: size, height: size }}
       />
     );
@@ -66,7 +66,7 @@ export function Face({ face, size = 32 }: { face: { displayName: string; imageUr
   return (
     <span
       aria-label={face.displayName || 'A member'}
-      className="flex items-center justify-center rounded-full border border-black-2 bg-gold/20 font-display text-sm text-gold-lt"
+      className="flex shrink-0 items-center justify-center rounded-full border border-black-2 bg-gold/20 font-display text-sm text-gold-lt"
       style={{ width: size, height: size }}
     >
       {initial}

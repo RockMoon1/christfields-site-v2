@@ -11,13 +11,13 @@ export function AddToCalendar({ eventId, googleUrl, token }: { eventId: string; 
         href={googleUrl}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex min-h-[44px] items-center rounded-sm bg-gold px-4 text-[11px] font-medium uppercase tracking-[0.1em] text-black transition-colors hover:bg-gold-lt"
+        className="inline-flex min-h-11 max-w-full items-center rounded-sm bg-gold px-4 py-2 text-sm font-medium leading-relaxed text-black transition-colors duration-200 hover:bg-gold-lt focus-visible:bg-gold-lt"
       >
         Put it on my Google Calendar
       </a>
       <a
         href={ics}
-        className="inline-flex min-h-[44px] items-center rounded-sm border border-border-sub px-4 text-[11px] font-medium uppercase tracking-[0.1em] text-silver transition-colors hover:border-ivory/40 hover:text-ivory"
+        className="inline-flex min-h-11 max-w-full items-center rounded-sm border border-border-sub px-4 py-2 text-sm font-medium leading-relaxed text-silver transition-colors duration-200 hover:border-ivory/40 hover:text-ivory focus-visible:border-ivory/40 focus-visible:text-ivory"
       >
         Apple or Outlook
       </a>
