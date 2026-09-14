@@ -29,11 +29,13 @@ export function WhoIsFree({
   availability,
   upcoming,
   onPick,
+  disabled = false,
 }: {
   when: string;
   availability: GroupAvailability | null;
   upcoming: UpcomingLite[];
   onPick: (localValue: string) => void;
+  disabled?: boolean;
 }) {
   if (!when || !availability || availability.total === 0) return null;
   const date = when.slice(0, 10);
@@ -42,7 +44,7 @@ export function WhoIsFree({
   const day = availability.days.find((d) => d.iso === date);
   const sameDay = upcoming.filter((e) => localDate(e.startsAt) === date);
 
-  const box = 'mt-2 rounded-sm border px-4 py-3 text-sm leading-relaxed';
+  const box = 'mt-2 break-words rounded-sm border px-4 py-3 text-sm leading-relaxed';
 
   if (!day) {
     const first = availability.days[0]?.iso ?? '';
@@ -74,7 +76,7 @@ export function WhoIsFree({
   const warn = thin || betterExists;
 
   return (
-    <div className={`${box} ${warn ? 'border-amber-500/40 bg-amber-500/5 text-ivory' : 'border-border-sub text-silver'}`}>
+    <div className={`${box} ${warn ? 'border-warn/40 bg-warn/5 text-ivory' : 'border-border-sub text-silver'}`}>
       <p>
         <span className="text-ivory">{free} of {availability.total}</span> free {day.dayShort} {SLOT_LABEL[slot].toLowerCase()}
         {unknown > 0 && <span className="text-muted">, {unknown} have not told us</span>}.
@@ -85,8 +87,9 @@ export function WhoIsFree({
           {thin ? 'Most people are busy then.' : 'A better time is open.'}{' '}
           <button
             type="button"
+            disabled={disabled}
             onClick={() => onPick(`${best.iso}T${pad(SLOT_DEFAULT_HOUR[best.slot])}:00`)}
-            className="text-gold underline-offset-2 hover:text-gold-lt hover:underline"
+            className="inline-flex min-h-11 items-center py-2 text-left text-gold underline-offset-2 transition-colors duration-200 hover:text-gold-lt hover:underline disabled:cursor-not-allowed disabled:opacity-50"
           >
             Move to {best.dayShort}, {best.dateLabel} {SLOT_LABEL[best.slot].toLowerCase()} ({best.free} free)
           </button>
