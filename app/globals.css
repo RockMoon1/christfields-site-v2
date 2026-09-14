@@ -27,6 +27,12 @@
      emerald / emerald-lt stay for fills and borders. */
   --color-emerald-bright: #5cab7d;
 
+  /* Destructive actions and service warnings; never used for the care surface. */
+  --color-danger: #b4574a;
+  --color-danger-lt: #e39a8f;
+  --color-danger-dk: #4a231d;
+  --color-warn: #c9903f;
+
   /* Whites and silvers */
   --color-ivory: #f0f2ee;
   --color-ivory-dim: #c4ccca;
@@ -49,14 +55,38 @@
 
   /* Spacing scale (custom rhythm) */
   --nav-h: 88px;
+  --spacing-section: clamp(4.5rem, 8vw, 6.875rem);
+  --spacing-section-lg: clamp(6rem, 11vw, 10.625rem);
+  --text-display-hero: clamp(3.4rem, 8vw, 7.5rem);
+  --text-display-hero--line-height: 0.98;
+  --text-display-xl: clamp(3.1rem, 7vw, 6.5rem);
+  --text-display-xl--line-height: 1.04;
+  --text-display-lg: clamp(2.4rem, 4.5vw, 3.75rem);
+  --text-display-lg--line-height: 1.12;
+  --text-display-md: clamp(2.1rem, 4.6vw, 3.4rem);
+  --text-display-md--line-height: 1.12;
+  --text-display-sm: clamp(1.75rem, 3vw, 2.5rem);
+  --text-display-sm--line-height: 1.2;
+  --text-meta: 0.8125rem;
+  --text-meta--line-height: 1.5;
 }
 
 /* ============================================================
    Base styles
    ============================================================ */
 
-html {
-  scroll-behavior: smooth;
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  [data-motion-reveal], [data-motion-reveal] [data-motion-token] {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+    filter: none !important;
+  }
 }
 
 body {

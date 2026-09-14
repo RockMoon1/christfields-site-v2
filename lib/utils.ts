@@ -1,5 +1,13 @@
 import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { extendTailwindMerge } from 'tailwind-merge';
+
+// These theme names are font sizes, not colors. Register them so a text-ivory
+// foreground does not silently erase text-display-lg or text-meta.
+const twMerge = extendTailwindMerge({
+  extend: { classGroups: {
+    'font-size': [{ text: ['display-hero', 'display-xl', 'display-lg', 'display-md', 'display-sm', 'meta'] }],
+  } },
+});
 
 /**
  * Combines class names with Tailwind merge so duplicate or conflicting

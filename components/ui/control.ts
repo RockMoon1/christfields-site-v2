@@ -1,0 +1,2 @@
+/** 16px prevents focus zoom on iOS; preserve the unlayered visible focus ring. */
+export const CONTROL_BASE = 'min-h-11 w-full rounded-sm border border-border-sub bg-black-2 px-3 py-3 text-base leading-normal text-ivory caret-gold placeholder:text-muted [color-scheme:dark] transition-colors duration-200 focus:border-gold/60 aria-invalid:border-danger-lt disabled:cursor-not-allowed disabled:opacity-50';
