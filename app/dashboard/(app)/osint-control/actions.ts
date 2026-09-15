@@ -10,20 +10,7 @@ import {
   type ServiceStatus,
 } from '@/lib/osint-control/store';
 import { cleanMultiline, cleanText, parsePositiveInt } from '@/lib/osint-control/security';
-
-export interface InviteActionState {
-  ok: boolean;
-  message: string;
-  token?: string;
-}
-
-export interface PlainActionState {
-  ok: boolean;
-  message: string;
-}
-
-export const initialInviteState: InviteActionState = { ok: false, message: '' };
-export const initialPlainState: PlainActionState = { ok: false, message: '' };
+import type { InviteActionState, PlainActionState } from '@/lib/osint-control/action-state';
 
 function actorLabel(access: Awaited<ReturnType<typeof requireOsintAdmin>>): string {
   return access.emails[0] || access.userId || 'osint-control-admin';

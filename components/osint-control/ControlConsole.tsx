@@ -4,11 +4,10 @@ import { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import {
   createInviteAction,
-  initialInviteState,
-  initialPlainState,
   saveReleasePolicyAction,
   setDeviceStatusAction,
 } from '@/app/dashboard/(app)/osint-control/actions';
+import { initialInviteState, initialPlainState } from '@/lib/osint-control/action-state';
 import type { ControlDevice, ControlPanelData, DeviceStatus, ServiceStatus } from '@/lib/osint-control/store';
 import { Button } from '@/components/Button';
 import { Field } from '@/components/ui/Field';
