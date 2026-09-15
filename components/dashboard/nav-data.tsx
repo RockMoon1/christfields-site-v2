@@ -41,6 +41,7 @@ export const LEAD_ITEM: NavItem = {
 
 /** Page titles for the top bar. Longest prefix wins. */
 export const TITLE_BY_PREFIX: [string, string][] = [
+  ['/dashboard/osint-control', 'OSINT Control'],
   ['/dashboard/lead/post', 'Post something'],
   ['/dashboard/lead/group', 'Your group'],
   ['/dashboard/lead', 'Lead'],
