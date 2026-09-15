@@ -11,6 +11,7 @@ import {
 } from '@/lib/osint-control/store';
 import { cleanMultiline, cleanText, parsePositiveInt } from '@/lib/osint-control/security';
 import type { InviteActionState, PlainActionState } from '@/lib/osint-control/action-state';
+import { buildReviewerInviteMessage } from '@/lib/osint-control/share-message';
 
 function actorLabel(access: Awaited<ReturnType<typeof requireOsintAdmin>>): string {
   return access.emails[0] || access.userId || 'osint-control-admin';
@@ -21,18 +22,27 @@ export async function createInviteAction(_: InviteActionState, formData: FormDat
     const access = await requireOsintAdmin();
     const days = parsePositiveInt(formData.get('expiresDays'), 14, 90);
     const expiresAt = new Date(Date.now() + days * 86_400_000).toISOString();
+    const label = cleanText(formData.get('label'), 120) || 'OSINT reviewer device';
+    const contact = cleanText(formData.get('contact'), 160);
+    const maxActivations = parsePositiveInt(formData.get('maxActivations'), 1, 25);
     const result = await createActivationInvite({
-      label: cleanText(formData.get('label'), 120) || 'OSINT reviewer device',
-      contact: cleanText(formData.get('contact'), 160),
-      maxActivations: parsePositiveInt(formData.get('maxActivations'), 1, 25),
+      label,
+      contact,
+      maxActivations,
       expiresAt,
       actor: actorLabel(access),
     });
     revalidatePath('/dashboard/osint-control');
     return {
       ok: true,
-      message: 'Invite created. Copy this token now; it will not be shown again.',
+      message: 'Invite created. Copy the reviewer message now; the token will not be shown again.',
       token: result.token,
+      shareMessage: buildReviewerInviteMessage({
+        token: result.token,
+        label,
+        contact,
+        baseUrl: process.env.NEXT_PUBLIC_APP_URL,
+      }),
     };
   } catch (err) {
     console.error('createInviteAction failed', { name: err instanceof Error ? err.name : 'UnknownError' });

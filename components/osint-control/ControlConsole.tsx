@@ -21,13 +21,14 @@ export function ControlConsole({ data }: { data: ControlPanelData }) {
   const [inviteState, inviteAction] = useActionState(createInviteAction, initialInviteState);
   const [policyState, policyAction] = useActionState(saveReleasePolicyAction, initialPlainState);
   const [statusState, statusAction] = useActionState(setDeviceStatusAction, initialPlainState);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<'message' | 'token' | null>(null);
 
-  async function copyToken() {
-    if (!inviteState.token) return;
-    await navigator.clipboard.writeText(inviteState.token);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
+  async function copyInviteText(kind: 'message' | 'token') {
+    const value = kind === 'message' ? inviteState.shareMessage : inviteState.token;
+    if (!value) return;
+    await navigator.clipboard.writeText(value);
+    setCopied(kind);
+    window.setTimeout(() => setCopied(null), 1800);
   }
 
   return (
@@ -131,11 +132,24 @@ export function ControlConsole({ data }: { data: ControlPanelData }) {
             <Notice message={inviteState.message} tone={inviteState.ok ? 'saved' : 'problem'} className="mt-4" />
             {inviteState.token && (
               <div className="mt-4 rounded-sm border border-border-gold bg-black-2 p-4">
-                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-gold">Token shown once</p>
-                <code className="mt-3 block break-all rounded-sm bg-black px-3 py-2 text-sm text-gold-lt">{inviteState.token}</code>
-                <Button fx={false} variant="ghost" size="sm" className="mt-3" onClick={copyToken}>
-                  {copied ? 'Copied' : 'Copy token'}
-                </Button>
+                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-gold">Message shown once</p>
+                <p className="mt-2 text-sm leading-relaxed text-silver">
+                  Copy this whole note into a private Discord or WhatsApp message. The token inside it will not be shown again.
+                </p>
+                {inviteState.shareMessage && (
+                  <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-sm border border-border-sub bg-black px-3 py-3 text-xs leading-relaxed text-ivory-dim">
+                    {inviteState.shareMessage}
+                  </pre>
+                )}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button fx={false} variant="ghost" size="sm" onClick={() => copyInviteText('message')}>
+                    {copied === 'message' ? 'Message copied' : 'Copy full message'}
+                  </Button>
+                  <Button fx={false} variant="quiet" size="sm" onClick={() => copyInviteText('token')}>
+                    {copied === 'token' ? 'Token copied' : 'Copy token only'}
+                  </Button>
+                </div>
+                <code className="mt-3 block break-all rounded-sm bg-black px-3 py-2 text-xs text-gold-lt">{inviteState.token}</code>
               </div>
             )}
           </Surface>

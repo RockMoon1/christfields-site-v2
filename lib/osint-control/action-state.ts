@@ -2,6 +2,7 @@ export interface InviteActionState {
   ok: boolean;
   message: string;
   token?: string;
+  shareMessage?: string;
 }
 
 export interface PlainActionState {
