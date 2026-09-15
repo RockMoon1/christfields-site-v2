@@ -85,14 +85,14 @@ const TILES: Tile[] = [
     title: 'OSINT & Trace',
     body: 'Open-source intelligence software to help find missing people. Technical skill in service of the lost.',
     forWho: 'Built to help find the missing, in service of others.',
-    access: 'In development. Ask below to be notified.',
+    access: 'In development. Feedback helpers can send product notes now.',
     accessTone: 'soon',
     span: 'md:col-span-2',
-    href: '#join',
+    href: '/osint-feedback',
     glow: 'rgba(196, 123, 60, 0.16)',
     surface: 'linear-gradient(135deg, rgba(196, 123, 60, 0.20) 0%, rgba(18, 13, 9, 0.96) 62%)',
     borderClass: 'border-[#c47b3c]/30 hover:border-[#c47b3c]/60',
-    ctaLabel: 'Get notified',
+    ctaLabel: 'Give feedback',
   },
 ];
 
