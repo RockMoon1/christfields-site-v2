@@ -11,11 +11,14 @@ describe('buildReviewerInviteMessage', () => {
     });
 
     expect(message).toContain('Use only synthetic/demo data for now.');
+    expect(message).toContain('extract the OSINT reviewer zip');
+    expect(message).toContain('node .\\feedback-pilot.js --data .\\feedback-demo-data');
+    expect(message).toContain('$env:OSINT_DATA_DIR = "$PWD\\feedback-demo-data"');
     expect(message).toContain('--url https://christfields2717.com');
     expect(message).toContain('--token cfosint_exampleTokenForTestsOnly1234567890');
     expect(message).toContain('--name "Reviewer 1 - Alex"');
     expect(message).toContain('--contact "Discord: alex"');
-    expect(message).toContain('http://127.0.0.1:7338');
+    expect(message).toContain('http://127.0.0.1:7337');
     expect(message).not.toContain('\\_');
   });
 

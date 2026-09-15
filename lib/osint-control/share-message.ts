@@ -1,5 +1,5 @@
 const DEFAULT_BASE_URL = 'https://christfields2717.com';
-const LOCAL_DASHBOARD_URL = 'http://127.0.0.1:7338';
+const LOCAL_DASHBOARD_URL = 'http://127.0.0.1:7337';
 
 export interface ReviewerInviteMessageInput {
   token: string;
@@ -22,13 +22,20 @@ export function buildReviewerInviteMessage(input: ReviewerInviteMessageInput): s
     '- Do not share this invite token with anyone else.',
     '- If access is suspended or revoked later, the local dashboard may lock on its next check-in.',
     '',
-    'When you have the OSINT folder on your machine, open a terminal in that folder and run:',
+    'First extract the OSINT reviewer zip to a normal folder, such as C:\\OSINT-Reviewer.',
     '',
-    `node control-client.js activate --url ${baseUrl} --token ${input.token} --name "${label}" --contact "${contact}"`,
+    'Open that folder, click the File Explorer address bar, type powershell, and press Enter.',
+    '',
+    'In PowerShell, run these commands:',
+    '',
+    'node .\\feedback-pilot.js --data .\\feedback-demo-data',
+    '$env:OSINT_DATA_DIR = "$PWD\\feedback-demo-data"',
+    '$env:NO_OLLAMA = "1"',
+    `node .\\control-client.js activate --url ${baseUrl} --token ${input.token} --name "${label}" --contact "${contact}"`,
     '',
     'Then start the dashboard with:',
     '',
-    'node server.js',
+    'node .\\server.js',
     '',
     'After it starts, open:',
     '',
