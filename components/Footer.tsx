@@ -22,6 +22,9 @@ const defaultColumns: FooterColumn[] = [
     links: [
       { href: '/#vision', label: 'Vision' },
       { href: '/faithflow', label: 'FaithFlow' },
+      { href: '/small-groups', label: 'Local small groups' },
+      { href: '/finding-community', label: 'Finding community' },
+      { href: '/about', label: 'About Christ Fields' },
       { href: '/scholarflow', label: 'ScholarFlow' },
       { href: '/#projects', label: 'Projects' },
       { href: '/journal', label: 'Journal' },

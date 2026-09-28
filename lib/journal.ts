@@ -22,6 +22,8 @@ export interface JournalFrontmatter {
   title: string;
   slug: string;
   date: string;
+  /** Date of a significant editorial update; omitted when no update is recorded. */
+  updated?: string;
   category: JournalCategory;
   excerpt: string;
   cover?: {

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import { communityMetadata } from '@/lib/community-seo';
 import { Footer } from '@/components/Footer';
 import { Nav } from '@/components/Nav';
 import { AnimatedDivider } from '@/components/motion/AnimatedDivider';
@@ -14,24 +14,14 @@ import { GetInvolved } from '@/components/sections/faithflow/GetInvolved';
 import { HowGroupsWork } from '@/components/sections/faithflow/HowGroupsWork';
 import { WhatIsFaithFlow } from '@/components/sections/faithflow/WhatIsFaithFlow';
 
-export const metadata: Metadata = {
-  title: 'FaithFlow',
-  description:
-    'FaithFlow is the Christ Fields community framework for real people walking together in Christ. Scripture-rooted small groups, accountability, and faithful community.',
-  openGraph: {
-    title: 'FaithFlow by Christ Fields',
-    description:
-      'Real community. Scripture-rooted accountability. Faith lived together. The Christ Fields community framework.',
-    url: 'https://christfields2717.com/faithflow',
-  },
-  twitter: {
-    title: 'FaithFlow by Christ Fields',
-    description: 'Real community. Scripture-rooted accountability. Faith lived together.',
-  },
-};
+export const metadata = communityMetadata(
+  '/faithflow',
+  'FaithFlow | Christian community in Colorado',
+  'Meet Iron and Ember, the FaithFlow community at Christ Fields. Scripture, friendship and in-person small groups, with outreach around Centennial and Parker, Colorado.',
+);
 
 const navLinks = [
-  { href: '/#vision', label: 'Vision' },
+  { href: '/small-groups', label: 'Small groups' },
   { href: '/#projects', label: 'Projects' },
   { href: '#groups', label: 'The Community' },
   { href: '#get-involved', label: 'Get Involved', cta: true },
@@ -54,6 +44,8 @@ const footerColumns = [
     links: [
       { href: '#what', label: 'What It Is' },
       { href: '#groups', label: 'The Community' },
+      { href: '/small-groups', label: 'Local small groups' },
+      { href: '/finding-community', label: 'Finding community' },
       { href: '#dashboard', label: 'Member Dashboard' },
       { href: '#how', label: 'How It Works' },
       { href: '#scripture', label: 'Scripture' },
@@ -64,6 +56,7 @@ const footerColumns = [
     heading: 'Christ Fields',
     links: [
       { href: '/', label: 'Main Site' },
+      { href: '/about', label: 'About Christ Fields' },
       { href: '/#vision', label: 'Vision' },
       { href: '/#projects', label: 'Projects' },
       { href: 'mailto:proverbs@christfields2717.com', label: 'proverbs@christfields2717.com' },

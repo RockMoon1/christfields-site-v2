@@ -13,7 +13,7 @@ interface NavLink { href: string; label: string; cta?: boolean }
 interface NavProps { links?: NavLink[]; alwaysScrolled?: boolean }
 
 const defaultLinks: NavLink[] = [
-  { href: '#vision', label: 'Vision' },
+  { href: '/small-groups', label: 'Small groups' },
   { href: '/faithflow', label: 'FaithFlow' },
   { href: '/scholarflow', label: 'ScholarFlow' },
   { href: '/journal', label: 'Journal' },

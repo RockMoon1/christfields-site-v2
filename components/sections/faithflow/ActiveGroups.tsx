@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Container } from '../../Container';
 import { Reveal } from '../../Reveal';
 import { SectionHeader } from '@/components/SectionHeader';
@@ -64,6 +65,14 @@ export function ActiveGroups() {
               </em>{' '}
               Together we gather for the big things, shared events, trips, and life side by side.
               Within the community, small groups meet under leaders who know their people.
+            </p>
+
+            <p className="mb-6 text-base leading-relaxed text-ivory-dim">
+              Looking for a Christian small group near Centennial or Parker? Our local outreach
+              focuses on these communities and the surrounding south Denver area.{' '}
+              <Link href="/small-groups" className="text-gold-lt underline underline-offset-4 hover:text-ivory">
+                Explore local small groups and how to inquire.
+              </Link>
             </p>
 
             <div className="mb-6 flex flex-wrap gap-2">

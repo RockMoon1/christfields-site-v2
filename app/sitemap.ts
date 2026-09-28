@@ -5,60 +5,53 @@ const BASE = 'https://christfields2717.com';
 
 /**
  * Sitemap for Google and other search engines. Lists every route on the site
- * with a sensible last-modified date and priority. Journal posts are added
+ * without inventing last-modified dates for static pages. Journal posts are added
  * dynamically based on what currently exists in content/journal.
  *
  * Next.js serves this at /sitemap.xml automatically.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const today = new Date();
-
   const staticRoutes: MetadataRoute.Sitemap = [
+    { url: `${BASE}/small-groups`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${BASE}/finding-community`, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE}/about`, changeFrequency: 'monthly', priority: 0.7 },
     {
       url: `${BASE}/`,
-      lastModified: today,
       changeFrequency: 'monthly',
       priority: 1.0,
     },
     {
       url: `${BASE}/faithflow`,
-      lastModified: today,
       changeFrequency: 'monthly',
       priority: 0.9,
     },
     {
       url: `${BASE}/scholarflow`,
-      lastModified: today,
       changeFrequency: 'monthly',
       priority: 0.9,
     },
     {
       url: `${BASE}/journal`,
-      lastModified: today,
       changeFrequency: 'weekly',
       priority: 0.85,
     },
     {
       url: `${BASE}/faithflow-resources`,
-      lastModified: today,
       changeFrequency: 'monthly',
       priority: 0.6,
     },
     {
       url: `${BASE}/scholarflow-resources`,
-      lastModified: today,
       changeFrequency: 'monthly',
       priority: 0.6,
     },
     {
       url: `${BASE}/privacy`,
-      lastModified: today,
       changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
       url: `${BASE}/terms`,
-      lastModified: today,
       changeFrequency: 'yearly',
       priority: 0.3,
     },
@@ -66,7 +59,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const postRoutes: MetadataRoute.Sitemap = getAllPosts().map((post) => ({
     url: `${BASE}/journal/${post.slug}`,
-    lastModified: new Date(post.frontmatter.date),
+    lastModified: new Date(post.frontmatter.updated ?? post.frontmatter.date),
     changeFrequency: 'monthly',
     priority: 0.7,
   }));

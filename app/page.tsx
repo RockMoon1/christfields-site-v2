@@ -11,6 +11,13 @@ import { JourneyScroll } from '@/components/sections/JourneyScroll';
 import { PracticesScroll } from '@/components/sections/PracticesScroll';
 import { Values } from '@/components/sections/Values';
 import { Vision } from '@/components/sections/Vision';
+import { communityMetadata } from '@/lib/community-seo';
+
+export const metadata = communityMetadata(
+  '/',
+  'Christ Fields | Christian community near Centennial & Parker',
+  'Christian community and practical tools for life together. Explore FaithFlow, ask about small groups near Centennial and Parker, Colorado, and discover ScholarFlow.',
+);
 
 /**
  * Christ Fields home page.

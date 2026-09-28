@@ -35,16 +35,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: fm.title,
     description: fm.excerpt,
+    alternates: { canonical: `https://christfields2717.com/journal/${fm.slug}` },
     openGraph: {
       title: `${fm.title} by Christ Fields`,
       description: fm.excerpt,
       url: `https://christfields2717.com/journal/${fm.slug}`,
       type: 'article',
       publishedTime: fm.date,
+      modifiedTime: fm.updated,
+      images: [{ url: '/assets/og-image.png', width: 1200, height: 630, alt: 'Christ Fields' }],
     },
     twitter: {
+      card: 'summary_large_image',
       title: `${fm.title} by Christ Fields`,
       description: fm.excerpt,
+      images: ['/assets/og-image.png'],
     },
   };
 }

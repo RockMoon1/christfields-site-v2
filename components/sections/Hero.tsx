@@ -23,9 +23,12 @@ export function Hero() {
             A Christian community, and the tools to actually walk it out together. Grow with people
             who know your name, stay close to God, and sharpen each other along the way.
           </p>
+          <p className="mt-4 max-w-[43ch] text-sm leading-relaxed text-ivory-dim">
+            Looking for a small group near Centennial or Parker, Colorado? Start with our FaithFlow community.
+          </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button href="/scholarflow">Discover ScholarFlow <span aria-hidden>→</span></Button>
-            <Button href="#vision" variant="ghost">Our Vision</Button>
+            <Button href="/small-groups">Find a small group <span aria-hidden>→</span></Button>
+            <Button href="/scholarflow" variant="ghost">Discover ScholarFlow</Button>
           </div>
         </div>
         <div className="relative mb-4 lg:mb-0 lg:pl-5">
