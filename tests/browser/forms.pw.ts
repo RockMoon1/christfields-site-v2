@@ -1,0 +1,32 @@
+import { test, expect } from '@playwright/test';
+test('mobile form preserves dates, handles failure and deduplicates retry', async ({page}) => {
+  const bodies: unknown[] = [];
+  await page.route('**/api/forms/availability', async route => { bodies.push(route.request().postDataJSON()); if (bodies.length === 1) await route.abort(); else await route.fulfill({json:{ok:true,saved:true,emailed:false}}); });
+  await page.goto('/forms.html');
+  await expect(page.getByRole('heading',{name:'Before you share'})).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByLabel('Your name').fill('Synthetic Test');
+  await page.getByLabel('Interested in coming?').selectOption('yes');
+  await page.getByRole('combobox',{name:'Sat, Nov 7',exact:true}).selectOption('yes');
+  await page.getByRole('combobox',{name:'Sun, Nov 8',exact:true}).selectOption('no');
+  await page.getByRole('textbox',{name:'Anything else?'}).fill('<script>not executed</script>');
+  await page.getByRole('checkbox').nth(0).check(); await page.getByRole('checkbox').nth(1).check();
+  await page.screenshot({path:'test-results/forms-mobile.png',fullPage:true});
+  await page.getByRole('button',{name:'Done — send my availability'}).click();
+  await expect(page.getByRole('alert')).toContainText('Connection interrupted');
+  await page.getByRole('button',{name:'Retry the same response'}).click();
+  await expect(page.getByRole('status')).toContainText('Your response is saved');
+  expect(bodies).toHaveLength(2); expect(bodies[0]).toEqual(bodies[1]);
+  expect(bodies[0]).toMatchObject({available:['2026-11-07'],unavailable:['2026-11-08']});
+});
+test('keyboard controls and closed response do not report false success', async ({page}) => {
+  await page.route('**/api/forms/availability', route => route.fulfill({status:410,json:{error:'This poll is closed.'}}));
+  await page.goto('/forms.html');
+  await page.getByLabel('Your name').fill('Synthetic Test');
+  await page.getByLabel('Interested in coming?').selectOption('no');
+  await page.getByRole('checkbox').nth(0).focus(); await page.keyboard.press('Space');
+  await page.keyboard.press('Tab'); await page.keyboard.press('Space');
+  await page.getByRole('button',{name:'Done — send my availability'}).click();
+  await expect(page.getByRole('alert')).toHaveText('This poll is closed.');
+  await expect(page.getByRole('status')).toHaveCount(0);
+});

@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { getLeadOverview } from './actions';
 import { ThisWeek } from '@/components/lead/ThisWeek';
+import { isFormsOrganizer } from '@/lib/forms/server';
 
 /** Lead: the fifteen-minute screen. One card per group you lead. */
 export default async function LeadPage() {
   const overview = await getLeadOverview();
+  const organizer = await isFormsOrganizer();
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -21,6 +23,7 @@ export default async function LeadPage() {
         </Link>
       </header>
 
+      {organizer && <Link href="/dashboard/forms" className="mb-6 block rounded-lg border border-gold/40 p-5 text-gold">Iron and Ember public forms &amp; responses →</Link>}
       {overview.groups.length === 0 ? (
         <p className="text-sm text-silver">You are not leading a group yet.</p>
       ) : (

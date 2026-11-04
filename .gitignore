@@ -55,3 +55,7 @@ next-env.d.ts.bak
 # LOCAL-ONLY legal/business documents. Never committed, never pushed.
 # See docs/private/README.md (also ignored). Do NOT remove this rule.
 docs/private/
+
+# Local CLI state (never credentials or deployment linkage in source).
+supabase/.temp/
+.netlify/

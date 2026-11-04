@@ -8,7 +8,7 @@ import { ScrollToTop } from './ScrollToTop';
 /** True on the app surfaces, where the marketing effects must not load. */
 export function isAppPath(pathname: string | null): boolean {
   if (!pathname) return false;
-  return pathname.startsWith('/dashboard') || pathname.startsWith('/r/');
+  return pathname.startsWith('/dashboard') || pathname.startsWith('/r/') || pathname === '/forms' || pathname.startsWith('/forms/');
 }
 
 /**

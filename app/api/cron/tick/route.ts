@@ -2,7 +2,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { getSupabase, type CalendarFeedRow } from '@/lib/supabase';
 import { remind24h, remind2h, leaderBriefs, leaderStartPush, rhythmPush, prune, type TickReport } from '@/lib/notify/scheduled';
-import { syncFeedForUser } from '@/app/dashboard/(app)/availability/actions';
+import { syncFeedForUser } from '@/lib/dashboard/sync-feed';
 import { decryptText, isEncryptionConfigured } from '@/lib/security/crypto';
 import { googleTick } from '@/lib/google/sync';
 import { isGoogleConfigured } from '@/lib/google/oauth';

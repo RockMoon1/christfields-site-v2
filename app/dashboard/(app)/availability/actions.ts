@@ -11,7 +11,8 @@ import {
   type CalendarFeedStatus,
 } from '@/lib/supabase';
 import { isSlot, type Slot } from '@/lib/dashboard/availability';
-import { validateIcsUrl, fetchBusySlots } from '@/lib/dashboard/ics';
+import { validateIcsUrl } from '@/lib/dashboard/ics';
+import { syncFeedForUser } from '@/lib/dashboard/sync-feed';
 import { encryptText, decryptText, isEncryptionConfigured } from '@/lib/security/crypto';
 import { isGoogleConfigured, SCOPES } from '@/lib/google/oauth';
 
@@ -22,12 +23,10 @@ import { isGoogleConfigured, SCOPES } from '@/lib/google/oauth';
  *
  * Privacy: only (date, slot) busy rows are ever stored, tagged source='ics' so
  * they never collide with Google-derived rows; the private link is encrypted at
- * rest when CALENDAR_TOKEN_KEY is configured; only its hostname reaches the browser.
+ * rest; new connections are refused without CALENDAR_TOKEN_KEY. Only its hostname reaches the browser.
  */
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const DAY = 86_400_000;
-const SYNC_DAYS = 28;
 
 export interface CalendarInfo {
   connected: boolean;
@@ -70,11 +69,6 @@ function isRealTz(tz: unknown): tz is string {
 
 function safeTz(tz: unknown): string {
   return isRealTz(tz) ? tz : 'UTC';
-}
-
-function startOfTodayUtcMs(): number {
-  const now = new Date();
-  return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
 }
 
 type FeedLink = Pick<CalendarFeedRow, 'clerk_user_id' | 'ics_url' | 'ics_url_enc'>;
@@ -242,47 +236,6 @@ export async function setOverride(
    Calendar feed connect / refresh / disconnect.
    ============================================================ */
 
-/**
- * Fetch + parse a feed and replace this member's ICS-derived busy rows. Only
- * replaces once the fetch succeeded, so a timed-out provider never blanks a
- * member's busy blocks. Google-derived rows (source='google') are untouched.
- * Also used by the hourly tick, hence the explicit userId.
- */
-export async function syncFeedForUser(
-  userId: string,
-  url: string,
-  tz: string,
-  timeoutMs: number = 8000,
-): Promise<{ ok: boolean; error?: string }> {
-  const fromMs = startOfTodayUtcMs();
-  const toMs = fromMs + SYNC_DAYS * DAY;
-  const result = await fetchBusySlots(url, tz, fromMs, toMs, timeoutMs);
-
-  const sb = getSupabase();
-  if (result.ok) {
-    await sb.from('calendar_busy').delete().eq('clerk_user_id', userId).eq('source', 'ics');
-    if (result.slots.length > 0) {
-      const { error } = await sb
-        .from('calendar_busy')
-        .insert(result.slots.map((s) => ({ clerk_user_id: userId, on_date: s.date, slot: s.slot, source: 'ics' })));
-      if (error) console.error('syncFeed: busy insert failed', error);
-    }
-  }
-
-  await sb
-    .from('calendar_feeds')
-    .update({
-      status: result.ok ? 'ok' : 'error',
-      last_error: result.error ?? null,
-      last_synced_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      tz,
-    })
-    .eq('clerk_user_id', userId);
-
-  return { ok: result.ok, error: result.error };
-}
-
 export async function connectCalendar(rawUrl: string, tz: string): Promise<{ ok: boolean; error?: string }> {
   try {
     const userId = await requireUser();
@@ -293,12 +246,12 @@ export async function connectCalendar(rawUrl: string, tz: string): Promise<{ ok:
 
     const zone = safeTz(tz);
     const sb = getSupabase();
-    const encrypted = isEncryptionConfigured();
+    if (!isEncryptionConfigured()) return { ok: false, error: 'Secure calendar storage is unavailable. Please try later.' };
     const { error } = await sb.from('calendar_feeds').upsert(
       {
         clerk_user_id: userId,
-        ics_url: encrypted ? '' : checked.url,
-        ics_url_enc: encrypted ? encryptText(checked.url) : null,
+        ics_url: '',
+        ics_url_enc: encryptText(checked.url),
         tz: zone,
         status: 'pending',
         last_error: null,
