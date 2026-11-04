@@ -8,6 +8,10 @@ const answer = { submissionId: '672bfda3-0048-4bc6-a612-bbca7b284e86', name: 'Sy
 function req(body: unknown = answer, headers: Record<string,string> = {}) { return new Request('https://christfields2717.com/api/forms/availability', {method:'POST',headers:{'content-type':'application/json',...headers}, body:JSON.stringify(body)}); }
 beforeEach(() => { vi.clearAllMocks(); process.env.SUPABASE_SERVICE_ROLE_KEY='test-only'; process.env.RESEND_API_KEY='test-only'; mocks.rate.mockResolvedValue({durable:true,allowed:true}); mocks.rpc.mockResolvedValue({data:'created',error:null}); mocks.send.mockResolvedValue({error:null}); mocks.update.mockResolvedValue({error:null}); });
 describe('public submission boundary (mocked providers; no real email)', () => {
+  it('accepts the canonical browser origin behind the hosting adapter', async () => {
+    const request = new Request('https://internal-function.example/api/forms/availability', {method:'POST',headers:{'content-type':'application/json',origin:'https://christfields2717.com'},body:JSON.stringify(answer)});
+    expect((await POST(request)).status).toBe(200);
+  });
   it('rejects cross-origin, bad content type and oversize bodies before database access', async () => {
     expect((await POST(req(answer,{origin:'https://evil.example'}))).status).toBe(403);
     expect((await POST(req(answer,{'content-type':'text/plain'}))).status).toBe(415);

@@ -10,7 +10,10 @@ const reply = (status: number, body: object) => NextResponse.json(body, { status
 
 export async function POST(req: Request) {
   const origin = req.headers.get('origin');
-  if (req.headers.get('sec-fetch-site') === 'cross-site' || (origin && origin !== new URL(req.url).origin)) return reply(403, { error: 'Please use the form on this website.' });
+  // Netlify's adapter may expose an internal function origin in req.url.
+  // Compare browser origins to the canonical public site, never forwarded hosts.
+  const allowedOrigin = process.env.NODE_ENV === 'development' ? new URL(req.url).origin : 'https://christfields2717.com';
+  if (req.headers.get('sec-fetch-site') === 'cross-site' || (origin && origin !== allowedOrigin)) return reply(403, { error: 'Please use the form on this website.' });
   if (!req.headers.get('content-type')?.startsWith('application/json')) return reply(415, { error: 'JSON required.' });
   if (Number(req.headers.get('content-length')) > 12000) return reply(413, { error: 'Response too large.' });
   try {
