@@ -1,0 +1,11 @@
+import {it,expect,vi,beforeEach} from 'vitest';
+vi.mock('server-only',()=>({}));
+const m=vi.hoisted(()=>({rate:vi.fn(),insert:vi.fn(),update:vi.fn(),send:vi.fn()}));
+vi.mock('@/lib/rate-limit',()=>({takeRateLimit:m.rate}));
+vi.mock('@/lib/supabase',()=>({getSupabase:()=>({from:()=>({insert:m.insert,update:(value:unknown)=>({eq:()=>m.update(value)})})})}));
+vi.mock('resend',()=>({Resend:class{emails={send:m.send};}}));
+import {requestReceipt} from './receipts';
+beforeEach(()=>{vi.clearAllMocks();process.env.SUPABASE_SERVICE_ROLE_KEY='test';process.env.RESEND_API_KEY='test';m.rate.mockResolvedValue({durable:true,allowed:true});m.insert.mockResolvedValue({error:null});m.send.mockResolvedValue({error:null});m.update.mockResolvedValue({error:null});});
+it('sends only a fixed verification notice with a hashed stored token',async()=>{expect(await requestReceipt('test-id','synthetic@example.com')).toBe('sent');const mail=m.send.mock.calls[0][0];expect(mail.to).toBe('synthetic@example.com');expect(mail.text).not.toContain('test-id');expect(mail.text).toContain('/forms/receipt#');const token=mail.text.match(/#([a-f0-9]{64})/)[1];expect(m.insert.mock.calls[0][0].token_hash).not.toBe(token);expect(m.update).toHaveBeenCalledWith({receipt_status:'sent'});});
+it('does not let a throttled recipient consume global sending quota',async()=>{m.rate.mockResolvedValue({durable:true,allowed:false});expect(await requestReceipt('test-id','synthetic@example.com')).toBe('rate_limited');expect(m.rate).toHaveBeenCalledTimes(1);expect(m.send).not.toHaveBeenCalled();});
+it('records email failure without throwing after a saved response',async()=>{m.send.mockRejectedValue(Error('provider down'));m.update.mockRejectedValue(Error('database down'));expect(await requestReceipt('test-id','synthetic@example.com')).toBe('failed');});

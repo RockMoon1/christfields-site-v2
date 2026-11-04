@@ -3,7 +3,10 @@ import { createHmac, createHash } from 'node:crypto';
 import { Resend } from 'resend';
 import { getSupabase } from '@/lib/supabase';
 import { takeRateLimit } from '@/lib/rate-limit';
-import { POLL_SLUG, NOTICE_VERSION, validateAnswer } from '@/lib/forms/availability';
+import { POLL_SLUG, validateAnswer } from '@/lib/forms/availability';
+import { getPublicForm, formOpen } from '@/lib/forms/server';
+import { datesFor, localDate, SLUG_RE, validateContact } from '@/lib/forms/events';
+import { requestReceipt } from '@/lib/forms/receipts';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const reply = (status: number, body: object) => NextResponse.json(body, { status, headers: { 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex, nofollow' } });
@@ -39,24 +42,42 @@ export async function POST(req: Request) {
     let raw: unknown;
     try { raw = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { return reply(400, { error: 'Invalid response.' }); }
     if (raw && typeof raw === 'object' && 'website' in raw && (raw as {website: unknown}).website) return reply(400, { error: 'Please leave the website field empty.' });
-    const answer = validateAnswer(raw);
-    if (!answer) return reply(400, { error: 'Check your name, November dates, and privacy confirmations.' });
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return reply(400, { error: 'Invalid response.' });
+    const input = raw as Record<string, unknown>;
+    const slug = input.formSlug ?? POLL_SLUG;
+    if (typeof slug !== 'string' || !SLUG_RE.test(slug)) return reply(400, { error: 'Invalid form.' });
+    const form = await getPublicForm(slug);
+    if (!form) return reply(503, { error: 'This form is unavailable.' });
+    const answer = validateAnswer(raw, datesFor(form.settings, '0000-00-00'));
+    const extra = validateContact(input, form.settings);
+    if (!answer || !extra) return reply(400, { error: 'Check your contact details, dates, and privacy confirmations.' });
+    const legacy = !input.formSlug && !['email','phone','followUp','priorAttendance','receiptRequested'].some(key => key in input);
+    const hash = createHash('sha256').update(JSON.stringify(legacy ? answer : {answer,extra,slug})).digest('hex');
+    const sb = getSupabase();
+    const stale = [...answer.available,...answer.unavailable].some(d => d < localDate(form.settings.tz));
+    if (legacy || stale || !formOpen(form)) {
+      // Allow an exact saved retry without charging global quota or sending mail.
+      const previous = await sb.from('activity_responses').select('id').eq('id',answer.submissionId).eq('form_slug',slug).eq('payload_hash',hash).maybeSingle();
+      if (previous.error) return reply(503,{error:'Could not check this response. Please retry later.'});
+      if (previous.data) return reply(200,{ok:true,saved:true,emailed:false});
+      if (legacy) return reply(400,{error:'This form and its privacy notice have been updated. Refresh the page before submitting.'});
+      return reply(stale ? 400 : 410,{error:stale?'A selected date has passed. Refresh the page and choose current dates.':'This poll is closed. Please contact the organizer.'});
+    }
     // Only validated answers from IPs still within their own limit may spend
     // the shared storage/email budget. Malformed bodies and honeypots cannot.
     const globalLimit = await takeRateLimit('forms:global', 100, 3600);
     if (!globalLimit.durable) return reply(503, { error: 'The form is temporarily unavailable. Please try later.' });
     if (!globalLimit.allowed) return reply(429, { error: 'Too many attempts. Please try again later.' });
-    const hash = createHash('sha256').update(JSON.stringify(answer)).digest('hex');
-    const sb = getSupabase();
     // A database row lock makes closing the form and accepting a response atomic.
-    const { data, error } = await sb.rpc('submit_activity_response', {
-      p_slug: POLL_SLUG, p_id: answer.submissionId, p_hash: hash, p_name: answer.name,
+    const { data, error } = await sb.rpc('submit_activity_response_v2', {
+      p_slug: slug, p_id: answer.submissionId, p_hash: hash, p_name: answer.name,
       p_interest: answer.interest, p_available: answer.available, p_unavailable: answer.unavailable,
-      p_notes: answer.notes, p_notice: NOTICE_VERSION,
+      p_notes: answer.notes, p_notice: '2026-11-04-v2', p_extra: extra,
     });
     if (error) return reply(503, { error: 'We could not save your response. Please retry with the same form.' });
     if (data === 'closed') return reply(410, { error: 'This poll is closed. Please contact the organizer.' });
     if (data === 'conflict') return reply(409, { error: 'This response was already submitted. Contact the organizer to change it.' });
+    if (data === 'invalid') return reply(400, { error: 'Dates or event settings changed. Refresh the page and choose current dates.' });
     if (data !== 'created' && data !== 'duplicate') return reply(503, { error: 'We could not confirm your response. Please retry.' });
     let emailed = false;
     // Only the first durable insert sends mail. A lost HTTP response never duplicates it.
@@ -65,13 +86,14 @@ export async function POST(req: Request) {
         const result = await new Resend(process.env.RESEND_API_KEY).emails.send({
           from: process.env.FROM_EMAIL || 'Christ Fields <proverbs@christfields2717.com>',
           to: 'proverbs@christfields2717.com',
-          subject: 'Iron and Ember: November availability response',
-          text: `Name: ${answer.name}\nInterest: ${answer.interest}\nAvailable: ${answer.available.join(', ') || 'Not specified'}\nUnavailable: ${answer.unavailable.join(', ') || 'Not specified'}\n\nScheduling notes: ${answer.notes || 'None'}\n\nPrivate organizer view: https://christfields2717.com/dashboard/forms\nResponse reference: ${answer.submissionId}`,
+          subject: 'Iron and Ember: activity response',
+          text: `Event: ${form.settings.title}\nName: ${answer.name}\nInterest: ${answer.interest}\nAvailable: ${answer.available.join(', ') || 'Not specified'}\nUnavailable: ${answer.unavailable.join(', ') || 'Not specified'}\n\nScheduling notes: ${answer.notes || 'None'}\n\nContact details, if provided, remain in the private organizer dashboard: https://christfields2717.com/dashboard/forms\nResponse reference: ${answer.submissionId}`,
         }, { idempotencyKey: `activity/${answer.submissionId}` });
         emailed = !result.error;
-        await sb.from('activity_responses').update({ email_status: emailed ? 'sent' : 'failed' }).eq('id', answer.submissionId).eq('form_slug', POLL_SLUG);
+        await sb.from('activity_responses').update({ email_status: emailed ? 'sent' : 'failed' }).eq('id', answer.submissionId).eq('form_slug', slug);
       } catch { /* The saved response remains available in the private dashboard. */ }
     }
+    if (data === 'created' && extra.receiptRequested) await requestReceipt(answer.submissionId, extra.email);
     return reply(200, { ok: true, saved: true, emailed });
   } catch { return reply(503, { error: 'The form is temporarily unavailable. Please retry with the same form.' }); }
 }

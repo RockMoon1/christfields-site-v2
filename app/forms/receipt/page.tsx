@@ -1,0 +1,7 @@
+'use client';
+import {useEffect,useState} from 'react';
+export default function Receipt(){const [token,setToken]=useState(''),[message,setMessage]=useState(''),[busy,setBusy]=useState(false);
+ useEffect(()=>{setToken(window.location.hash.slice(1));history.replaceState(null,'',window.location.pathname);},[]);
+ async function confirm(){setBusy(true);try{const r=await fetch('/api/forms/receipt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});const d=await r.json();setMessage(d.receipt?`Saved response ${d.receipt.id}\nEvent: ${d.receipt.form_slug}\nReceived: ${d.receipt.created_at}\nInterest: ${d.receipt.interest}\nAvailable: ${d.receipt.available.join(', ')||'Not specified'}\nUnavailable: ${d.receipt.unavailable.join(', ')||'Not specified'}\nThis confirms receipt only, not attendance or a ticket.`:d.error);}catch{setMessage('Receipt unavailable. Try again later.');}finally{setBusy(false);}}
+ return <section className="my-10 space-y-5"><h1 className="font-display text-4xl">Your response receipt</h1><p>Only confirm if you requested this receipt. This verifies access to the email address; it does not establish your identity or confirm attendance. Keep this link private.</p><button disabled={!token||busy} onClick={confirm} className="rounded bg-gold px-6 py-3 text-black disabled:opacity-50">{busy?'Checking…':'Confirm and view receipt'}</button><p role="status" className="whitespace-pre-wrap break-words">{message}</p></section>;
+}

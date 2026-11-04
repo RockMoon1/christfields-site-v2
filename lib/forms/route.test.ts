@@ -1,13 +1,18 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-const mocks = vi.hoisted(() => ({ rate: vi.fn(), rpc: vi.fn(), send: vi.fn(), update: vi.fn() }));
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+const mocks = vi.hoisted(() => ({ rate: vi.fn(), rpc: vi.fn(), send: vi.fn(), update: vi.fn(),previous:vi.fn() }));
 vi.mock('@/lib/rate-limit', () => ({ takeRateLimit: mocks.rate }));
-vi.mock('@/lib/supabase', () => ({ getSupabase: () => ({ rpc: mocks.rpc, from: () => ({update: () => ({eq: () => ({eq: mocks.update})})}) }) }));
+vi.mock('@/lib/supabase', () => ({ getSupabase: () => ({ rpc: mocks.rpc, from: () => ({update: () => ({eq: () => ({eq: mocks.update})}),select:()=>({eq:()=>({eq:()=>({eq:()=>({maybeSingle:mocks.previous})})})})}) }) }));
 vi.mock('resend', () => ({ Resend: class { emails = {send: mocks.send}; } }));
+vi.mock('@/lib/forms/server', async () => ({getPublicForm: async (slug:string)=>({slug,enabled:true,settings:(await import('./events')).DEFAULT_EVENT}),formOpen:()=>true}));
+vi.mock('@/lib/forms/receipts',()=>({requestReceipt:vi.fn()}));
 import { POST } from '@/app/api/forms/availability/route';
-const answer = { submissionId: '672bfda3-0048-4bc6-a612-bbca7b284e86', name: 'Synthetic test', interest:'yes', available:['2026-11-07'], unavailable:[], notes:'', consent:true, ageConfirmed:true };
+const answer = { formSlug:'november-2026-car-camping',submissionId: '672bfda3-0048-4bc6-a612-bbca7b284e86', name: 'Synthetic test', interest:'yes', available:['2026-11-07'], unavailable:[], notes:'', consent:true, ageConfirmed:true };
 function req(body: unknown = answer, headers: Record<string,string> = {}) { return new Request('https://christfields2717.com/api/forms/availability', {method:'POST',headers:{'content-type':'application/json',...headers}, body:JSON.stringify(body)}); }
-beforeEach(() => { vi.clearAllMocks(); process.env.SUPABASE_SERVICE_ROLE_KEY='test-only'; process.env.RESEND_API_KEY='test-only'; mocks.rate.mockResolvedValue({durable:true,allowed:true}); mocks.rpc.mockResolvedValue({data:'created',error:null}); mocks.send.mockResolvedValue({error:null}); mocks.update.mockResolvedValue({error:null}); });
+beforeEach(() => { vi.clearAllMocks();vi.useFakeTimers();vi.setSystemTime(new Date('2026-11-04T15:00:00Z'));mocks.previous.mockResolvedValue({data:null,error:null}); process.env.SUPABASE_SERVICE_ROLE_KEY='test-only'; process.env.RESEND_API_KEY='test-only'; mocks.rate.mockResolvedValue({durable:true,allowed:true}); mocks.rpc.mockResolvedValue({data:'created',error:null}); mocks.send.mockResolvedValue({error:null}); mocks.update.mockResolvedValue({error:null}); });
+afterEach(()=>vi.useRealTimers());
 describe('public submission boundary (mocked providers; no real email)', () => {
+  it('requires stale legacy tabs to read the new notice, but recognizes already-saved legacy responses',async()=>{const {formSlug,...legacy}=answer;expect(formSlug).toBeTruthy();expect((await POST(req(legacy))).status).toBe(400);expect(mocks.rpc).not.toHaveBeenCalled();mocks.previous.mockResolvedValue({data:{id:answer.submissionId},error:null});expect((await POST(req(legacy))).status).toBe(200);expect(mocks.send).not.toHaveBeenCalled();});
+  it('rejects newly stale dates without spending global quota, but accepts an exact saved retry',async()=>{const old={...answer,available:['2026-11-03']};expect((await POST(req(old))).status).toBe(400);expect(mocks.rate).toHaveBeenCalledTimes(1);expect(mocks.rpc).not.toHaveBeenCalled();mocks.previous.mockResolvedValue({data:{id:answer.submissionId},error:null});expect((await POST(req(old))).status).toBe(200);expect(mocks.send).not.toHaveBeenCalled();});
   it('accepts the canonical browser origin behind the hosting adapter', async () => {
     const request = new Request('https://internal-function.example/api/forms/availability', {method:'POST',headers:{'content-type':'application/json',origin:'https://christfields2717.com'},body:JSON.stringify(answer)});
     expect((await POST(request)).status).toBe(200);

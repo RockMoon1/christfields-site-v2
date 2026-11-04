@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+test.beforeEach(async({page})=>{await page.clock.install({time:new Date('2026-11-04T15:00:00Z')});});
 test('mobile form preserves dates, handles failure and deduplicates retry', async ({page}) => {
   const bodies: unknown[] = [];
   await page.route('**/api/forms/availability', async route => { bodies.push(route.request().postDataJSON()); if (bodies.length === 1) await route.abort(); else await route.fulfill({json:{ok:true,saved:true,emailed:false}}); });
@@ -18,6 +19,20 @@ test('mobile form preserves dates, handles failure and deduplicates retry', asyn
   await expect(page.getByRole('status')).toContainText('Your response is saved');
   expect(bodies).toHaveLength(2); expect(bodies[0]).toEqual(bodies[1]);
   expect(bodies[0]).toMatchObject({available:['2026-11-07'],unavailable:['2026-11-08']});
+});
+test('contacts stay optional where configured, months preserve choices, and receipt is factual',async({page})=>{
+ let body:Record<string,unknown>={};await page.route('**/api/forms/availability',async route=>{body=route.request().postDataJSON();await route.fulfill({json:{ok:true,saved:true,emailed:false}});});
+ await page.goto('/forms.html?contacts');
+ await expect(page.getByRole('combobox',{name:'Tue, Nov 3',exact:true})).toHaveCount(0);
+ await page.getByLabel('Your name').fill('Synthetic Test');await page.getByLabel('Interested in coming?').selectOption('yes');
+ await page.getByLabel('Email address (required)').fill('synthetic@example.com');
+ await page.getByRole('combobox',{name:'Sat, Nov 7',exact:true}).selectOption('yes');
+ await page.getByRole('button',{name:'December 2026',exact:true}).click();await page.getByRole('combobox',{name:'Tue, Dec 1',exact:true}).selectOption('no');
+ await page.getByRole('button',{name:'November 2026',exact:true}).click();await expect(page.getByRole('combobox',{name:'Sat, Nov 7',exact:true})).toHaveValue('yes');
+ await page.getByRole('checkbox').nth(0).check();await page.getByRole('checkbox').nth(1).check();
+ await page.getByRole('button',{name:/send my availability/}).click();await expect(page.getByRole('status')).toContainText('does not confirm a trip');await expect(page.getByRole('status')).toContainText('Bring a warm layer');
+ expect(body).toMatchObject({email:'synthetic@example.com',phone:'',followUp:false,receiptRequested:false,available:['2026-11-07'],unavailable:['2026-12-01']});
+ const download=page.waitForEvent('download');await page.getByRole('button',{name:'Download my receipt'}).click();expect((await download).suggestedFilename()).toBe('christ-fields-receipt.txt');
 });
 test('keyboard controls and closed response do not report false success', async ({page}) => {
   await page.route('**/api/forms/availability', route => route.fulfill({status:410,json:{error:'This poll is closed.'}}));
