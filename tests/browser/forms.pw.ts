@@ -48,3 +48,27 @@ test('keyboard controls and closed response do not report false success', async 
   await expect(page.getByRole('alert')).toHaveText('This poll is closed.');
   await expect(page.getByRole('status')).toHaveCount(0);
 });
+test('FaithFlow replaces only the demo gathering with published polls and clears unpublished cards',async({page})=>{
+ let events=[{slug:'synthetic-camping',title:'Synthetic camping',summary:'Public planning summary',start:'2026-11-05',end:'2026-11-30',photo:null},{slug:'synthetic-walk',title:'Synthetic walk',summary:'Another public activity',start:'2026-11-06',end:'2026-11-20',photo:null}];
+ let failure=false;
+ await page.route('**/api/events/public',route=>route.fulfill({status:failure?503:200,json:{events:failure?[]:events}}));
+ await page.goto('/forms.html?preview');
+ const preview=page.getByRole('region',{name:'FaithFlow illustrative dashboard'});
+ await expect(preview.getByRole('heading',{name:'Synthetic camping'})).toBeVisible();
+ await expect(preview.getByRole('heading',{name:'Synthetic walk'})).toBeVisible();
+ await expect(preview.getByText('Supper & conversation')).toHaveCount(0);
+ await expect(preview.getByRole('button',{name:/^I.m in$/})).toHaveCount(0);
+ await expect(preview.getByText('Prayer wall · Sample')).toBeVisible();
+ await expect(preview.getByText('Scripture in this example')).toBeVisible();
+ const links=preview.getByRole('link',{name:'View activity & share availability'});
+ await expect(links).toHaveCount(2);await expect(links.nth(0)).toHaveAttribute('href','/forms/synthetic-camping');
+ await links.nth(0).focus();await expect(links.nth(0)).toBeFocused();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ failure=true;await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+ await expect(preview.getByText('Next gathering · Demo only')).toBeVisible();
+ await expect(links).toHaveCount(0);
+ await preview.getByRole('button',{name:/^I.m in$/}).click();
+ await expect(preview.locator('[aria-live="polite"]')).toContainText('No RSVP has been sent');
+ failure=false;events=[];await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+ await expect(preview.getByText('Sample details. Try the actions here; nothing is saved or sent.')).toBeVisible();
+});

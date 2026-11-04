@@ -4,10 +4,11 @@ import { useRef, useState } from 'react';
 import { Button } from '@/components/Button';
 import { Notice } from '@/components/ui/Notice';
 import { Surface } from '@/components/ui/Surface';
+import { usePublishedEvents } from '@/components/forms/usePublishedEvents';
 
-/** An illustrative member experience, not an authenticated dashboard. Sample
- * details and interactions live only in component state: no service calls,
- * storage, calendar links, or real prayer requests belong in this preview.
+/** Published activities use the public projection and link to real forms.
+ * Sample prayer, RSVP and calendar interactions live only in component state;
+ * this is not an authenticated member dashboard.
  * Existing Scripture wording is retained without claiming a verified edition. */
 const ANSWERS = [
   { value: 'going', label: 'I’m in' },
@@ -18,6 +19,7 @@ const ANSWERS = [
 type Answer = (typeof ANSWERS)[number]['value'];
 
 export function DashboardPreview() {
+  const events = usePublishedEvents();
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [prayed, setPrayed] = useState(false);
   const [calendar, setCalendar] = useState<string | null>(null);
@@ -48,18 +50,27 @@ export function DashboardPreview() {
     >
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <p className="font-body text-meta font-medium uppercase tracking-[0.14em] text-gold-lt">
-          Illustrative preview
+          {events.length ? 'Live activities & sample dashboard' : 'Illustrative preview'}
         </p>
         <Button fx={false} variant="quiet" size="sm" onClick={reset}>
           Reset example
         </Button>
       </div>
       <p className="mt-2 text-sm leading-relaxed text-silver">
-        Sample details. Try the actions here; nothing is saved or sent.
+        {events.length ? 'Published activities link to real availability forms. The prayer wall and Scripture below are samples; their actions save nothing.' : 'Sample details. Try the actions here; nothing is saved or sent.'}
       </p>
 
-      <div className="mt-5 border-t border-border-sub pt-5">
-        <p className="font-body text-meta uppercase tracking-[0.14em] text-silver">Next gathering</p>
+      {events.length ? <section aria-label="Live published activities" className="mt-5 space-y-5 border-t border-border-sub pt-5">
+        <p className="text-xs uppercase tracking-widest text-gold-lt">Live activities · Share your availability</p>
+        <p className="text-sm text-silver">These are planning polls. Dates and attendance are confirmed separately; sharing interest does not replace the community's joining conversation.</p>
+        {events.map(event => <article key={event.slug} className="rounded-xl border border-gold/25 p-4">
+          <h3 className="font-display text-2xl text-ivory">{event.title}</h3>
+          <p className="mt-2 text-sm text-silver">Planning dates: {event.start} – {event.end}</p>
+          <p className="mt-3 whitespace-pre-wrap text-sm text-ivory-dim">{event.summary}</p>
+          <Button fx={false} href={`/forms/${event.slug}`} className="mt-4">View activity &amp; share availability</Button>
+        </article>)}
+      </section> : <div className="mt-5 border-t border-border-sub pt-5">
+        <p className="font-body text-meta uppercase tracking-[0.14em] text-silver">Next gathering · Demo only</p>
         <h3 className="mt-2 font-display text-3xl font-light leading-tight text-ivory">
           Supper &amp; conversation
         </h3>
@@ -111,10 +122,10 @@ export function DashboardPreview() {
             ))}
           </div>
         </details>
-      </div>
+      </div>}
 
       <div className="mt-5 border-t border-border-sub pt-5">
-        <h3 className="text-base font-medium text-ivory">Prayer wall</h3>
+        <h3 className="text-base font-medium text-ivory">Prayer wall · Sample</h3>
         <p className="mt-3 font-body text-meta text-silver">Alex · sample request</p>
         <p className="mt-1 text-base text-ivory">Peace for a busy week</p>
         <p className="mt-1 text-sm leading-relaxed text-ivory-dim">

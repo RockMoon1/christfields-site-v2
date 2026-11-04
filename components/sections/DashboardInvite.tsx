@@ -7,8 +7,8 @@ import { DashboardPreview } from './faithflow/DashboardPreview';
  * The member door: invites Iron and Ember members into their dashboard.
  * Lives on /faithflow (moved off the homepage 2026-08-09 so the front page
  * stays simple and FaithFlow's own page holds FaithFlow's things). The
- * preview illustrates the current gathering, RSVP, calendar, and prayer-wall
- * features with sample details and local interactions only.
+ * preview shows explicitly published activity links and clearly marked
+ * sample RSVP, calendar, prayer-wall and Scripture content.
  */
 
 const FEATURES = [

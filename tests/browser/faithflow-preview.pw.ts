@@ -40,6 +40,7 @@ for (const width of [390, 1280]) {
     });
     page.on('download', () => { downloads += 1; });
     page.on('popup', () => { popups += 1; });
+    await page.route('**/api/events/public', route => route.fulfill({json:{events:[]}}));
     await page.goto('/faithflow');
     await page.evaluate(() => document.fonts.ready);
     const preview = page.getByRole('region', { name: 'FaithFlow illustrative dashboard' });
