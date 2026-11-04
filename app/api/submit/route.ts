@@ -10,6 +10,7 @@ import {
 import { isBodyTooLarge, isCrossSite } from '@/lib/security/origin';
 import { takeRateLimit } from '@/lib/rate-limit';
 import { getSupabase } from '@/lib/supabase';
+import { contactMailbox, reserveContactMail } from '@/lib/security/contact-mail';
 
 /** Public contact submissions with bounded processing and shared abuse budgets. */
 export const runtime = 'nodejs';
@@ -18,8 +19,6 @@ export const dynamic = 'force-dynamic';
 const FROM = process.env.FROM_EMAIL || 'Christ Fields <proverbs@christfields2717.com>';
 const NOTIFY = process.env.NOTIFY_EMAIL || 'proverbs@christfields2717.com';
 const REPLY_TO = process.env.REPLY_TO_EMAIL || 'proverbs@christfields2717.com';
-
-const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
 
 /**
  * Durable record, best effort: returns the new row's id, or null if the write
@@ -101,11 +100,11 @@ export async function POST(req: Request) {
   if(['name','email','interest','message'].some(k=>data[k]!==undefined&&typeof data[k]!=='string'))return NextResponse.json({ok:false,error:'Invalid fields.'},{status:400});
   const formName = normalizePublicSubmissionFormName(data.formName);
   const name = String(data.name || '').trim().slice(0, 100);
-  const email = String(data.email || '').trim().slice(0, 254);
+  const email = contactMailbox(data.email);
   const interest = String(data.interest || '').trim().slice(0, 80);
   const message = String(data.message || '').trim().slice(0, 2000);
 
-  if (!name || /[\r\n\x00]/.test(name+email) || !EMAIL_RE.test(email)) {
+  if (!name || /[\r\n\x00]/.test(name) || !email) {
     return NextResponse.json(
       { ok: false, error: 'A name and a valid email are required.' },
       { status: 400 },
@@ -144,8 +143,9 @@ export async function POST(req: Request) {
   }
 
   const resend = new Resend(process.env.RESEND_API_KEY);
-
-
+  if(!await reserveContactMail()) {
+    return NextResponse.json(stored?{ok:true}:{ok:false,error:'Could not send right now. Please try again.'},{status:stored?200:503});
+  }
   // 1) Notification to the Christ Fields inbox. This is the one that must land.
   // Resend v6 never rejects: emails.send() resolves with { data, error } even
   // for API and network failures, so the error must be checked, not caught.
@@ -180,7 +180,7 @@ export async function POST(req: Request) {
   // Never echo attacker-controlled content to an unverified mailbox.
   const recipientKey=createHmac('sha256',secret).update(email.toLowerCase()).digest('hex');
   const recipient=await takeRateLimit('submit:recipient:'+recipientKey,1,86400);
-  if(recipient.durable&&recipient.allowed){
+  if(recipient.durable&&recipient.allowed&&await reserveContactMail()){
     try{await resend.emails.send({from:FROM,to:email,replyTo:REPLY_TO,subject:'Christ Fields contact request received',text:'Someone used this email address on a Christ Fields contact form. If that was you, your message has been received. If it was not you, you can ignore this email. This does not verify your identity, confirm membership, or subscribe you to updates.'});}catch{/* the primary submission remains saved */}
   }
 

@@ -1,12 +1,13 @@
 import {beforeEach,afterEach,it,expect,vi} from 'vitest';
-const m=vi.hoisted(()=>({rate:vi.fn(),insert:vi.fn(),send:vi.fn(),update:vi.fn()}));
+const m=vi.hoisted(()=>({rate:vi.fn(),insert:vi.fn(),send:vi.fn(),update:vi.fn(),reserve:vi.fn()}));
+vi.mock('@/lib/security/contact-mail',async importOriginal=>({...await importOriginal<typeof import('./contact-mail')>(),reserveContactMail:m.reserve}));
 vi.mock('@/lib/rate-limit',()=>({takeRateLimit:m.rate}));
 vi.mock('@/lib/supabase',()=>({getSupabase:()=>({from:()=>({insert:m.insert,update:()=>({eq:m.update})})})}));
 vi.mock('resend',()=>({Resend:class{emails={send:m.send}}}));
 import {POST} from '@/app/api/submit/route';
 const valid={name:'Synthetic <test>',email:'synthetic@example.com',message:'Synthetic message',formName:'faithflow'};
 function req(body:unknown=valid,headers:Record<string,string>={}){return new Request('https://internal.example/api/submit',{method:'POST',headers:{origin:'https://christfields2717.com','content-type':'application/json',...headers},body:JSON.stringify(body)});}
-beforeEach(()=>{vi.clearAllMocks();vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY','test-only');vi.stubEnv('RESEND_API_KEY','test-only');m.rate.mockResolvedValue({durable:true,allowed:true});m.insert.mockReturnValue({select:()=>({single:async()=>({data:{id:'synthetic'},error:null})})});m.send.mockResolvedValue({error:null});});
+beforeEach(()=>{vi.clearAllMocks();m.reserve.mockResolvedValue(true);vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY','test-only');vi.stubEnv('RESEND_API_KEY','test-only');m.rate.mockResolvedValue({durable:true,allowed:true});m.insert.mockReturnValue({select:()=>({single:async()=>({data:{id:'synthetic'},error:null})})});m.send.mockResolvedValue({error:null});});
 afterEach(()=>vi.unstubAllEnvs());
 it('rejects forged browser origins and wrong media type before consuming quota',async()=>{
  expect((await POST(req(valid,{origin:'https://evil.example'}))).status).toBe(403);
@@ -34,4 +35,23 @@ it('saves a real-shaped submission and sends only fixed content to the unverifie
 it('a recipient limit skips the reply without losing the stored message',async()=>{
  m.rate.mockImplementation(async key=>({durable:true,allowed:!key.startsWith('submit:recipient:')}));
  expect((await POST(req())).status).toBe(200);expect(m.insert).toHaveBeenCalledOnce();expect(m.send).toHaveBeenCalledOnce();
+});
+it('rejects display-address variants before storage or shared mail budgets',async()=>{
+ for(const email of ['first<alice@example.com>','second<alice@example.com>','alice@example.com,bob@example.com'])expect((await POST(req({...valid,email}))).status).toBe(400);
+ expect(m.insert).not.toHaveBeenCalled();expect(m.send).not.toHaveBeenCalled();expect(m.reserve).not.toHaveBeenCalled();
+});
+it('uses the same canonical mailbox for the provider and recipient counter',async()=>{
+ await POST(req({...valid,email:' Synthetic@EXAMPLE.com '}));const first=m.rate.mock.calls.find(([key])=>key.startsWith('submit:recipient:'))?.[0];
+ m.rate.mockClear();await POST(req());expect(m.rate.mock.calls.find(([key])=>key.startsWith('submit:recipient:'))?.[0]).toBe(first);
+ expect(m.send.mock.calls[1][0].to).toBe(valid.email);
+});
+it('keeps saved messages successful when the daily mail budget is exhausted',async()=>{
+ m.reserve.mockResolvedValue(false);expect((await POST(req())).status).toBe(200);expect(m.insert).toHaveBeenCalledOnce();expect(m.send).not.toHaveBeenCalled();expect(m.update).not.toHaveBeenCalled();
+});
+it('reserves separately for each email and skips acknowledgment when the last slot was used',async()=>{
+ m.reserve.mockResolvedValueOnce(true).mockResolvedValueOnce(false);expect((await POST(req())).status).toBe(200);expect(m.reserve).toHaveBeenCalledTimes(2);expect(m.send).toHaveBeenCalledOnce();
+});
+it('does not report success when neither storage nor mail is available',async()=>{
+ m.insert.mockReturnValue({select:()=>({single:async()=>({data:null,error:null})})});m.reserve.mockResolvedValue(false);
+ expect((await POST(req())).status).toBe(503);expect(m.send).not.toHaveBeenCalled();
 });

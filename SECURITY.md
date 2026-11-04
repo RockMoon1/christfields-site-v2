@@ -28,7 +28,11 @@ ATT&CK describes adversary behavior; it is not a compliance standard.
 - Public availability responses use bounded streaming input, strict validation,
   atomic submission deduplication and shared IP/global limits. Generic contact
   forms use bounded input, canonical-origin checks, shared limits and fixed
-  acknowledgments limited per unverified recipient. Generic contact submissions
+  acknowledgments limited per normalized bare-mailbox recipient. Each contact
+  email reserves a slot from the existing shared daily info-tier budget using
+  a conditional atomic write; denied reservations do not consume higher-tier
+  capacity. Stored messages remain successful when mail capacity is exhausted.
+  Generic contact submissions
   do not yet have database-backed retry deduplication.
 - Shared rate-limit failures deny protected operations. Urgent member safety
   email retains its explicit existing exception; it is not an unlimited public
