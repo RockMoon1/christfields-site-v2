@@ -68,8 +68,9 @@ code review. Provider-level configuration and monitoring need owner review.
   push destination bypasses/DNS pinning, calendar streams and refresh limits.
   These tests send no real messages and do not load-test production.
 - Production npm audit reported zero known advisories on 2026-11-04. The full
-  development tree still reported 14 moderate and one high advisory, including
-  tooling dependencies. Review compatible updates separately; do not force
+  development tree reports 14 moderate advisories after a compatible
+  brace-expansion patch removed the high advisory. Review remaining updates;
+  do not force
   downgrade/major overrides simply to silence the report.
 - A heuristic scan of current source found no matching credential patterns.
   This is not proof that all historical commits, binaries, excluded paths or
