@@ -766,58 +766,326 @@ export async function getLeadOverview(): Promise<LeadOverview> {
           .lte('starts_at', until)
           .order('starts_at', { ascending: true }),
         getGroupAvailability(members, GROUP_TZ, now),
-        sayHiFor(…4544 tokens truncated…!== new URL(req.url).origin)) return reply(403, { error: 'Please use the form on this website.' });
-  if (!req.headers.get('content-type')?.startsWith('application/json')) return reply(415, { error: 'JSON required.' });
-  if (Number(req.headers.get('content-length')) > 12000) return reply(413, { error: 'Response too large.' });
+        sayHiFor(org.orgId, members),
+        sb
+          .from('events')
+          .select('id, title, starts_at, tz, series_id')
+          .eq('org_id', org.orgId)
+          .eq('status', 'scheduled')
+          .not('series_id', 'is', null)
+          .gte('starts_at', new Date(now).toISOString())
+          .order('starts_at', { ascending: false }),
+        // Leaders' own reflections must not help clear the three-person bar.
+        groupThemes(members.filter((m) => !m.isLeader).map((m) => m.userId), now),
+      ]);
+      const rows = (eventsRes.data as EventRow[] | null) ?? [];
+      const ids = rows.map((e) => e.id);
+      let rsvps: EventRsvpRow[] = [];
+      let attendance: EventAttendanceRow[] = [];
+      if (ids.length > 0) {
+        const [r, a] = await Promise.all([
+          sb.from('event_rsvps').select('*').in('event_id', ids),
+          sb.from('event_attendance').select('*').in('event_id', ids),
+        ]);
+        rsvps = (r.data as EventRsvpRow[] | null) ?? [];
+        attendance = (a.data as EventAttendanceRow[] | null) ?? [];
+      }
+      const memberIds = new Set(members.map((m) => m.userId));
+      const events: LeadEventRow[] = rows.map((e) => {
+        const mine = rsvps.filter((x) => x.event_id === e.id && memberIds.has(x.clerk_user_id));
+        const answered = new Set(mine.map((x) => x.clerk_user_id));
+        return {
+          id: e.id,
+          title: e.title,
+          type: e.event_type,
+          startsAt: e.starts_at,
+          tz: e.tz,
+          status: e.status === 'cancelled' ? 'cancelled' : 'scheduled',
+          going: mine.filter((x) => x.status === 'going').length,
+          maybe: mine.filter((x) => x.status === 'maybe').length,
+          cant: mine.filter((x) => x.status === 'not_going').length,
+          silent: members.filter((m) => !answered.has(m.userId)).length,
+          firstTimers: mine.filter((x) => x.first_time && x.status !== 'not_going').length,
+          marked: attendance.some((a) => a.event_id === e.id),
+        };
+      });
+
+      const upcoming = events.filter((e) => e.status === 'scheduled' && new Date(e.startsAt).getTime() > now);
+      const recent = events.filter((e) => e.status === 'scheduled' && new Date(e.startsAt).getTime() <= now && !e.marked);
+      let prompt: LeadPrompt = { kind: 'none' };
+      if (recent.length > 0) {
+        const last = recent[recent.length - 1];
+        prompt = { kind: 'whoCame', eventId: last.id, title: last.title };
+      } else if (upcoming.length > 0 && new Date(upcoming[0].startsAt).getTime() - now < 24 * 60 * 60 * 1000) {
+        prompt = { kind: 'prep', eventId: upcoming[0].id, title: upcoming[0].title, startsAt: upcoming[0].startsAt, tz: upcoming[0].tz };
+      } else if (upcoming.length === 0 && availability.best.length > 0) {
+        const b = availability.best[0];
+        prompt = {
+          kind: 'post',
+          iso: b.iso,
+          slot: b.slot,
+          dayShort: b.dayShort,
+          dateLabel: b.dateLabel,
+          free: b.free,
+          total: availability.total,
+          names: b.freeNames,
+        };
+      }
+
+      let seriesEnding: LeadGroup['seriesEnding'] = null;
+      const lastBySeries = new Map<string, { id: string; title: string; starts_at: string; tz: string }>();
+      for (const r of (seriesRes.data as { id: string; title: string; starts_at: string; tz: string; series_id: string }[] | null) ?? []) {
+        if (!lastBySeries.has(r.series_id)) lastBySeries.set(r.series_id, r);
+      }
+      for (const last of lastBySeries.values()) {
+        if (new Date(last.starts_at).getTime() - now < 14 * 86_400_000) {
+          seriesEnding = { title: last.title, lastAt: last.starts_at, tz: last.tz, eventId: last.id };
+          break;
+        }
+      }
+
+      groups.push({
+        orgId: org.orgId,
+        orgName: org.orgName,
+        total: availability.total,
+        informed: availability.informed,
+        events,
+        prompt,
+        sayHi: sayHi.names,
+        sayHiReady: sayHi.ready,
+        seriesEnding,
+        themes: themes.map((t) => ({ key: t.key, label: t.label, passage: t.passage, nudge: t.nudge })),
+      });
+    }
+    return { groups, tz: GROUP_TZ };
+  } catch (err) {
+    console.error('getLeadOverview failed', err);
+    return empty;
+  }
+}
+
+/* ============================================================
+   Group page: roster + when to gather.
+   ============================================================ */
+
+export interface GroupPage {
+  orgId: string;
+  orgName: string;
+  availability: GroupAvailability;
+  inviteText: string;
+  knownCount: number;
+  /** When any member's connected calendar was last read. */
+  lastRefreshedAt: string | null;
+  /** People not seen for two weeks (present, or a yes to something that happened). Leader-only. */
+  notSeen: { name: string; email: string }[];
+}
+
+/** Members (not leaders) who have not been in the room for two weeks. Works from day one. */
+async function notSeenFor(orgId: string, members: GroupMember[], nowMs: number): Promise<{ name: string; email: string }[]> {
+  const sb = getSupabase();
+  const { data: past } = await sb
+    .from('events')
+    .select('id, starts_at')
+    .eq('org_id', orgId)
+    .eq('status', 'scheduled')
+    .gte('starts_at', new Date(nowMs - 90 * 86_400_000).toISOString())
+    .lte('starts_at', new Date(nowMs).toISOString())
+    .limit(200);
+  const eventStarts = new Map(((past as { id: string; starts_at: string }[] | null) ?? []).map((e) => [e.id, e.starts_at]));
+  const ids = [...eventStarts.keys()];
+  if (ids.length === 0) return [];
+  const [att, going] = await Promise.all([
+    sb.from('event_attendance').select('clerk_user_id, event_id').in('event_id', ids).eq('present', true),
+    sb.from('event_rsvps').select('clerk_user_id, event_id').in('event_id', ids).eq('status', 'going'),
+  ]);
+  const lastSeen = lastSeenByMember({
+    attendance: (att.data as { clerk_user_id: string; event_id: string }[] | null) ?? [],
+    going: (going.data as { clerk_user_id: string; event_id: string }[] | null) ?? [],
+    eventStarts,
+    nowMs,
+  });
+  const quiet = new Set(notSeenLately(members.filter((m) => !m.isLeader), lastSeen, nowMs));
+  return members
+    .filter((m) => quiet.has(m.userId))
+    .map((m) => ({ name: m.firstName, email: m.email }))
+    .slice(0, 6);
+}
+
+/** The most recent calendar read across these members (Google free/busy or a pasted link). */
+async function lastCalendarRefresh(memberIds: string[]): Promise<string | null> {
+  if (memberIds.length === 0) return null;
+  const sb = getSupabase();
+  const [g, f] = await Promise.all([
+    sb.from('google_connections').select('last_freebusy_at, scopes').eq('status', 'ok').in('clerk_user_id', memberIds),
+    sb.from('calendar_feeds').select('last_synced_at').in('clerk_user_id', memberIds),
+  ]);
+  let best = 0;
+  for (const r of (g.data as { last_freebusy_at: string | null; scopes: string[] }[] | null) ?? []) {
+    if (!r.scopes?.includes(SCOPES.busy) || !r.last_freebusy_at) continue;
+    best = Math.max(best, Date.parse(r.last_freebusy_at));
+  }
+  for (const r of (f.data as { last_synced_at: string | null }[] | null) ?? []) {
+    if (r.last_synced_at) best = Math.max(best, Date.parse(r.last_synced_at));
+  }
+  return best > 0 ? new Date(best).toISOString() : null;
+}
+
+export async function getGroupPage(orgId: string): Promise<GroupPage | null> {
   try {
-    // Fail closed if shared abuse protection is unavailable. No raw IP is stored.
-    const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!secret) return reply(503, { error: 'The form is temporarily unavailable. Please try later.' });
-    const ip = req.headers.get('x-nf-client-connection-ip') || 'unknown';
-    const bucket = createHmac('sha256', secret).update(`forms:${new Date().toISOString().slice(0, 10)}:${ip}`).digest('hex');
-    const limits = await Promise.all([takeRateLimit(`forms:ip:${bucket}`, 8, 600), takeRateLimit('forms:global', 100, 3600)]);
-    if (limits.some(l => !l.durable)) return reply(503, { error: 'The form is temporarily unavailable. Please try later.' });
-    if (limits.some(l => !l.allowed)) return reply(429, { error: 'Too many attempts. Please try again later.' });
-    const reader = req.body?.getReader();
-    if (!reader) return reply(400, { error: 'Missing response.' });
-    const chunks: Uint8Array[] = []; let size = 0;
-    while (true) {
-      const { done, value } = await reader.read(); if (done) break;
-      size += value.byteLength;
-      if (size > 12000) { await reader.cancel(); return reply(413, { error: 'Response too large.' }); }
-      chunks.push(value);
-    }
-    let raw: unknown;
-    try { raw = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { return reply(400, { error: 'Invalid response.' }); }
-    if (raw && typeof raw === 'object' && 'website' in raw && (raw as {website: unknown}).website) return reply(400, { error: 'Please leave the website field empty.' });
-    const answer = validateAnswer(raw);
-    if (!answer) return reply(400, { error: 'Check your name, November dates, and privacy confirmations.' });
-    const hash = createHash('sha256').update(JSON.stringify(answer)).digest('hex');
+    const ctx = await requireLeaderOf(orgId);
+    if (!ctx) return null;
     const sb = getSupabase();
-    // A database row lock makes closing the form and accepting a response atomic.
-    const { data, error } = await sb.rpc('submit_activity_response', {
-      p_slug: POLL_SLUG, p_id: answer.submissionId, p_hash: hash, p_name: answer.name,
-      p_interest: answer.interest, p_available: answer.available, p_unavailable: answer.unavailable,
-      p_notes: answer.notes, p_notice: NOTICE_VERSION,
-    });
-    if (error) return reply(503, { error: 'We could not save your response. Please retry with the same form.' });
-    if (data === 'closed') return reply(410, { error: 'This poll is closed. Please contact the organizer.' });
-    if (data === 'conflict') return reply(409, { error: 'This response was already submitted. Contact the organizer to change it.' });
-    if (data !== 'created' && data !== 'duplicate') return reply(503, { error: 'We could not confirm your response. Please retry.' });
-    let emailed = false;
-    // Only the first durable insert sends mail. A lost HTTP response never duplicates it.
-    if (data === 'created' && process.env.RESEND_API_KEY) {
-      try {
-        const result = await new Resend(process.env.RESEND_API_KEY).emails.send({
-          from: process.env.FROM_EMAIL || 'Christ Fields <proverbs@christfields2717.com>',
-          to: 'proverbs@christfields2717.com',
-          subject: 'Iron and Ember: November availability response',
-          text: `Name: ${answer.name}\nInterest: ${answer.interest}\nAvailable: ${answer.available.join(', ') || 'Not specified'}\nUnavailable: ${answer.unavailable.join(', ') || 'Not specified'}\n\nScheduling notes: ${answer.notes || 'None'}\n\nPrivate organizer view: https://christfields2717.com/dashboard/forms\nResponse reference: ${answer.submissionId}`,
-        }, { idempotencyKey: `activity/${answer.submissionId}` });
-        emailed = !result.error;
-        await sb.from('activity_responses').update({ email_status: emailed ? 'sent' : 'failed' }).eq('id', answer.submissionId).eq('form_slug', POLL_SLUG);
-      } catch { /* The saved response remains available in the private dashboard. */ }
+    const memberIds = ctx.members.map((m) => m.userId);
+    const now = Date.now();
+    const [availability, seen, lastRefreshedAt, notSeen] = await Promise.all([
+      getGroupAvailability(ctx.members, GROUP_TZ, now),
+      sb.from('org_member_seen').select('clerk_user_id', { count: 'exact', head: true }).eq('org_id', orgId),
+      lastCalendarRefresh(memberIds),
+      notSeenFor(orgId, ctx.members, now),
+    ]);
+    return {
+      orgId,
+      orgName: ctx.orgName,
+      availability,
+      inviteText: `I added you to ${ctx.orgName} on Christ Fields. It is where we keep our plans. Tap here to see what is coming up: ${appUrl()}/dashboard`,
+      knownCount: seen.count ?? 0,
+      lastRefreshedAt,
+      notSeen,
+    };
+  } catch (err) {
+    console.error('getGroupPage failed', err);
+    return null;
+  }
+}
+
+/* ============================================================
+   Who is free, for the Post form; and the leader's Refresh.
+   ============================================================ */
+
+export interface OrgAvailability {
+  availability: GroupAvailability;
+  /** Scheduled events in the next three weeks, for "also that day". */
+  upcoming: { id: string; title: string; startsAt: string }[];
+  lastRefreshedAt: string | null;
+}
+
+export async function getOrgAvailability(orgId: string): Promise<OrgAvailability | null> {
+  try {
+    const ctx = await requireLeaderOf(orgId);
+    if (!ctx) return null;
+    const sb = getSupabase();
+    const now = Date.now();
+    const [availability, eventsRes, lastRefreshedAt] = await Promise.all([
+      getGroupAvailability(ctx.members, GROUP_TZ, now),
+      sb
+        .from('events')
+        .select('id, title, starts_at')
+        .eq('org_id', orgId)
+        .eq('status', 'scheduled')
+        .gte('starts_at', new Date(now - 86_400_000).toISOString())
+        .lte('starts_at', new Date(now + 22 * 86_400_000).toISOString())
+        .order('starts_at', { ascending: true })
+        .limit(40),
+      lastCalendarRefresh(ctx.members.map((m) => m.userId)),
+    ]);
+    return {
+      availability,
+      upcoming: ((eventsRes.data as { id: string; title: string; starts_at: string }[] | null) ?? []).map((e) => ({
+        id: e.id,
+        title: e.title,
+        startsAt: e.starts_at,
+      })),
+      lastRefreshedAt,
+    };
+  } catch (err) {
+    console.error('getOrgAvailability failed', err);
+    return null;
+  }
+}
+
+const REFRESH_WINDOW_SECONDS = 600;
+/** Hard box: a server action has about ten seconds on Netlify; leave room for the page to render. */
+const REFRESH_BUDGET_MS = 5_000;
+const MIN_START_MS = 1_500;
+
+export interface RefreshResult {
+  ok: boolean;
+  /** Connected calendars we tried to read. */
+  attempted: number;
+  /** Of those, the ones that answered. */
+  refreshed: number;
+  retryInSec?: number;
+}
+
+/**
+ * Pull the group's connected calendars again, now. Once every ten minutes per
+ * group (durable bucket), Google free/busy for up to eight members and pasted
+ * links older than an hour for up to five, inside a hard five-second box: each
+ * request is given only the time that is left. The hourly job covers the rest.
+ */
+export async function refreshGroupBusy(orgId: string): Promise<RefreshResult> {
+  try {
+    const ctx = await requireLeaderOf(orgId);
+    if (!ctx) return { ok: false, attempted: 0, refreshed: 0 };
+    const gate = await takeRateLimit(`gbusy:${orgId}`, 1, REFRESH_WINDOW_SECONDS);
+    if (gate.durable && !gate.allowed) {
+      const nowSec = Math.floor(Date.now() / 1000);
+      const windowEnd = Math.floor(nowSec / REFRESH_WINDOW_SECONDS) * REFRESH_WINDOW_SECONDS + REFRESH_WINDOW_SECONDS;
+      return { ok: false, attempted: 0, refreshed: 0, retryInSec: Math.max(1, windowEnd - nowSec) };
     }
-    return reply(200, { ok: true, saved: true, emailed });
-  } catch { return reply(503, { error: 'The form is temporarily unavailable. Please retry with the same form.' }); }
+    const until = Date.now() + REFRESH_BUDGET_MS;
+    const remaining = () => until - Date.now();
+    const deadline = () => remaining() <= 0;
+    const memberIds = ctx.members.map((m) => m.userId);
+    const sb = getSupabase();
+    let attempted = 0;
+    let refreshed = 0;
+
+    const { data: gRows } = await sb
+      .from('google_connections')
+      .select('clerk_user_id')
+      .eq('status', 'ok')
+      .in('clerk_user_id', memberIds)
+      .contains('scopes', [SCOPES.busy])
+      .order('last_freebusy_at', { ascending: true, nullsFirst: true })
+      .limit(8);
+    for (const r of (gRows as { clerk_user_id: string }[] | null) ?? []) {
+      if (remaining() < MIN_START_MS) break;
+      attempted += 1;
+      // Two requests (token, free/busy) share what is left.
+      const res = await syncMemberCalendar(r.clerk_user_id, { deadline, busyOnly: true, timeoutMs: Math.min(4_000, Math.floor(remaining() / 2)) });
+      if (res.busyRead) refreshed += 1;
+    }
+
+    const { data: feeds } = await sb
+      .from('calendar_feeds')
+      .select('*')
+      .in('clerk_user_id', memberIds)
+      .lt('last_synced_at', new Date(Date.now() - 3_600_000).toISOString())
+      .order('last_synced_at', { ascending: true })
+      .limit(5);
+    for (const f of (feeds as CalendarFeedRow[] | null) ?? []) {
+      if (remaining() < MIN_START_MS) break;
+      const url = f.ics_url_enc ? decryptText(f.ics_url_enc) : f.ics_url || null;
+      if (!url) continue;
+      attempted += 1;
+      const res = await syncFeedForUser(f.clerk_user_id, url, f.tz || GROUP_TZ, Math.min(4_000, remaining() - 300));
+      if (res.ok) refreshed += 1;
+    }
+
+    revalidatePath('/dashboard/lead/group');
+    revalidatePath('/dashboard/lead/post');
+    revalidatePath('/dashboard/lead');
+    return { ok: true, attempted, refreshed };
+  } catch (err) {
+    console.error('refreshGroupBusy failed', err);
+    return { ok: false, attempted: 0, refreshed: 0 };
+  }
+}
+
+/** Prefill data for the edit form. Leader-only. */
+export async function getEventForEdit(eventId: string): Promise<{ event: EventRow; orgName: string } | null> {
+  const ctx = await leaderOfEvent(eventId);
+  if (!ctx) return null;
+  return { event: ctx.event, orgName: ctx.orgName };
 }
