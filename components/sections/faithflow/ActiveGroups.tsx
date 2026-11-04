@@ -1,3 +1,4 @@
+import PublishedEvents from '@/components/forms/PublishedEvents';
 import Link from 'next/link';
 import { Container } from '../../Container';
 import { Reveal } from '../../Reveal';
@@ -95,6 +96,7 @@ export function ActiveGroups() {
               Joining FaithFlow means joining Iron and Ember. Membership is in person and begins
               with a real conversation. If that is what you are looking for, reach out below.
             </p>
+          <PublishedEvents compact />
           </article>
           </CardSpotlight>
         </Reveal>

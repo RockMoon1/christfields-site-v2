@@ -1,7 +1,8 @@
 import 'server-only';
 import {localDate,type EventSettings} from './events';
+import {climateNormals,type ClimateNormals} from './climate';
 export type DayContext={observances:{label:string;source:string}[];weather:string};
-export type EventContext={days:Record<string,DayContext>;weatherStatus:string;updated:string|null;jewishStatus:string};
+export type EventContext={days:Record<string,DayContext>;weatherStatus:string;updated:string|null;jewishStatus:string;climate?:ClimateNormals|null};
 const OPM='https://www.opm.gov/policy-data-oversight/pay-leave/federal-holidays/';
 const USCCB='https://www.usccb.org/resources/';
 const federal:Record<string,string>={
@@ -15,6 +16,7 @@ export async function eventContext(s:EventSettings,dates:string[]):Promise<Event
  for(const d of dates){result.days[d]={observances:[],weather:'Check back closer to the date for a local forecast.'};if(federal[d])result.days[d].observances.push({label:federal[d],source:OPM});if(christian[d])result.days[d].observances.push({label:christian[d],source:`${USCCB}${d.slice(0,4)}cal.pdf`});}
  if(!dates.length)return result;
  await Promise.allSettled([
+ (async()=>{if(s.climateStation&&s.climateConfirmed&&s.location)result.climate=await climateNormals(s.climateStation);})(),
  (async()=>{try{const data=await json(`https://www.hebcal.com/hebcal?v=1&cfg=json&start=${dates[0]}&end=${dates[dates.length-1]}&maj=on&min=on&mf=on&nx=on&i=off`,86400);if(!Array.isArray(data.items))return;for(const item of data.items.slice(0,200)){if(result.days[item.date]&&['holiday','roshchodesh'].includes(item.category)&&typeof item.title==='string')result.days[item.date].observances.push({label:`${item.title.slice(0,120)} (Jewish)`,source:'https://www.hebcal.com/holidays/'});}result.jewishStatus='Jewish dates: Hebcal, Diaspora calendar. Many observances begin the preceding evening; fast-day timing varies. Consult your community for local practice.';}catch{/* explicit unavailable */}})(),
  (async()=>{if(!s.weather||s.latitude===null||s.longitude===null||!s.location)return;try{const point=await json(`https://api.weather.gov/points/${s.latitude.toFixed(4)},${s.longitude.toFixed(4)}`,86400);const url=new URL(point.properties?.forecast);if(url.origin!=='https://api.weather.gov'||!/^\/gridpoints\/[A-Z]{3}\/\d+,\d+\/forecast$/.test(url.pathname))return;const data=await json(url.href,1800);if(!Array.isArray(data.properties?.periods))return;const updated=data.properties.updated;if(typeof updated!=='string'||!Number.isFinite(Date.parse(updated))||Date.now()-Date.parse(updated)>12*3600000)return;result.updated=updated;result.weatherStatus=`National Weather Service forecast for ${s.location}. Only provider-supported dates are shown; forecasts can change. Mountain conditions can differ sharply nearby.`;for(const p of data.properties.periods.slice(0,16)){const time=Date.parse(p.startTime);if(!Number.isFinite(time)||time>Date.now()+7*86400000||Date.parse(p.endTime)<Date.now())continue;const day=localDate(s.tz,new Date(time));if(!result.days[day]||typeof p.detailedForecast!=='string')continue;const line=`${p.name}: ${(typeof p.shortForecast==='string'?p.shortForecast:p.detailedForecast).slice(0,180)}`;result.days[day].weather=result.days[day].weather.startsWith('Check back')?line:result.days[day].weather+' '+line;}}catch{/* no fabricated forecast */}})()
  ]);return result;

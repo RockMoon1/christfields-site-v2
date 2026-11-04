@@ -1,0 +1,11 @@
+import {it,expect,vi,afterEach} from 'vitest';
+vi.mock('server-only',()=>({}));
+import {parseNormals,climateNormals} from './climate';
+import {DEFAULT_EVENT,parseSettings} from './events';
+const row={DATE:'11',STATION:'USC00053005',NAME:'FT COLLINS, CO US',LATITUDE:'40.5764',LONGITUDE:'-105.0858',ELEVATION:'1525.2','MLY-TMAX-NORMAL':'52.5','MLY-TMIN-NORMAL':'26.1','MLY-PRCP-NORMAL':'0.74'};
+afterEach(()=>vi.unstubAllGlobals());
+it('parses documented standard units and keeps monthly totals distinct from daily forecasts',()=>{const r=parseNormals([row],row.STATION)!;expect(r.months['11']).toEqual({high:52.5,low:26.1,precipitation:0.74});expect(r.elevation).toBe(1525.2);expect(r.source).toContain('units=standard');});
+it('does not interpret blanks or missing sentinel values as zero',()=>{const r=parseNormals([{...row,'MLY-TMIN-NORMAL':'','MLY-PRCP-NORMAL':'-9999'}],row.STATION)!;expect(r.months['11']).toEqual({high:52.5,low:null,precipitation:null});});
+it('rejects mismatched stations, duplicate months and malformed metadata',()=>{expect(parseNormals([row],'USC00000000')).toBeNull();expect(parseNormals([row,row],row.STATION)).toBeNull();expect(parseNormals([{...row,LATITUDE:'999'}],row.STATION)).toBeNull();expect(parseNormals([{...row,'MLY-TMIN-NORMAL':'60'}],row.STATION)).toBeNull();});
+it('requires explicit station confirmation and venue configuration while preserving old settings',()=>{expect(parseSettings(DEFAULT_EVENT)).toEqual(DEFAULT_EVENT);expect(parseSettings({...DEFAULT_EVENT,climateStation:row.STATION})).toBeNull();expect(parseSettings({...DEFAULT_EVENT,climateStation:row.STATION,climateConfirmed:true,location:'Organizer-selected test venue',latitude:40,longitude:-105})).not.toBeNull();});
+it('never fetches arbitrary URLs and fails gracefully on provider errors or oversized bodies',async()=>{const fetch=vi.fn().mockResolvedValue(new Response('down',{status:503}));vi.stubGlobal('fetch',fetch);expect(await climateNormals('https://evil.example')).toBeNull();expect(fetch).not.toHaveBeenCalled();expect(await climateNormals(row.STATION)).toBeNull();expect(fetch.mock.calls[0][0]).toMatch(/^https:\/\/www.ncei.noaa.gov\/access\/services\/data\/v1/);fetch.mockResolvedValue(new Response('x'.repeat(100001)));expect(await climateNormals(row.STATION)).toBeNull();});

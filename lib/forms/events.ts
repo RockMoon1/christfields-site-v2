@@ -4,6 +4,8 @@ export interface EventSettings {
   email: ContactMode; phone: ContactMode; receipts: boolean; moreInfo: boolean;
   clothing: string; scripture: string; information: string; weather: boolean;
   location: string; latitude: number | null; longitude: number | null;
+  climateStation?: string; climateConfirmed?: boolean;
+  publishToSite?: boolean;
   color: 'gold' | 'blue' | 'green' | 'rose'; status: 'planning' | 'scheduled' | 'completed' | 'cancelled';
 }
 export const DEFAULT_EVENT: EventSettings = {title:'November car camping',summary:'Winter is almost here, and ski season is starting! Help us find dates for car camping, walking through mountain towns, and time together. Tickets, discounts, costs and final arrangements will be confirmed separately.',tz:'America/Denver',start:'2026-11-01',end:'2026-11-30',email:'off',phone:'off',receipts:false,moreInfo:false,clothing:'',scripture:'',information:'',weather:false,location:'',latitude:null,longitude:null,color:'gold',status:'planning'};
@@ -29,6 +31,10 @@ export function parseSettings(value: unknown): EventSettings | null {
   if(s.latitude!==null&&(typeof s.latitude!=='number'||!Number.isFinite(s.latitude)||Math.abs(s.latitude)>90))return null;
   if(s.longitude!==null&&(typeof s.longitude!=='number'||!Number.isFinite(s.longitude)||Math.abs(s.longitude)>180))return null;
   if(s.weather&&(!s.location.trim()||s.latitude===null||s.longitude===null))return null;
+  if(s.climateStation!==undefined&&(typeof s.climateStation!=='string'||(s.climateStation!==''&&!/^[A-Z0-9]{11}$/.test(s.climateStation))))return null;
+  if(s.climateConfirmed!==undefined&&typeof s.climateConfirmed!=='boolean')return null;
+  if(s.publishToSite!==undefined&&typeof s.publishToSite!=='boolean')return null;
+  if(s.climateStation&&(!s.climateConfirmed||!s.location.trim()||s.latitude===null||s.longitude===null))return null;
   return {...s,title:s.title.trim()};
 }
 export type ExtraAnswer = {email:string;phone:string;followUp:boolean;priorAttendance:'first'|'returning'|'unspecified';receiptRequested:boolean};

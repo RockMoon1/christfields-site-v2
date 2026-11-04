@@ -1,0 +1,11 @@
+import {it,expect,vi} from 'vitest';
+import {publishedEvent} from './published';
+import {DEFAULT_EVENT} from './events';
+const now=new Date('2026-11-04T12:00:00Z');
+const form={slug:'test-event',enabled:true,settings:{...DEFAULT_EVENT,publishToSite:true,information:'PRIVATE PLANNING NOTE',email:'optional' as const},photo_version:null};
+it('publishes only an explicit projection and requires opt-in',()=>{const e=publishedEvent(form,now)!;expect(Object.keys(e).sort()).toEqual(['end','photo','slug','start','summary','title']);expect(JSON.stringify(e)).not.toContain('PRIVATE');expect(publishedEvent({...form,settings:DEFAULT_EVENT},now)).toBeNull();});
+it('removes unpublished, disabled, expired, cancelled and completed events',()=>{expect(publishedEvent({...form,enabled:false},now)).toBeNull();for(const settings of [{...form.settings,publishToSite:false},{...form.settings,status:'cancelled'},{...form.settings,status:'completed'},{...form.settings,end:'2026-11-03'}])expect(publishedEvent({...form,settings},now)).toBeNull();});
+const m=vi.hoisted(()=>({data:[] as unknown[]}));
+vi.mock('@/lib/supabase',()=>({getSupabase:()=>({from:()=>({select:()=>({eq:()=>({eq:()=>({order:()=>({limit:async()=>({data:m.data,error:null})})})})})})})}));
+import {GET} from '@/app/api/events/public/route';
+it('does not cache discovery responses and rereads publication changes',async()=>{vi.useFakeTimers();vi.setSystemTime(now);try{m.data=[form];const first=await GET();expect(first.headers.get('Cache-Control')).toContain('no-store');expect((await first.json()).events).toHaveLength(1);m.data=[{...form,settings:{...form.settings,publishToSite:false}}];expect((await (await GET()).json()).events).toEqual([]);}finally{vi.useRealTimers();}});

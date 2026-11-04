@@ -12,6 +12,7 @@ import { PracticesScroll } from '@/components/sections/PracticesScroll';
 import { Values } from '@/components/sections/Values';
 import { Vision } from '@/components/sections/Vision';
 import { communityMetadata } from '@/lib/community-seo';
+import PublishedEvents from '@/components/forms/PublishedEvents';
 
 export const metadata = communityMetadata(
   '/',
@@ -39,6 +40,7 @@ export default function HomePage() {
         <Hero />
         <Vision />
         <BentoGrid />
+        <PublishedEvents />
         <JourneyScroll />
         <PracticesScroll />
         <DayScroll />

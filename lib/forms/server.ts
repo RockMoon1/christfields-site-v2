@@ -19,3 +19,7 @@ export async function getPublicForm(slug:string):Promise<ActivityForm|null>{
   if(!SLUG_RE.test(slug))return null;
   try{const {data,error}=await getSupabase().from('activity_forms').select('slug,enabled,settings,photo_version').eq('slug',slug).single();const settings=parseSettings(data?.settings);return error||!settings?null:{slug:data.slug,enabled:data.enabled,settings,photo_version:data.photo_version};}catch{return null;}
 }
+export async function getOrganizerForm(slug:string):Promise<ActivityForm|null>{
+  if(!(await isFormsOrganizer()))return null;
+  return getPublicForm(slug);
+}

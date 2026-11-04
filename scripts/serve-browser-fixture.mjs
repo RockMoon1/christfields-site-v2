@@ -10,6 +10,7 @@ const fixtureRoot = path.join(repoRoot, 'tests/browser/fixture');
 const fixtureFile = (name) => path.join(fixtureRoot, name);
 const logoBytes = fs.readFileSync(path.join(repoRoot, 'public/assets/logo.png'));
 const aliases = [
+  { find: '@/app/dashboard/(app)/forms/actions', replacement: fixtureFile('forms-actions.ts') },
   { find: '@/app/dashboard/(app)/lead/actions', replacement: fixtureFile('post-actions.ts') },
   { find: '@/components/lead/LeaderStrip', replacement: fixtureFile('excluded-leader.tsx') },
   { find: '@clerk/nextjs/server', replacement: fixtureFile('event-server.ts') },
