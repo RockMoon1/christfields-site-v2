@@ -28,6 +28,38 @@ describe('public submission boundary (mocked providers; no real email)', () => {
     expect((await POST(req({...answer,available:['2026-11-31']}))).status).toBe(400);
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
+  it('does not spend the global budget for repeated requests from a throttled IP', async () => {
+    mocks.rate.mockImplementation(async (bucket: string) => ({durable:true,allowed:bucket === 'forms:global'}));
+    for (let i=0;i<12;i++) expect((await POST(req())).status).toBe(429);
+    expect(mocks.rate).toHaveBeenCalledTimes(12);
+    expect(mocks.rate.mock.calls.every(([bucket]) => bucket.startsWith('forms:ip:'))).toBe(true);
+    expect(mocks.rpc).not.toHaveBeenCalled(); expect(mocks.send).not.toHaveBeenCalled();
+  });
+  it('charges invalid JSON, honeypots, oversize streams and invalid answers only to the IP', async () => {
+    const malformed = new Request('https://christfields2717.com/api/forms/availability', {method:'POST',headers:{'content-type':'application/json'},body:'{'});
+    expect((await POST(malformed)).status).toBe(400);
+    expect((await POST(req({...answer,website:'bot.example'}))).status).toBe(400);
+    expect((await POST(req({notes:'x'.repeat(12001)}))).status).toBe(413);
+    expect((await POST(req({...answer,available:['2026-11-31']}))).status).toBe(400);
+    expect(mocks.rate).toHaveBeenCalledTimes(4);
+    expect(mocks.rate.mock.calls.every(([bucket]) => bucket.startsWith('forms:ip:'))).toBe(true);
+    expect(mocks.rpc).not.toHaveBeenCalled(); expect(mocks.send).not.toHaveBeenCalled();
+  });
+  it('still fails closed at the global limit after IP and validation pass', async () => {
+    for (const global of [{durable:false,allowed:true},{durable:true,allowed:false}]) {
+      mocks.rate.mockClear();
+      mocks.rate.mockImplementation(async (bucket: string) => bucket === 'forms:global' ? global : {durable:true,allowed:true});
+      expect((await POST(req())).status).toBe(global.durable ? 429 : 503);
+      expect(mocks.rate.mock.calls[0][0]).toMatch(/^forms:ip:/);
+      expect(mocks.rate.mock.calls[1]).toEqual(['forms:global',100,3600]);
+    }
+    expect(mocks.rpc).not.toHaveBeenCalled(); expect(mocks.send).not.toHaveBeenCalled();
+  });
+  it('charges a valid request to the IP and then the global budget before saving', async () => {
+    expect((await POST(req())).status).toBe(200);
+    expect(mocks.rate.mock.calls.map(([bucket]) => bucket === 'forms:global' ? 'global' : 'ip')).toEqual(['ip','global']);
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
+  });
   it('rejects closed and conflicting responses without sending', async () => {
     mocks.rpc.mockResolvedValue({data:'closed'}); expect((await POST(req())).status).toBe(410);
     mocks.rpc.mockResolvedValue({data:'conflict'}); expect((await POST(req())).status).toBe(409);

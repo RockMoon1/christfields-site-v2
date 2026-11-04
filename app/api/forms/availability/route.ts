@@ -22,9 +22,11 @@ export async function POST(req: Request) {
     if (!secret) return reply(503, { error: 'The form is temporarily unavailable. Please try later.' });
     const ip = req.headers.get('x-nf-client-connection-ip') || 'unknown';
     const bucket = createHmac('sha256', secret).update(`forms:${new Date().toISOString().slice(0, 10)}:${ip}`).digest('hex');
-    const limits = await Promise.all([takeRateLimit(`forms:ip:${bucket}`, 8, 600), takeRateLimit('forms:global', 100, 3600)]);
-    if (limits.some(l => !l.durable)) return reply(503, { error: 'The form is temporarily unavailable. Please try later.' });
-    if (limits.some(l => !l.allowed)) return reply(429, { error: 'Too many attempts. Please try again later.' });
+    // Charge every attempt to its IP first. Already-throttled callers must not
+    // spend the shared allowance or force body parsing on subsequent requests.
+    const ipLimit = await takeRateLimit(`forms:ip:${bucket}`, 8, 600);
+    if (!ipLimit.durable) return reply(503, { error: 'The form is temporarily unavailable. Please try later.' });
+    if (!ipLimit.allowed) return reply(429, { error: 'Too many attempts. Please try again later.' });
     const reader = req.body?.getReader();
     if (!reader) return reply(400, { error: 'Missing response.' });
     const chunks: Uint8Array[] = []; let size = 0;
@@ -39,6 +41,11 @@ export async function POST(req: Request) {
     if (raw && typeof raw === 'object' && 'website' in raw && (raw as {website: unknown}).website) return reply(400, { error: 'Please leave the website field empty.' });
     const answer = validateAnswer(raw);
     if (!answer) return reply(400, { error: 'Check your name, November dates, and privacy confirmations.' });
+    // Only validated answers from IPs still within their own limit may spend
+    // the shared storage/email budget. Malformed bodies and honeypots cannot.
+    const globalLimit = await takeRateLimit('forms:global', 100, 3600);
+    if (!globalLimit.durable) return reply(503, { error: 'The form is temporarily unavailable. Please try later.' });
+    if (!globalLimit.allowed) return reply(429, { error: 'Too many attempts. Please try again later.' });
     const hash = createHash('sha256').update(JSON.stringify(answer)).digest('hex');
     const sb = getSupabase();
     // A database row lock makes closing the form and accepting a response atomic.
