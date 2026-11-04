@@ -1,3 +1,4 @@
+import {boundedText} from '@/lib/security/body';
 import { NextResponse } from 'next/server';
 import { checkInDevice, OsintControlNotConfigured, OsintControlPublicError } from '@/lib/osint-control/store';
 import { cleanText, isDeviceSecret, isInstallId } from '@/lib/osint-control/security';
@@ -10,13 +11,13 @@ export const dynamic = 'force-dynamic';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function clientIp(req: Request): string {
-  return req.headers.get('x-nf-client-connection-ip') || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  return req.headers.get('x-nf-client-connection-ip') || 'unknown';
 }
 
 async function readBody(req: Request): Promise<Record<string, unknown> | null> {
   if (isBodyTooLarge(req, 8_192)) return null;
   try {
-    const body = await req.json();
+    const body = JSON.parse(await boundedText(req.body,8192));
     return typeof body === 'object' && body !== null && !Array.isArray(body) ? (body as Record<string, unknown>) : null;
   } catch {
     return null;
@@ -27,6 +28,8 @@ export async function POST(req: Request) {
   if (isCrossSite(req)) return noStore({ ok: false, error: 'forbidden' }, 403);
 
   const ip = clientIp(req);
+  const rl = await takeRateLimit(`osint-check:${ip}`,60,600);
+  if(!rl.durable||!rl.allowed)return noStore({ok:false,error:'Please wait before checking in again.'},rl.durable?429:503);
   const body = await readBody(req);
   if (!body) return noStore({ ok: false, error: 'Invalid body.' }, 400);
 
@@ -37,8 +40,7 @@ export async function POST(req: Request) {
     return noStore({ ok: false, error: 'Device credentials were not accepted.' }, 401);
   }
 
-  const rl = await takeRateLimit(`osint-check:${deviceId}:${ip}`, 60, 10 * 60);
-  if (rl.durable && !rl.allowed) return noStore({ ok: false, error: 'Please wait before checking in again.' }, 429);
+
 
   try {
     const policy = await checkInDevice({

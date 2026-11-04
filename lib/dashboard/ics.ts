@@ -1,6 +1,7 @@
 import dns from 'node:dns/promises';
 import net from 'node:net';
 import ical from 'node-ical';
+import { boundedText } from '@/lib/security/body';
 import { SLOTS, type Slot } from '@/lib/dashboard/availability';
 
 /**
@@ -47,6 +48,9 @@ export function validateIcsUrl(raw: string): ValidatedUrl | InvalidUrl {
 
   if (parsed.protocol !== 'https:') {
     return { ok: false, error: 'The link must start with https (or webcal).' };
+  }
+  if (parsed.username || parsed.password || (parsed.port && parsed.port !== '443')) {
+    return { ok: false, error: 'Calendar links must use HTTPS without credentials or a custom port.' };
   }
 
   const host = parsed.hostname.toLowerCase();
@@ -95,8 +99,9 @@ async function hostIsPublic(hostname: string): Promise<boolean> {
  * Fetch the feed, following redirects OURSELVES so the allowlist + IP guard are
  * re-checked on every hop. This closes the SSRF where an allowlisted host could
  * 302 to an internal / cloud-metadata target. We also resolve the host and
- * refuse any private/reserved IP, which defends DNS-rebinding and inward-pointing
- * names. Caps redirect hops, total time (8s), and body size (2MB).
+ * refuse inward-pointing names. DNS is checked before fetch, not pinned to the
+ * connection; the provider allowlist is also required. Caps redirect hops,
+ * fetch time (8s), and streamed body size (2MB).
  */
 async function fetchIcsText(initialUrl: string, timeoutMs: number = 8000): Promise<string> {
   const controller = new AbortController();
@@ -116,14 +121,14 @@ async function fetchIcsText(initialUrl: string, timeoutMs: number = 8000): Promi
         headers: { 'User-Agent': 'ChristFields-Availability/1.0', Accept: 'text/calendar, text/plain' },
       });
       if (res.status >= 300 && res.status < 400) {
+        void res.body?.cancel().catch(() => {});
         const loc = res.headers.get('location');
         if (!loc) throw new Error(`Calendar feed returned ${res.status} with no location`);
         url = new URL(loc, checked.url).toString(); // re-validated at the top of the next hop
         continue;
       }
       if (!res.ok) throw new Error(`Calendar feed returned ${res.status}`);
-      const text = await res.text();
-      return text.length > 2_000_000 ? text.slice(0, 2_000_000) : text;
+      return await boundedText(res.body, 2_000_000);
     }
     throw new Error('Calendar link redirected too many times.');
   } finally {
@@ -292,7 +297,8 @@ export async function fetchBusySlots(
       err instanceof Error && err.name === 'AbortError'
         ? 'The calendar took too long to respond. Try again.'
         : 'Could not read that calendar link.';
-    console.error('fetchBusySlots failed', err);
+    // Network errors may contain the private bearer URL; never log them.
+    console.error('fetchBusySlots failed', { timeout: err instanceof Error && err.name === 'AbortError' });
     return { ok: false, slots: [], error: msg };
   }
 }

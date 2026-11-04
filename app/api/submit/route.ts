@@ -1,8 +1,8 @@
+import { createHmac } from 'node:crypto';
+import { boundedText, BodyTooLarge } from '@/lib/security/body';
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import {
-  autoReplyHtml,
-  autoReplyText,
   normalizePublicSubmissionFormName,
   notificationHtml,
   publicSubmissionLabel,
@@ -11,27 +11,7 @@ import { isBodyTooLarge, isCrossSite } from '@/lib/security/origin';
 import { takeRateLimit } from '@/lib/rate-limit';
 import { getSupabase } from '@/lib/supabase';
 
-/**
- * Form submission handler for the public site (waitlist, faithflow, OSINT feedback).
- *
- * Every valid submission is first written to Supabase (public_submissions,
- * migration 012) as the durable primary record — "we read every message" must
- * survive a missing key or a spam folder. Email is the notification of that
- * record: it sends directly via Resend instead of relying on Netlify Forms to
- * intercept the POST, which is unreliable inside the Next.js runtime:
- *   1. a notification to the Christ Fields inbox (the important one), and
- *   2. a branded thank-you to the person who submitted.
- * The request only reports failure when NEITHER the store NOR the
- * notification succeeded, so a retry can never silently duplicate a message
- * that was already safely received.
- *
- * Env (set in Netlify):
- *   RESEND_API_KEY   required to actually send
- *   FROM_EMAIL       defaults to "Christ Fields <proverbs@christfields2717.com>"
- *   NOTIFY_EMAIL     where submissions are sent. Defaults to proverbs@christfields2717.com
- *   REPLY_TO_EMAIL   reply-to on the thank-you. Defaults to proverbs@christfields2717.com
- */
-
+/** Public contact submissions with bounded processing and shared abuse budgets. */
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -40,26 +20,6 @@ const NOTIFY = process.env.NOTIFY_EMAIL || 'proverbs@christfields2717.com';
 const REPLY_TO = process.env.REPLY_TO_EMAIL || 'proverbs@christfields2717.com';
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
-
-/**
- * Best-effort in-memory rate limit. On serverless this is per-instance and
- * resets on cold start, so it is not a hard guarantee, but it stops casual
- * abuse, scripted bursts that hit a warm instance, and accidental double
- * submits without adding infrastructure. For a hard global limit, back this
- * with Upstash/Supabase later.
- */
-const RATE_LIMIT = 5; // submissions ...
-const RATE_WINDOW_MS = 10 * 60 * 1000; // ... per 10 minutes per IP
-const hits = new Map<string, number[]>();
-
-function clientIp(req: Request): string {
-  const h = req.headers;
-  return (
-    h.get('x-nf-client-connection-ip') ||
-    h.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    'unknown'
-  );
-}
 
 /**
  * Durable record, best effort: returns the new row's id, or null if the write
@@ -102,27 +62,11 @@ async function markEmailed(id: string): Promise<void> {
   }
 }
 
-function rateLimited(ip: string): boolean {
-  const now = Date.now();
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
-  if (recent.length >= RATE_LIMIT) {
-    hits.set(ip, recent);
-    return true;
-  }
-  recent.push(now);
-  hits.set(ip, recent);
-  // Opportunistic cleanup so the map cannot grow unbounded.
-  if (hits.size > 5000) {
-    for (const [k, v] of hits) {
-      if (v.every((t) => now - t >= RATE_WINDOW_MS)) hits.delete(k);
-    }
-  }
-  return false;
-}
-
 export async function POST(req: Request) {
   // CSRF defense-in-depth: reject forged cross-site POSTs from other origins.
-  if (isCrossSite(req)) {
+  const origin=req.headers.get('origin');
+  const expected=process.env.NODE_ENV==='development'?new URL(req.url).origin:'https://christfields2717.com';
+  if (isCrossSite(req) || (origin && origin!==expected)) {
     return NextResponse.json({ ok: false, error: 'Cross-site requests are not allowed.' }, { status: 403 });
   }
   // Coarse body-size guard before parsing (fields are length-capped below).
@@ -130,11 +74,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: 'Request too large.' }, { status: 413 });
   }
 
+  if(req.headers.get('content-type')?.split(';')[0].trim().toLowerCase()!=='application/json') return NextResponse.json({ok:false,error:'JSON required.'},{status:415});
+  const secret=process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if(!secret)return NextResponse.json({ok:false,error:'Please try again later.'},{status:503});
+  const ip=req.headers.get('x-nf-client-connection-ip')||'unknown';
+  const ipKey=createHmac('sha256',secret).update(new Date().toISOString().slice(0,10)+':'+ip).digest('hex');
+  const rate=await takeRateLimit('submit:ip:'+ipKey,5,600);
+  if(!rate.durable||!rate.allowed)return NextResponse.json({ok:false,error:'Please wait before trying again.'},{status:rate.durable?429:503});
   let data: Record<string, unknown>;
   try {
-    data = await req.json();
-  } catch {
-    return NextResponse.json({ ok: false, error: 'Invalid body' }, { status: 400 });
+    data = JSON.parse(await boundedText(req.body,16000));
+  } catch (error) {
+    return NextResponse.json({ ok: false, error: 'Invalid or oversized body' }, { status: error instanceof BodyTooLarge?413:400 });
   }
 
   // Reject non-object bodies (arrays, primitives) before coercing fields.
@@ -142,35 +93,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: 'Invalid body' }, { status: 400 });
   }
 
-  // Server-side rate limit (every POST counts, regardless of the honeypot).
-  // Durable (Supabase) once migration 011 is applied, else the in-memory fallback.
-  const ip = clientIp(req);
-  const rl = await takeRateLimit(`submit:${ip}`, RATE_LIMIT, Math.floor(RATE_WINDOW_MS / 1000));
-  if (rl.durable ? !rl.allowed : rateLimited(ip)) {
-    return NextResponse.json(
-      { ok: false, error: 'Please wait a moment before sending another message.' },
-      { status: 429 },
-    );
-  }
-
   // Honeypot: a bot filled the hidden field. Pretend success, send nothing.
   if (String(data.botField || '').trim()) {
     return NextResponse.json({ ok: true });
   }
 
+  if(['name','email','interest','message'].some(k=>data[k]!==undefined&&typeof data[k]!=='string'))return NextResponse.json({ok:false,error:'Invalid fields.'},{status:400});
   const formName = normalizePublicSubmissionFormName(data.formName);
   const name = String(data.name || '').trim().slice(0, 100);
   const email = String(data.email || '').trim().slice(0, 254);
   const interest = String(data.interest || '').trim().slice(0, 80);
   const message = String(data.message || '').trim().slice(0, 2000);
 
-  if (!name || !EMAIL_RE.test(email)) {
+  if (!name || /[\r\n\x00]/.test(name+email) || !EMAIL_RE.test(email)) {
     return NextResponse.json(
       { ok: false, error: 'A name and a valid email are required.' },
       { status: 400 },
     );
   }
 
+  const global=await takeRateLimit('submit:global',100,3600);
+  if(!global.durable||!global.allowed)return NextResponse.json({ok:false,error:'Please try again later.'},{status:global.durable?429:503});
   const canEmail = Boolean(process.env.RESEND_API_KEY);
   const formLabel = publicSubmissionLabel(formName);
 
@@ -201,7 +144,7 @@ export async function POST(req: Request) {
   }
 
   const resend = new Resend(process.env.RESEND_API_KEY);
-  const firstName = name.split(/\s+/)[0] || 'friend';
+
 
   // 1) Notification to the Christ Fields inbox. This is the one that must land.
   // Resend v6 never rejects: emails.send() resolves with { data, error } even
@@ -234,25 +177,11 @@ export async function POST(req: Request) {
     await markEmailed(storedId);
   }
 
-  // 2) Branded thank-you to the person. Best effort: do not fail the request if
-  // this one has trouble, since the message is already recorded/notified.
-  const { error: replyError } = await resend.emails.send({
-    from: FROM,
-    to: email,
-    replyTo: REPLY_TO,
-    subject:
-      formName === 'faithflow'
-        ? 'Thank you for reaching out to FaithFlow'
-        : formName === 'osint-feedback'
-          ? 'Thank you for reviewing the OSINT dashboard'
-        : 'Welcome to Christ Fields',
-    html: autoReplyHtml({ firstName, formName }),
-    text: autoReplyText({ firstName, formName }),
-  });
-  if (replyError) {
-    console.error('Auto-reply email failed (submission already handled)', {
-      name: replyError.name,
-    });
+  // Never echo attacker-controlled content to an unverified mailbox.
+  const recipientKey=createHmac('sha256',secret).update(email.toLowerCase()).digest('hex');
+  const recipient=await takeRateLimit('submit:recipient:'+recipientKey,1,86400);
+  if(recipient.durable&&recipient.allowed){
+    try{await resend.emails.send({from:FROM,to:email,replyTo:REPLY_TO,subject:'Christ Fields contact request received',text:'Someone used this email address on a Christ Fields contact form. If that was you, your message has been received. If it was not you, you can ignore this email. This does not verify your identity, confirm membership, or subscribe you to updates.'});}catch{/* the primary submission remains saved */}
   }
 
   return NextResponse.json({ ok: true });

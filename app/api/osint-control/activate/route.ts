@@ -1,3 +1,4 @@
+import {boundedText} from '@/lib/security/body';
 import { NextResponse } from 'next/server';
 import { activateDevice, OsintControlNotConfigured, OsintControlPublicError } from '@/lib/osint-control/store';
 import { cleanText, isActivationToken, isInstallId } from '@/lib/osint-control/security';
@@ -11,13 +12,13 @@ const LIMIT = 10;
 const WINDOW_SECONDS = 10 * 60;
 
 function clientIp(req: Request): string {
-  return req.headers.get('x-nf-client-connection-ip') || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  return req.headers.get('x-nf-client-connection-ip') || 'unknown';
 }
 
 async function readBody(req: Request): Promise<Record<string, unknown> | null> {
   if (isBodyTooLarge(req, 8_192)) return null;
   try {
-    const body = await req.json();
+    const body = JSON.parse(await boundedText(req.body,8192));
     return typeof body === 'object' && body !== null && !Array.isArray(body) ? (body as Record<string, unknown>) : null;
   } catch {
     return null;
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
 
   const ip = clientIp(req);
   const rl = await takeRateLimit(`osint-activate:${ip}`, LIMIT, WINDOW_SECONDS);
-  if (rl.durable && !rl.allowed) return noStore({ ok: false, error: 'Please wait before trying another activation.' }, 429);
+  if (!rl.durable || !rl.allowed) return noStore({ ok: false, error: 'Please wait before trying another activation.' }, 429);
 
   const body = await readBody(req);
   if (!body) return noStore({ ok: false, error: 'Invalid body.' }, 400);

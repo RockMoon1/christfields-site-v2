@@ -77,28 +77,10 @@ function needsUrgentRead(walk: Record<string, string>): string[] {
   return URGENT_TERMS.filter((t) => hay.includes(t));
 }
 
-/**
- * Best-effort in-memory fallback, matching app/api/submit/route.ts. Per-instance
- * and reset by a cold start, so not a guarantee, but without it a deploy where
- * migration 011 has not been run has no limiting at all on the one endpoint
- * that can mail a stranger.
- */
-const hits = new Map<string, number[]>();
-
-function memoryLimited(key: string, limit: number, windowSeconds: number): boolean {
-  const now = Date.now();
-  const windowMs = windowSeconds * 1000;
-  const recent = (hits.get(key) ?? []).filter((t) => now - t < windowMs);
-  recent.push(now);
-  hits.set(key, recent);
-  if (hits.size > 5000) hits.clear(); // crude ceiling; correctness does not depend on it
-  return recent.length > limit;
-}
-
-/** Durable once migration 011 is applied, in-memory before then. Never nothing. */
+/** Shared abuse protection is required before accepting an assessment. */
 async function limited(key: string, limit: number, windowSeconds: number): Promise<boolean> {
   const rl = await takeRateLimit(key, limit, windowSeconds);
-  return rl.durable ? !rl.allowed : memoryLimited(key, limit, windowSeconds);
+  return !rl.durable || !rl.allowed;
 }
 
 async function clientIp(): Promise<string> {

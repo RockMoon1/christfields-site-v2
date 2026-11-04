@@ -1,4 +1,5 @@
 import webpush from 'web-push';
+import {pushAgent} from '@/lib/security/push-endpoint';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { PushSubscriptionRow } from '@/lib/supabase';
 
@@ -44,7 +45,7 @@ export function isPushConfigured(): boolean {
     webpush.setVapidDetails(subject, pub, priv);
     configured = true;
   } catch (err) {
-    console.error('VAPID keys rejected', err);
+    console.error('VAPID configuration rejected');
     configured = false;
   }
   return configured;
@@ -90,11 +91,13 @@ export async function pushToSubs(
   for (let i = 0; i < subs.length; i += CONCURRENCY) {
     await Promise.all(
       subs.slice(i, i + CONCURRENCY).map(async (s) => {
+        let agent: Awaited<ReturnType<typeof pushAgent>> | undefined;
         try {
+          agent = await pushAgent(s.endpoint);
           await webpush.sendNotification(
             { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
             payload,
-            { TTL: opts.ttlSeconds, urgency: opts.urgency, timeout: SOCKET_TIMEOUT_MS },
+            { TTL: opts.ttlSeconds, urgency: opts.urgency, timeout: SOCKET_TIMEOUT_MS, agent },
           );
           out.outcomes.push({ subId: s.id, userId: s.clerk_user_id, ok: true });
           out.sent += 1;
@@ -103,6 +106,8 @@ export async function pushToSubs(
           if (code === 404 || code === 410) dead.push(s.id);
           else failed.push(s);
           out.outcomes.push({ subId: s.id, userId: s.clerk_user_id, ok: false });
+        } finally {
+          agent?.destroy();
         }
       }),
     );

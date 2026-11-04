@@ -7,11 +7,8 @@ import { getSupabase } from '@/lib/supabase';
  * are bypassable across cold starts. This gives those routes a shared, atomic
  * counter instead.
  *
- * Graceful by design: if the backing function/table is not present yet
- * (migration 011 not run), this returns `{ durable: false }` and the caller
- * falls back to its in-memory limiter, so behavior never regresses. Once the
- * migration is applied, the same code starts enforcing a real global limit with
- * no further changes.
+ * Fail closed when the backing counter is unavailable. Callers may report a
+ * temporary service error; serverless memory is not a shared abuse boundary.
  */
 export async function takeRateLimit(
   bucket: string,
@@ -24,9 +21,9 @@ export async function takeRateLimit(
       p_bucket: bucket,
       p_window_seconds: windowSeconds,
     });
-    if (error || typeof data !== 'number') return { allowed: true, durable: false };
+    if (error || typeof data !== 'number') return { allowed: false, durable: false };
     return { allowed: data <= limit, durable: true };
   } catch {
-    return { allowed: true, durable: false };
+    return { allowed: false, durable: false };
   }
 }

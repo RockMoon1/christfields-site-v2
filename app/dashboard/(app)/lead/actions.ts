@@ -1028,7 +1028,7 @@ export async function refreshGroupBusy(orgId: string): Promise<RefreshResult> {
     const ctx = await requireLeaderOf(orgId);
     if (!ctx) return { ok: false, attempted: 0, refreshed: 0 };
     const gate = await takeRateLimit(`gbusy:${orgId}`, 1, REFRESH_WINDOW_SECONDS);
-    if (gate.durable && !gate.allowed) {
+    if (!gate.durable || !gate.allowed) {
       const nowSec = Math.floor(Date.now() / 1000);
       const windowEnd = Math.floor(nowSec / REFRESH_WINDOW_SECONDS) * REFRESH_WINDOW_SECONDS + REFRESH_WINDOW_SECONDS;
       return { ok: false, attempted: 0, refreshed: 0, retryInSec: Math.max(1, windowEnd - nowSec) };

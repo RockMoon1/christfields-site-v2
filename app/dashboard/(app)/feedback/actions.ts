@@ -26,28 +26,9 @@ const NOTIFY = process.env.NOTIFY_EMAIL || 'proverbs@christfields2717.com';
 const CATEGORIES = ['Idea', 'Something is confusing', 'Bug', 'Encouragement', 'Other'] as const;
 type Category = (typeof CATEGORIES)[number];
 
-// Best-effort in-memory rate limit (per warm instance): 5 notes / 10 min / user.
+// Shared durable limit: 5 notes / 10 minutes / user.
 const RATE_LIMIT = 5;
 const RATE_WINDOW_MS = 10 * 60 * 1000;
-const hits = new Map<string, number[]>();
-
-function rateLimited(userId: string): boolean {
-  const now = Date.now();
-  const recent = (hits.get(userId) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
-  if (recent.length >= RATE_LIMIT) {
-    hits.set(userId, recent);
-    return true;
-  }
-  recent.push(now);
-  hits.set(userId, recent);
-  if (hits.size > 5000) {
-    for (const [k, v] of hits) {
-      if (v.every((t) => now - t >= RATE_WINDOW_MS)) hits.delete(k);
-    }
-  }
-  return false;
-}
-
 /** Durable record, best effort; degrades gracefully until migration 012 runs. */
 async function storeFeedback(row: {
   name: string;
@@ -93,14 +74,12 @@ export async function submitFeedback(input: {
       ? (input.category as Category)
       : 'Other';
 
-    // Durable limit when migration 011 has been run, else the in-memory one
-    // (which resets per serverless instance), same pattern as /api/submit.
     const rl = await takeRateLimit(
       `feedback:${userId}`,
       RATE_LIMIT,
       Math.floor(RATE_WINDOW_MS / 1000),
     );
-    if (rl.durable ? !rl.allowed : rateLimited(userId)) {
+    if (!rl.durable || !rl.allowed) {
       return { ok: false, error: 'Thanks. Give it a few minutes before sending more.' };
     }
 

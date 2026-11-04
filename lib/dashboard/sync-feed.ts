@@ -1,6 +1,7 @@
 import 'server-only';
 import { getSupabase } from '@/lib/supabase';
 import { fetchBusySlots } from '@/lib/dashboard/ics';
+import { takeRateLimit } from '@/lib/rate-limit';
 const DAY = 86_400_000;
 const SYNC_DAYS = 28;
 function startOfTodayUtcMs() { const now = new Date(); return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()); }
@@ -11,6 +12,10 @@ export async function syncFeedForUser(
   tz: string,
   timeoutMs: number = 8000,
 ): Promise<{ ok: boolean; error?: string }> {
+  // Applies equally to member, leader and scheduled callers. A throttled
+  // refresh preserves the last saved busy slots and feed status.
+  const limit=await takeRateLimit(`calendar-sync:${userId}`,2,60);
+  if(!limit.durable||!limit.allowed)return {ok:false,error:'Please wait a minute before refreshing your calendar.'};
   const fromMs = startOfTodayUtcMs();
   const toMs = fromMs + SYNC_DAYS * DAY;
   const result = await fetchBusySlots(url, tz, fromMs, toMs, timeoutMs);

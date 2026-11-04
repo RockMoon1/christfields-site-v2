@@ -1,3 +1,5 @@
+import {validPushEndpoint as validEndpoint,validPushKeys} from '@/lib/security/push-endpoint';
+import {boundedText} from '@/lib/security/body';
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
 import { takeRateLimit } from '@/lib/rate-limit';
@@ -20,9 +22,6 @@ interface Body {
   subscription?: { endpoint?: unknown; keys?: { p256dh?: unknown; auth?: unknown } };
 }
 
-function validEndpoint(e: unknown): e is string {
-  return typeof e === 'string' && e.startsWith('https://') && e.length <= 1024;
-}
 
 export async function POST(req: Request) {
   if (isBodyTooLarge(req, 8_192)) return NextResponse.json({ ok: false }, { status: 413 });
@@ -30,16 +29,16 @@ export async function POST(req: Request) {
     .split(',')[0]
     .trim();
   const limit = await takeRateLimit(`push-rotate:${ip}`, 30, 600);
-  if (!limit.allowed) return NextResponse.json({ ok: false }, { status: 429 });
+  if (!limit.durable || !limit.allowed) return NextResponse.json({ ok: false }, { status: 429 });
 
   let body: Body;
   try {
-    body = (await req.json()) as Body;
+    body = (JSON.parse(await boundedText(req.body,8192))) as Body;
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
-  const sub = body.subscription;
-  if (!validEndpoint(body.oldEndpoint) || !sub || !validEndpoint(sub.endpoint) || typeof sub.keys?.p256dh !== 'string' || typeof sub.keys?.auth !== 'string') {
+  const sub = body?.subscription;
+  if (!validEndpoint(body?.oldEndpoint) || !sub || !validEndpoint(sub.endpoint) || !validPushKeys(sub.keys)) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
 
@@ -57,10 +56,11 @@ export async function POST(req: Request) {
       last_ok_at: now,
       fail_count: 0,
     })
-    .eq('id', (data as { id: string }).id);
-  if (error) {
+    .eq('id', (data as { id: string }).id).eq('endpoint',body.oldEndpoint);
+  if (error?.code === '23505') {
     // The new endpoint already has a row (re-subscribed from a page first): drop the stale one.
     await sb.from('push_subscriptions').delete().eq('endpoint', body.oldEndpoint);
   }
+  else if(error)return NextResponse.json({ok:false},{status:503});
   return NextResponse.json({ ok: true });
 }
